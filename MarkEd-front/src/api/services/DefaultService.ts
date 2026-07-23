@@ -2,9 +2,14 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { ActionResponse } from '../models/ActionResponse';
+import type { AddMembersRequest } from '../models/AddMembersRequest';
 import type { AllSubmissionSchema } from '../models/AllSubmissionSchema';
 import type { AssignmentSchema } from '../models/AssignmentSchema';
 import type { AssignmentStatistics } from '../models/AssignmentStatistics';
+import type { AutoAssignRequest } from '../models/AutoAssignRequest';
+import type { ChecklistItemRequest } from '../models/ChecklistItemRequest';
+import type { ChecklistItemSchema } from '../models/ChecklistItemSchema';
 import type { CommentCreate } from '../models/CommentCreate';
 import type { CourseSchema } from '../models/CourseSchema';
 import type { CreationResponse } from '../models/CreationResponse';
@@ -12,7 +17,17 @@ import type { DismissedLLMFeedbackResponse } from '../models/DismissedLLMFeedbac
 import type { DismissLLMFeedbackRequest } from '../models/DismissLLMFeedbackRequest';
 import type { FileAccessResponse } from '../models/FileAccessResponse';
 import type { FileUploadResponse } from '../models/FileUploadResponse';
+import type { GroupCreateRequest } from '../models/GroupCreateRequest';
+import type { GroupResultSchema } from '../models/GroupResultSchema';
+import type { GroupSchema } from '../models/GroupSchema';
+import type { GroupSetCreateRequest } from '../models/GroupSetCreateRequest';
+import type { GroupSetSchema } from '../models/GroupSetSchema';
+import type { GroupSetUpdateRequest } from '../models/GroupSetUpdateRequest';
+import type { GroupSubmissionSchema } from '../models/GroupSubmissionSchema';
+import type { GroupSubmitRequest } from '../models/GroupSubmitRequest';
+import type { GroupUpdateRequest } from '../models/GroupUpdateRequest';
 import type { MarkerCommentUpdate } from '../models/MarkerCommentUpdate';
+import type { MoveMemberRequest } from '../models/MoveMemberRequest';
 import type { PeerAssignmentCreationResponse } from '../models/PeerAssignmentCreationResponse';
 import type { PeerAssignmentRequest } from '../models/PeerAssignmentRequest';
 import type { PeerMatch } from '../models/PeerMatch';
@@ -22,10 +37,30 @@ import type { PeerReviewCompletion } from '../models/PeerReviewCompletion';
 import type { PeerReviewSchema } from '../models/PeerReviewSchema';
 import type { PeerReviewSchemaWithStudent } from '../models/PeerReviewSchemaWithStudent';
 import type { PeersLastSubmissionResponse } from '../models/PeersLastSubmissionResponse';
+import type { PersonalAdjustmentSaveRequest } from '../models/PersonalAdjustmentSaveRequest';
+import type { PersonalAdjustmentSchema } from '../models/PersonalAdjustmentSchema';
+import type { RandomAssignRequest } from '../models/RandomAssignRequest';
+import type { ReflectionPromptSchema } from '../models/ReflectionPromptSchema';
+import type { ReflectionPromptsSaveRequest } from '../models/ReflectionPromptsSaveRequest';
+import type { RubricSelectionSaveRequest } from '../models/RubricSelectionSaveRequest';
+import type { RubricTreeNode } from '../models/RubricTreeNode';
+import type { SAFeedbackRequest } from '../models/SAFeedbackRequest';
+import type { SAStatusSchema } from '../models/SAStatusSchema';
+import type { SelfAssessmentFormSchema } from '../models/SelfAssessmentFormSchema';
+import type { SelfAssessmentSettingSchema } from '../models/SelfAssessmentSettingSchema';
+import type { SelfAssessmentSettingUpdateRequest } from '../models/SelfAssessmentSettingUpdateRequest';
+import type { SelfAssessmentSubmitRequest } from '../models/SelfAssessmentSubmitRequest';
+import type { SelfAssessmentSubmitResponse } from '../models/SelfAssessmentSubmitResponse';
+import type { StudentSelfAssessmentSchema } from '../models/StudentSelfAssessmentSchema';
 import type { SubmissionRequest } from '../models/SubmissionRequest';
 import type { SubmissionResponse } from '../models/SubmissionResponse';
 import type { SubmissionSchema } from '../models/SubmissionSchema';
+import type { UngroupedStudentSchema } from '../models/UngroupedStudentSchema';
 import type { UserSchema } from '../models/UserSchema';
+import type { WorkspaceCommentCreateRequest } from '../models/WorkspaceCommentCreateRequest';
+import type { WorkspaceCommentSchema } from '../models/WorkspaceCommentSchema';
+import type { WorkspaceFileCreateRequest } from '../models/WorkspaceFileCreateRequest';
+import type { WorkspaceFileSchema } from '../models/WorkspaceFileSchema';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -631,6 +666,853 @@ export class DefaultService {
                 'type': type,
                 'content_type': contentType,
             },
+        });
+    }
+    /**
+     * List Group Sets
+     * @param courseId
+     * @returns GroupSetSchema OK
+     * @throws ApiError
+     */
+    public static listGroupSets(
+        courseId: number,
+    ): CancelablePromise<Array<GroupSetSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/courses/{course_id}/groupsets',
+            path: {
+                'course_id': courseId,
+            },
+        });
+    }
+    /**
+     * Create Group Set
+     * @param courseId
+     * @param requestBody
+     * @returns GroupSetSchema OK
+     * @throws ApiError
+     */
+    public static createGroupSet(
+        courseId: number,
+        requestBody: GroupSetCreateRequest,
+    ): CancelablePromise<GroupSetSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/courses/{course_id}/groupsets',
+            path: {
+                'course_id': courseId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Random Assign Students
+     * Randomly assign ungrouped students into NEW groups.
+     *
+     * Ported from Hao's random_assign_students (teacher/views.py:5458). Shuffles
+     * the ungrouped students and then either splits them across a fixed number of
+     * groups, or chunks them into groups of a fixed size.
+     * @param courseId
+     * @param requestBody
+     * @returns ActionResponse OK
+     * @throws ApiError
+     */
+    public static randomAssignStudents(
+        courseId: number,
+        requestBody: RandomAssignRequest,
+    ): CancelablePromise<ActionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/courses/{course_id}/random-assign',
+            path: {
+                'course_id': courseId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Auto Assign Ungrouped
+     * Fill existing groups that still have capacity; create new ones if needed.
+     *
+     * Ported from Hao's auto_assign_ungrouped_students (teacher/views.py:5589).
+     * Unlike random assign, this reuses groups that already exist and only
+     * creates a new group once every existing group is full.
+     * @param courseId
+     * @param requestBody
+     * @returns ActionResponse OK
+     * @throws ApiError
+     */
+    public static autoAssignUngrouped(
+        courseId: number,
+        requestBody: AutoAssignRequest,
+    ): CancelablePromise<ActionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/courses/{course_id}/auto-assign-ungrouped',
+            path: {
+                'course_id': courseId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get Group Set
+     * @param groupSetId
+     * @returns GroupSetSchema OK
+     * @throws ApiError
+     */
+    public static getGroupSet(
+        groupSetId: number,
+    ): CancelablePromise<GroupSetSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/groupsets/{group_set_id}',
+            path: {
+                'group_set_id': groupSetId,
+            },
+        });
+    }
+    /**
+     * Update Group Set
+     * @param groupSetId
+     * @param requestBody
+     * @returns GroupSetSchema OK
+     * @throws ApiError
+     */
+    public static updateGroupSet(
+        groupSetId: number,
+        requestBody: GroupSetUpdateRequest,
+    ): CancelablePromise<GroupSetSchema> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/groupsets/{group_set_id}',
+            path: {
+                'group_set_id': groupSetId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Delete Group Set
+     * @param groupSetId
+     * @returns ActionResponse OK
+     * @throws ApiError
+     */
+    public static deleteGroupSet(
+        groupSetId: number,
+    ): CancelablePromise<ActionResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/groupsets/{group_set_id}',
+            path: {
+                'group_set_id': groupSetId,
+            },
+        });
+    }
+    /**
+     * List Groups
+     * @param groupSetId
+     * @returns GroupSchema OK
+     * @throws ApiError
+     */
+    public static listGroups(
+        groupSetId: number,
+    ): CancelablePromise<Array<GroupSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/groupsets/{group_set_id}/groups',
+            path: {
+                'group_set_id': groupSetId,
+            },
+        });
+    }
+    /**
+     * Create Group
+     * @param groupSetId
+     * @param requestBody
+     * @returns GroupSchema OK
+     * @throws ApiError
+     */
+    public static createGroup(
+        groupSetId: number,
+        requestBody: GroupCreateRequest,
+    ): CancelablePromise<GroupSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/groupsets/{group_set_id}/groups',
+            path: {
+                'group_set_id': groupSetId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * List Ungrouped Students
+     * @param groupSetId
+     * @returns UngroupedStudentSchema OK
+     * @throws ApiError
+     */
+    public static listUngroupedStudents(
+        groupSetId: number,
+    ): CancelablePromise<Array<UngroupedStudentSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/groupsets/{group_set_id}/ungrouped-students',
+            path: {
+                'group_set_id': groupSetId,
+            },
+        });
+    }
+    /**
+     * Update Group
+     * @param groupId
+     * @param requestBody
+     * @returns GroupSchema OK
+     * @throws ApiError
+     */
+    public static updateGroup(
+        groupId: number,
+        requestBody: GroupUpdateRequest,
+    ): CancelablePromise<GroupSchema> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/groups/{group_id}',
+            path: {
+                'group_id': groupId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Delete Group
+     * @param groupId
+     * @returns ActionResponse OK
+     * @throws ApiError
+     */
+    public static deleteGroup(
+        groupId: number,
+    ): CancelablePromise<ActionResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/groups/{group_id}',
+            path: {
+                'group_id': groupId,
+            },
+        });
+    }
+    /**
+     * Add Group Members
+     * @param groupId
+     * @param requestBody
+     * @returns GroupSchema OK
+     * @throws ApiError
+     */
+    public static addGroupMembers(
+        groupId: number,
+        requestBody: AddMembersRequest,
+    ): CancelablePromise<GroupSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/groups/{group_id}/members',
+            path: {
+                'group_id': groupId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Remove Group Member
+     * @param groupId
+     * @param studentId
+     * @returns GroupSchema OK
+     * @throws ApiError
+     */
+    public static removeGroupMember(
+        groupId: number,
+        studentId: number,
+    ): CancelablePromise<GroupSchema> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/groups/{group_id}/members/{student_id}',
+            path: {
+                'group_id': groupId,
+                'student_id': studentId,
+            },
+        });
+    }
+    /**
+     * Move Group Member
+     * Backs the drag-and-drop interface (Hao GM-4).
+     *
+     * Moving a student to `target_group_id=null` returns them to the unassigned
+     * pool. Hao's jQuery UI sortable posted the same intent.
+     * @param groupSetId
+     * @param requestBody
+     * @returns ActionResponse OK
+     * @throws ApiError
+     */
+    public static moveGroupMember(
+        groupSetId: number,
+        requestBody: MoveMemberRequest,
+    ): CancelablePromise<ActionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/groups/move-member',
+            query: {
+                'group_set_id': groupSetId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * List My Groups
+     * @returns GroupSchema OK
+     * @throws ApiError
+     */
+    public static listMyGroups(): CancelablePromise<Array<GroupSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/groups/my-groups',
+        });
+    }
+    /**
+     * Join Group
+     * Student self-enrolment — only when the group set allows it (Hao GM-7).
+     * @param groupId
+     * @returns ActionResponse OK
+     * @throws ApiError
+     */
+    public static joinGroup(
+        groupId: number,
+    ): CancelablePromise<ActionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/groups/{group_id}/join',
+            path: {
+                'group_id': groupId,
+            },
+        });
+    }
+    /**
+     * Leave Group
+     * @param groupId
+     * @returns ActionResponse OK
+     * @throws ApiError
+     */
+    public static leaveGroup(
+        groupId: number,
+    ): CancelablePromise<ActionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/groups/{group_id}/leave',
+            path: {
+                'group_id': groupId,
+            },
+        });
+    }
+    /**
+     * List Workspace Files
+     * @param groupId
+     * @param assignmentId
+     * @returns WorkspaceFileSchema OK
+     * @throws ApiError
+     */
+    public static listWorkspaceFiles(
+        groupId: number,
+        assignmentId: number,
+    ): CancelablePromise<Array<WorkspaceFileSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/groups/{group_id}/workspace-files',
+            path: {
+                'group_id': groupId,
+            },
+            query: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Upload Workspace File
+     * @param groupId
+     * @param requestBody
+     * @returns WorkspaceFileSchema OK
+     * @throws ApiError
+     */
+    public static uploadWorkspaceFile(
+        groupId: number,
+        requestBody: WorkspaceFileCreateRequest,
+    ): CancelablePromise<WorkspaceFileSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/groups/{group_id}/workspace-files',
+            path: {
+                'group_id': groupId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Delete Workspace File
+     * @param fileId
+     * @returns ActionResponse OK
+     * @throws ApiError
+     */
+    public static deleteWorkspaceFile(
+        fileId: number,
+    ): CancelablePromise<ActionResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/groups/workspace-files/{file_id}',
+            path: {
+                'file_id': fileId,
+            },
+        });
+    }
+    /**
+     * Add Workspace Comment
+     * @param fileId
+     * @param requestBody
+     * @returns WorkspaceCommentSchema OK
+     * @throws ApiError
+     */
+    public static addWorkspaceComment(
+        fileId: number,
+        requestBody: WorkspaceCommentCreateRequest,
+    ): CancelablePromise<WorkspaceCommentSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/groups/workspace-files/{file_id}/comments',
+            path: {
+                'file_id': fileId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Submit Group Assignment
+     * Confirm the group's submission.
+     *
+     * Hao's two-step flow: files are uploaded to the workspace first, then a
+     * member confirms one as the group's submission. Each confirmation creates a
+     * new immutable row, giving the version history his evaluation praised.
+     * @param groupId
+     * @param requestBody
+     * @returns GroupSubmissionSchema OK
+     * @throws ApiError
+     */
+    public static submitGroupAssignment(
+        groupId: number,
+        requestBody: GroupSubmitRequest,
+    ): CancelablePromise<GroupSubmissionSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/groups/{group_id}/submit',
+            path: {
+                'group_id': groupId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * List Group Submissions
+     * Latest submission per group for an assignment.
+     * @param assignmentId
+     * @returns GroupSubmissionSchema OK
+     * @throws ApiError
+     */
+    public static listGroupSubmissions(
+        assignmentId: number,
+    ): CancelablePromise<Array<GroupSubmissionSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/groups/submissions/{assignment_id}',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Get Personal Adjustments
+     * @param groupSubmissionId
+     * @returns PersonalAdjustmentSchema OK
+     * @throws ApiError
+     */
+    public static getPersonalAdjustments(
+        groupSubmissionId: number,
+    ): CancelablePromise<Array<PersonalAdjustmentSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/groups/group-submissions/{group_submission_id}/personal-adjustment',
+            path: {
+                'group_submission_id': groupSubmissionId,
+            },
+        });
+    }
+    /**
+     * Save Personal Adjustments
+     * Save every member's adjustment at once, as Hao's form did.
+     * @param groupSubmissionId
+     * @param requestBody
+     * @returns ActionResponse OK
+     * @throws ApiError
+     */
+    public static savePersonalAdjustments(
+        groupSubmissionId: number,
+        requestBody: PersonalAdjustmentSaveRequest,
+    ): CancelablePromise<ActionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/groups/group-submissions/{group_submission_id}/personal-adjustment',
+            path: {
+                'group_submission_id': groupSubmissionId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get My Group Result
+     * Transparent breakdown for the student: base + adjustment = final.
+     * @param groupSubmissionId
+     * @returns GroupResultSchema OK
+     * @throws ApiError
+     */
+    public static getMyGroupResult(
+        groupSubmissionId: number,
+    ): CancelablePromise<GroupResultSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/groups/group-submissions/{group_submission_id}/my-result',
+            path: {
+                'group_submission_id': groupSubmissionId,
+            },
+        });
+    }
+    /**
+     * Get Settings
+     * @param assignmentId
+     * @returns SelfAssessmentSettingSchema OK
+     * @throws ApiError
+     */
+    public static getSelfAssessmentSettings(
+        assignmentId: number,
+    ): CancelablePromise<SelfAssessmentSettingSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/assignments/{assignment_id}/self-assessment/settings',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Update Settings
+     * @param assignmentId
+     * @param requestBody
+     * @returns SelfAssessmentSettingSchema OK
+     * @throws ApiError
+     */
+    public static updateSelfAssessmentSettings(
+        assignmentId: number,
+        requestBody: SelfAssessmentSettingUpdateRequest,
+    ): CancelablePromise<SelfAssessmentSettingSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/assignments/{assignment_id}/self-assessment/settings',
+            path: {
+                'assignment_id': assignmentId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * List Checklist Items
+     * @param assignmentId
+     * @returns ChecklistItemSchema OK
+     * @throws ApiError
+     */
+    public static listChecklistItems(
+        assignmentId: number,
+    ): CancelablePromise<Array<ChecklistItemSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/assignments/{assignment_id}/self-assessment/checklist',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Add Checklist Item
+     * @param assignmentId
+     * @param requestBody
+     * @returns ChecklistItemSchema OK
+     * @throws ApiError
+     */
+    public static addChecklistItem(
+        assignmentId: number,
+        requestBody: ChecklistItemRequest,
+    ): CancelablePromise<ChecklistItemSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/assignments/{assignment_id}/self-assessment/checklist',
+            path: {
+                'assignment_id': assignmentId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get Reflection Prompts
+     * @param assignmentId
+     * @returns ReflectionPromptSchema OK
+     * @throws ApiError
+     */
+    public static getReflectionPrompts(
+        assignmentId: number,
+    ): CancelablePromise<Array<ReflectionPromptSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/assignments/{assignment_id}/self-assessment/reflections',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Save Reflection Prompts
+     * @param assignmentId
+     * @param requestBody
+     * @returns ReflectionPromptSchema OK
+     * @throws ApiError
+     */
+    public static saveReflectionPrompts(
+        assignmentId: number,
+        requestBody: ReflectionPromptsSaveRequest,
+    ): CancelablePromise<Array<ReflectionPromptSchema>> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/assignments/{assignment_id}/self-assessment/reflections',
+            path: {
+                'assignment_id': assignmentId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get Rubric Tree
+     * Criteria hierarchy with current selections.
+     *
+     * Replaces Mingyue's build_rubric_json (which emitted jsTree's node format)
+     * with a plain nested structure; the React checkbox tree renders the same
+     * hierarchy and selection state.
+     * @param assignmentId
+     * @returns RubricTreeNode OK
+     * @throws ApiError
+     */
+    public static getRubricTree(
+        assignmentId: number,
+    ): CancelablePromise<Array<RubricTreeNode>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/assignments/{assignment_id}/self-assessment/rubric-tree',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Save Rubric Selection
+     * @param assignmentId
+     * @param requestBody
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static saveRubricSelection(
+        assignmentId: number,
+        requestBody: RubricSelectionSaveRequest,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/assignments/{assignment_id}/self-assessment/rubric-selection',
+            path: {
+                'assignment_id': assignmentId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get Self Assessment Form
+     * @param assignmentId
+     * @returns SelfAssessmentFormSchema OK
+     * @throws ApiError
+     */
+    public static getSelfAssessmentForm(
+        assignmentId: number,
+    ): CancelablePromise<SelfAssessmentFormSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/assignments/{assignment_id}/self-assessment/form',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Submit Self Assessment
+     * Record a self-assessment.
+     *
+     * Mingyue deliberately allowed repeat submissions and displayed the latest,
+     * so this creates a new row rather than updating in place.
+     * @param assignmentId
+     * @param requestBody
+     * @returns SelfAssessmentSubmitResponse OK
+     * @throws ApiError
+     */
+    public static submitSelfAssessment(
+        assignmentId: number,
+        requestBody: SelfAssessmentSubmitRequest,
+    ): CancelablePromise<SelfAssessmentSubmitResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/assignments/{assignment_id}/self-assessment/submit',
+            path: {
+                'assignment_id': assignmentId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get Self Assessment Status
+     * Badge for the student's assignment card (Mingyue SA-10).
+     * @param assignmentId
+     * @returns SAStatusSchema OK
+     * @throws ApiError
+     */
+    public static getSelfAssessmentStatus(
+        assignmentId: number,
+    ): CancelablePromise<SAStatusSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/assignments/{assignment_id}/self-assessment/status',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Get Student Self Assessment
+     * @param assignmentId
+     * @param studentId
+     * @returns StudentSelfAssessmentSchema OK
+     * @throws ApiError
+     */
+    public static getStudentSelfAssessment(
+        assignmentId: number,
+        studentId: number,
+    ): CancelablePromise<StudentSelfAssessmentSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/assignments/{assignment_id}/self-assessment/student/{student_id}',
+            path: {
+                'assignment_id': assignmentId,
+                'student_id': studentId,
+            },
+        });
+    }
+    /**
+     * List Self Assessment Submissions
+     * Latest self-assessment per student, for the marker's overview.
+     * @param assignmentId
+     * @returns StudentSelfAssessmentSchema OK
+     * @throws ApiError
+     */
+    public static listSelfAssessmentSubmissions(
+        assignmentId: number,
+    ): CancelablePromise<Array<StudentSelfAssessmentSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/assignments/{assignment_id}/self-assessment/submissions',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Edit Checklist Item
+     * @param itemId
+     * @param requestBody
+     * @returns ChecklistItemSchema OK
+     * @throws ApiError
+     */
+    public static editChecklistItem(
+        itemId: number,
+        requestBody: ChecklistItemRequest,
+    ): CancelablePromise<ChecklistItemSchema> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/self-assessment/checklist/{item_id}',
+            path: {
+                'item_id': itemId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Delete Checklist Item
+     * @param itemId
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static deleteChecklistItem(
+        itemId: number,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/self-assessment/checklist/{item_id}',
+            path: {
+                'item_id': itemId,
+            },
+        });
+    }
+    /**
+     * Save Self Assessment Feedback
+     * Teacher feedback on a self-assessment — a single text box, as Mingyue built it.
+     * @param submissionId
+     * @param requestBody
+     * @returns StudentSelfAssessmentSchema OK
+     * @throws ApiError
+     */
+    public static saveSelfAssessmentFeedback(
+        submissionId: number,
+        requestBody: SAFeedbackRequest,
+    ): CancelablePromise<StudentSelfAssessmentSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/self-assessment/submissions/{submission_id}/feedback',
+            path: {
+                'submission_id': submissionId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }
