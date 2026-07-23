@@ -121,6 +121,21 @@ export class DefaultService {
         });
     }
     /**
+     * List My Courses
+     * Courses the current user belongs to, for the sidebar course switcher.
+     *
+     * All three source codebases scope every view to a course; the unified
+     * navigation surfaces that as an explicit switcher (Design PRD §3.1).
+     * @returns CourseSchema OK
+     * @throws ApiError
+     */
+    public static getMyCourses(): CancelablePromise<Array<CourseSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/courses/',
+        });
+    }
+    /**
      * Get Course
      * @param courseId
      * @returns CourseSchema OK
@@ -139,13 +154,24 @@ export class DefaultService {
     }
     /**
      * List Assignments
+     * Assignments visible to the current user, optionally scoped to a course.
+     *
+     * The course filter backs the sidebar's course switcher, which the unified
+     * navigation treats as a context filter rather than a navigation selector
+     * (Design PRD §3.1).
+     * @param courseId
      * @returns AssignmentSchema OK
      * @throws ApiError
      */
-    public static getAssignments(): CancelablePromise<Array<AssignmentSchema>> {
+    public static getAssignments(
+        courseId?: number,
+    ): CancelablePromise<Array<AssignmentSchema>> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/assignments/',
+            query: {
+                'course_id': courseId,
+            },
         });
     }
     /**

@@ -116,10 +116,14 @@ export function AssignmentProvider({
     if (!assignment) return { isOpen: false, message: 'No assignment selected' }
 
     const now = new Date()
-    const releaseDate = new Date(assignment.release_date)
+    // release_date is nullable: only peer review assignments are guaranteed to
+    // set one, so an assignment without it is treated as already released.
+    const releaseDate = assignment.release_date
+      ? new Date(assignment.release_date)
+      : null
     const deadline = new Date(assignment.deadline)
 
-    if (now < releaseDate) {
+    if (releaseDate && now < releaseDate) {
       return {
         isOpen: false,
         message: `Submissions open on ${releaseDate.toLocaleDateString()}`,
@@ -140,10 +144,17 @@ export function AssignmentProvider({
     assignment: AssignmentSchema | null
   ): AssignmentStatus => {
     if (!assignment) return { isOpen: false, message: 'No assignment selected' }
+    // Peer review is a per-assignment toggle in the unified model, so this can
+    // now be called for assignments that have no review configuration at all.
+    if (!assignment.peer_review_enabled) {
+      return { isOpen: false, message: 'Peer review is not enabled for this assignment' }
+    }
 
     const now = new Date()
     const deadline = new Date(assignment.deadline)
-    const reviewDeadline = new Date(assignment.review_deadline)
+    const reviewDeadline = assignment.review_deadline
+      ? new Date(assignment.review_deadline)
+      : null
 
     if (now < deadline) {
       return {
@@ -155,7 +166,7 @@ export function AssignmentProvider({
         isOpen: false,
         message: 'Peer review matching in progress',
       }
-    } else if (now > reviewDeadline) {
+    } else if (reviewDeadline && now > reviewDeadline) {
       return {
         isOpen: false,
         message: 'Peer review deadline has passed',

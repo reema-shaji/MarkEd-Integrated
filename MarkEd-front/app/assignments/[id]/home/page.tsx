@@ -71,10 +71,10 @@ export default function AssignmentHomePage() {
             <CountdownCard
               title='Submission Deadline'
               deadline={new Date(assignment.deadline)}
-              startDate={new Date(assignment.release_date)}
+              startDate={assignment.release_date ? new Date(assignment.release_date) : undefined}
             />
 
-            {assignment.assignment_type === 'PEER_REVIEW' &&
+            {assignment.peer_review_enabled &&
               assignment.review_deadline && (
                 <CountdownCard
                   title='Peer Reviewing Period'

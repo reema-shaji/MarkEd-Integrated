@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { UserProvider } from '@/src/contexts/user-context'
 import WarningBanner from '@/components/warning-banner'
 import { AssignmentProvider } from '@/src/contexts/assignment-context'
+import { CourseProvider } from '@/src/contexts/course-context'
 // import Script from 'next/script'
 
 
@@ -24,8 +25,8 @@ const geistMono = localFont({
 })
 
 export const metadata: Metadata = {
-  title: 'MarkEd Peer Feedback',
-  description: 'MarkEd Peer Feedback system',
+  title: 'MarkEd',
+  description: 'Unified assessment platform: group marking, peer feedback and self-assessment',
 }
 
 export default function RootLayout({
@@ -53,14 +54,16 @@ export default function RootLayout({
           </p>
         </div>
         <UserProvider>
-          <AssignmentProvider>
-            <SidebarProvider className='invisible md:visible'>
-              <AppSidebar />
-              <WarningBanner />
-              <div className='m-auto w-full'>{children}</div>
-              <Toaster />
-            </SidebarProvider>
-          </AssignmentProvider>
+          <CourseProvider>
+            <AssignmentProvider>
+              <SidebarProvider className='invisible md:visible'>
+                <AppSidebar />
+                <WarningBanner />
+                <div className='m-auto w-full'>{children}</div>
+                <Toaster />
+              </SidebarProvider>
+            </AssignmentProvider>
+          </CourseProvider>
         </UserProvider>
       </body>
     </html>
