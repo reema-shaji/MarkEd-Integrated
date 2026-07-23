@@ -1,3 +1,8 @@
+# Explicit project name so this stack's containers and volumes stay separate
+# from any other MarkEd checkout on the same machine (Compose otherwise derives
+# the project name from the directory, which collides).
+name: marked-integrated
+
 services:
   db:
     image: mysql:8.0

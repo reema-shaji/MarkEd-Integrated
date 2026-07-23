@@ -1,6 +1,8 @@
+import os
 from datetime import datetime
 import typing
 from django.db import models
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.forms import EmailField, URLField
@@ -107,22 +109,53 @@ class Assignment(models.Model):
     course: models.ForeignKey = models.ForeignKey('Course', on_delete=models.CASCADE)
     assignmentTitle: models.CharField = models.CharField(max_length=50)
     assignmentDescription: models.TextField = models.TextField(blank=True, null=True)
-    assignmentWebsite: models.URLField = models.URLField()
+    assignmentWebsite: models.URLField = models.URLField(blank=True, null=True)
     deadline: models.DateTimeField = models.DateTimeField()
     permission_choice: typing.Tuple[typing.Tuple[int, str], ...] = (
         (0, 'disabled'),
         (1, 'enabled'),
     )
     status: models.IntegerField = models.IntegerField(choices=permission_choice, default=1)
-    
+
+    # --- Assignment type (unified: Hao's INDIVIDUAL/GROUP wins) ---------------
+    # Tomas modelled peer review as an assignment *type* (STANDARD/PEER_REVIEW).
+    # The unified model treats peer review as a configuration toggle instead
+    # (see peer_review_enabled below), mirroring how self-assessment works, so
+    # that an INDIVIDUAL *or* GROUP assignment can independently enable it.
+    # Unified PRD §6.2. Tomas's PEER_REVIEW type maps to
+    # INDIVIDUAL + peer_review_enabled=True.
     ASSIGNMENT_TYPE_CHOICES: typing.Tuple[typing.Tuple[str, str], ...] = (
-        ('STANDARD', 'Standard Assignment'),
-        ('PEER_REVIEW', 'Peer Review Assignment'),
+        ('INDIVIDUAL', 'Individual Assignment'),
+        ('GROUP', 'Group Assignment'),
     )
     assignment_type: models.CharField = models.CharField(
         max_length=20,
         choices=ASSIGNMENT_TYPE_CHOICES,
-        default='STANDARD'
+        default='INDIVIDUAL'
+    )
+
+    # --- Group assignment settings (ported from Hao) --------------------------
+    # Hao stored this as a plain IntegerField with no FK constraint; the unified
+    # model promotes it to a real ForeignKey (Unified PRD §6.1).
+    group_set: models.ForeignKey = models.ForeignKey(
+        'GroupSet',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assignments',
+        help_text="Group category this assignment draws its groups from (GROUP assignments only)"
+    )
+    max_group_size: models.IntegerField = models.IntegerField(
+        null=True, blank=True, help_text="Maximum number of students per group"
+    )
+    min_group_size: models.IntegerField = models.IntegerField(
+        null=True, blank=True, help_text="Minimum number of students per group"
+    )
+
+    # --- Peer review settings (from Tomas) ------------------------------------
+    peer_review_enabled: models.BooleanField = models.BooleanField(
+        default=False,
+        help_text="Enable peer review for this assignment (INDIVIDUAL or GROUP)"
     )
     reviews_per_student: models.IntegerField = models.IntegerField(
         null=True, 
@@ -148,7 +181,20 @@ class Assignment(models.Model):
         blank=True,
         help_text="Date when the assignment is released to students and students can submit their assignments"
     )
-    
+
+    # --- Helpers ported from Hao ---------------------------------------------
+    def is_group_assignment(self) -> bool:
+        return self.assignment_type == 'GROUP'
+
+    def is_individual_assignment(self) -> bool:
+        return self.assignment_type == 'INDIVIDUAL'
+
+    def get_groups(self):
+        """Active groups available to this assignment, via its group set."""
+        if self.group_set_id:
+            return Group.objects.filter(group_set_id=self.group_set_id, is_active=True)
+        return Group.objects.none()
+
 
 
 
@@ -368,7 +414,19 @@ class PeerReviewAllocation(models.Model):
     submission: models.ForeignKey = models.ForeignKey(
         'Submission',
         on_delete=models.CASCADE,
-        related_name='peer_reviewers'
+        related_name='peer_reviewers',
+        null=True,
+        blank=True
+    )
+    # Cross-feature extension (Unified PRD §6.4, §8): when set, the reviewer is
+    # reviewing a group submission rather than an individual one. Exactly one of
+    # `submission` / `group_submission` is set on any allocation.
+    group_submission: models.ForeignKey = models.ForeignKey(
+        'GroupSubmission',
+        on_delete=models.CASCADE,
+        related_name='peer_reviewers',
+        null=True,
+        blank=True
     )
     assignment: models.ForeignKey = models.ForeignKey(
         'Assignment',
@@ -396,8 +454,23 @@ class PeerReviewAllocation(models.Model):
         self.status = 'IN_PROGRESS' if has_comments else 'PENDING'
         self.save()
 
+    def clean(self) -> None:
+        if bool(self.submission_id) == bool(self.group_submission_id):
+            raise ValidationError(
+                "A peer review allocation must target exactly one of "
+                "`submission` or `group_submission`."
+            )
+
+    @property
+    def reviewed_object(self):
+        """The Submission or GroupSubmission this allocation points at."""
+        return self.group_submission if self.group_submission_id else self.submission
+
     class Meta:
-        unique_together = ['reviewer', 'submission', 'assignment']
+        unique_together = [
+            ['reviewer', 'submission', 'assignment'],
+            ['reviewer', 'group_submission', 'assignment'],
+        ]
 
 class PeerReviewComment(models.Model):
     """
@@ -452,3 +525,347 @@ class DismissedLLMFeedback(models.Model):
         choices=DISMISS_REASONS,
     )
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+
+
+# =============================================================================
+# Group Marking — ported from Haoyu Wang's branch (MarkEd-Hao/MarkEd/models.py)
+#
+# Ported verbatim except for two integration changes required by Unified PRD
+# §6.1 and the Option B (S3) architecture:
+#   1. `group_set_id` plain IntegerFields promoted to real ForeignKeys.
+#   2. FileFields for submissions/workspace files become URLFields holding
+#      pre-signed S3 URLs, matching Tomas's Submission.submissionFile.
+# =============================================================================
+
+
+class GroupSet(models.Model):
+    """A named collection of groups within a course.
+
+    Surfaced in the UI as "Group Category" (Unified PRD §9, b-1: students and
+    staff found the term "GroupSet" confusing). The model name is preserved.
+    """
+    course: models.ForeignKey = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='group_sets')
+    name: models.CharField = models.CharField(max_length=100, help_text="Name of the group set (e.g., 'Midterm Groups', 'Final Project Groups')")
+    description: models.TextField = models.TextField(blank=True, null=True, help_text="Description of the group set")
+    max_group_size: models.IntegerField = models.IntegerField(default=5, help_text="Maximum number of students per group")
+    min_group_size: models.IntegerField = models.IntegerField(default=2, help_text="Minimum number of students per group")
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+    is_active: models.BooleanField = models.BooleanField(default=True)
+
+    # Student self-assignment settings
+    allow_student_self_assignment: models.BooleanField = models.BooleanField(
+        default=False,
+        help_text="Allow students to join groups by themselves"
+    )
+    self_assignment_deadline: models.DateTimeField = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Deadline for student self-assignment (leave empty for no deadline)"
+    )
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self) -> str:
+        return f"{self.course.courseName} - {self.name}"
+
+    def get_groups_count(self) -> int:
+        return Group.objects.filter(group_set_id=self.id, is_active=True).count()
+
+    def get_students_count(self) -> int:
+        return GroupMember.objects.filter(
+            group__group_set_id=self.id,
+            group__is_active=True,
+            is_active=True
+        ).values('student').distinct().count()
+
+
+class Group(models.Model):
+    course: models.ForeignKey = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='groups')
+    # Promoted from Hao's plain IntegerField to a real FK (Unified PRD §6.1).
+    group_set: models.ForeignKey = models.ForeignKey(
+        'GroupSet', on_delete=models.CASCADE, null=True, blank=True, related_name='groups'
+    )
+    name: models.CharField = models.CharField(max_length=100)
+    description: models.TextField = models.TextField(blank=True, null=True)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+    is_active: models.BooleanField = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self) -> str:
+        return f"{self.course.courseName} - {self.name}"
+
+
+class GroupMember(models.Model):
+    group: models.ForeignKey = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='members')
+    student: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='group_memberships')
+    joined_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    is_active: models.BooleanField = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['joined_at']
+
+    def __str__(self) -> str:
+        return f"{self.student.userName} in {self.group.name}"
+
+    @property
+    def group_set(self):
+        return self.group.group_set
+
+
+class GroupSubmission(models.Model):
+    """Group submission for group assignments.
+
+    Immutable: each confirmed submission is a new row, giving the version
+    history Hao's evaluation praised as a "safety net". The latest active row
+    is the current submission.
+    """
+    group: models.ForeignKey = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='submissions')
+    assignment: models.ForeignKey = models.ForeignKey('Assignment', on_delete=models.CASCADE, related_name='group_submissions')
+    submitted_by: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='group_submissions_made')
+    submissionDateTime: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    # S3 URL, matching Submission.submissionFile (Option B architecture).
+    submissionFile: models.URLField = models.URLField(blank=True, null=True, help_text="URL of the group submission file")
+    is_active: models.BooleanField = models.BooleanField(default=True)
+    submission_version: models.IntegerField = models.IntegerField(default=1, help_text="Submission version number for grouping files submitted together")
+
+    class Meta:
+        ordering = ['-submissionDateTime']
+
+    def __str__(self) -> str:
+        return f"{self.group.name} - {self.assignment.assignmentTitle}"
+
+    @property
+    def group_set(self):
+        return self.group.group_set
+
+    @property
+    def filename(self) -> str:
+        """Just the filename, without the S3 path/query string."""
+        if self.submissionFile:
+            return os.path.basename(self.submissionFile.split('?')[0])
+        return "No file"
+
+
+class GroupWorkspaceFile(models.Model):
+    """Files uploaded to group workspace for review before final submission."""
+    group: models.ForeignKey = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='workspace_files')
+    assignment: models.ForeignKey = models.ForeignKey('Assignment', on_delete=models.CASCADE, related_name='group_workspace_files')
+    uploaded_by: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='uploaded_workspace_files')
+    file: models.URLField = models.URLField(blank=True, null=True, help_text="URL of the workspace file")
+    upload_time: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    file_name: models.CharField = models.CharField(max_length=255)
+    file_size: models.IntegerField = models.IntegerField()
+    file_type: models.CharField = models.CharField(max_length=50)
+
+    STATUS_CHOICES: typing.Tuple[typing.Tuple[str, str], ...] = (
+        ('pending', 'Pending Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('submitted', 'Submitted'),
+    )
+    status: models.CharField = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    comments: models.TextField = models.TextField(blank=True, null=True)
+    reviewed_by: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True, related_name='reviewed_files')
+    review_time: models.DateTimeField = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-upload_time']
+
+    def __str__(self) -> str:
+        return f"{self.group.name} - {self.file_name}"
+
+
+class GroupSubmissionConfig(models.Model):
+    """Configuration for group submissions."""
+    group: models.ForeignKey = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='submission_configs')
+    assignment: models.ForeignKey = models.ForeignKey('Assignment', on_delete=models.CASCADE, related_name='group_submission_configs')
+    maximum_submissions: models.IntegerField = models.IntegerField(default=3)
+    is_late_submission_allowed: models.BooleanField = models.BooleanField(default=False)
+    allowed_file_formats: models.CharField = models.CharField(max_length=500, default='pdf,doc,docx')
+    max_file_size_mb: models.IntegerField = models.IntegerField(default=10)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['group', 'assignment']
+
+    def __str__(self) -> str:
+        return f"{self.group.name} - {self.assignment.assignmentTitle}"
+
+
+class GroupSubmissionComment(models.Model):
+    """Comments on workspace files."""
+    file: models.ForeignKey = models.ForeignKey('GroupWorkspaceFile', on_delete=models.CASCADE, related_name='file_comments')
+    author: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='group_file_comments')
+    content: models.TextField = models.TextField()
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    is_active: models.BooleanField = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self) -> str:
+        return f"Comment by {self.author.userName} on {self.file.file_name}"
+
+
+class GroupSubmissionElement(models.Model):
+    group_submission: models.ForeignKey = models.ForeignKey('GroupSubmission', on_delete=models.CASCADE)
+    element: models.ForeignKey = models.ForeignKey('Element', on_delete=models.CASCADE)
+    marker: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE, blank=True, null=True)
+    score: models.FloatField = models.FloatField(blank=True, null=True)
+    needModerate: models.BooleanField = models.BooleanField(default=False)
+    needHelp: models.BooleanField = models.BooleanField(default=False)
+    STATUS_CHOICES: typing.Tuple[typing.Tuple[int, str], ...] = (
+        (0, 'Submitted'),
+        (1, 'Marking'),
+        (2, 'Finished'),
+    )
+    status: models.IntegerField = models.IntegerField(choices=STATUS_CHOICES, default=0)
+    dateUpdated: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"Group Submission Element: {self.element.name} - Score: {self.score}"
+
+    class Meta:
+        unique_together = ['group_submission', 'element']
+
+
+class GroupSubmissionCriteria(models.Model):
+    group_submission: models.ForeignKey = models.ForeignKey('GroupSubmission', on_delete=models.CASCADE)
+    criteria: models.ForeignKey = models.ForeignKey(Criteria, on_delete=models.CASCADE, related_name='group_submission_elements', null=True)
+    marker: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE, blank=True, null=True)
+    score: models.FloatField = models.FloatField(blank=True, null=True)
+    feedback: models.TextField = models.TextField(blank=True, null=True, default='{"start": "", "middle":"", "end": ""}')
+    needModerate: models.BooleanField = models.BooleanField(default=False)
+    needHelp: models.BooleanField = models.BooleanField(default=False)
+    selected_elements: models.ManyToManyField = models.ManyToManyField(Element, blank=True)
+    STATUS_CHOICES: typing.Tuple[typing.Tuple[int, str], ...] = (
+        (0, 'Submitted'),
+        (1, 'Marking'),
+        (2, 'Finished'),
+    )
+    status: models.IntegerField = models.IntegerField(choices=STATUS_CHOICES, default=0)
+
+    def clean(self) -> None:
+        if not self.criteria:
+            raise ValidationError("GroupSubmissionCriteria must be linked to a Criteria.")
+
+    def __str__(self) -> str:
+        element_list = ", ".join([str(element) for element in self.selected_elements.all()])
+        return f"GroupSubmissionCriteria for {self.criteria} - Elements: {element_list} - {self.group_submission}"
+
+    class Meta:
+        unique_together = ['group_submission', 'criteria']
+
+
+class GroupSubmissionPersonalAdjustment(models.Model):
+    """Personal contribution adjustment for group submissions.
+
+    Additive, exactly as Hao implemented it: final = base + adjustment.
+    The score breakdown was the most-praised part of his evaluation, so the
+    formula and the absence of a range constraint are both preserved
+    (Unified PRD §14.5).
+    """
+    group_submission: models.ForeignKey = models.ForeignKey('GroupSubmission', on_delete=models.CASCADE, related_name='personal_adjustments')
+    student: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='group_personal_adjustments')
+    adjustment_score: models.FloatField = models.FloatField(help_text="Personal contribution adjustment score (can be positive or negative)")
+    adjustment_reason: models.TextField = models.TextField(blank=True, null=True, help_text="Reason for the adjustment")
+    adjusted_by: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='adjustments_made')
+    adjustment_date: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+
+    STATUS_CHOICES: typing.Tuple[typing.Tuple[str, str], ...] = (
+        ('draft', 'Draft'),
+        ('final', 'Final'),
+    )
+    status: models.CharField = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
+
+    class Meta:
+        unique_together = ['group_submission', 'student']
+        ordering = ['-adjustment_date']
+
+    def __str__(self) -> str:
+        return f"Personal adjustment for {self.student.userName} in {self.group_submission.group.name}"
+
+
+# =============================================================================
+# Self-Assessment — ported from Mingyue Qin's branch
+# (MarkEd Self-Assessment-Mingyue/MarkEd/models.py). Ported verbatim.
+# =============================================================================
+
+
+class SelfAssessmentSetting(models.Model):
+    assignment: models.OneToOneField = models.OneToOneField(Assignment, on_delete=models.CASCADE, primary_key=True)
+    enabled: models.BooleanField = models.BooleanField(default=False)
+    use_checklist: models.BooleanField = models.BooleanField(default=False)
+    use_rubric: models.BooleanField = models.BooleanField(default=False)
+    use_reflection: models.BooleanField = models.BooleanField(default=False)
+
+    deadline: models.DateTimeField = models.DateTimeField(null=False, default=timezone.now)
+
+    needs_feedback: models.BooleanField = models.BooleanField(default=False)
+    max_score: models.PositiveIntegerField = models.PositiveIntegerField(default=0)
+
+    def __str__(self) -> str:
+        return f"SA Setting for Assignment {self.assignment_id}"
+
+
+class ChecklistItem(models.Model):
+    assignment: models.ForeignKey = models.ForeignKey('Assignment', on_delete=models.CASCADE)
+    name: models.CharField = models.CharField(max_length=255)
+    description: models.TextField = models.TextField(blank=True)
+
+    def __str__(self) -> str:
+        return f"[{self.assignment_id}] {self.name}"
+
+
+class StudentSelfAssessmentSubmission(models.Model):
+    student: models.ForeignKey = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sa_submissions')
+    assignment: models.ForeignKey = models.ForeignKey('Assignment', on_delete=models.CASCADE, related_name='sa_submissions')
+    checklist_answers: models.JSONField = models.JSONField(default=dict, blank=True)
+    rubric_answers: models.JSONField = models.JSONField(default=dict, blank=True)
+    guided_reflection_answers: models.JSONField = models.JSONField(default=dict, blank=True)
+    submitted_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+
+    feedback_text: models.TextField = models.TextField(blank=True, null=True)
+
+    # Mingyue deliberately left this un-constrained: a student may submit a
+    # self-assessment more than once and the latest row is the one displayed.
+    # (Original comment: "每个作业可以提交多次自评，选取最新的进行展示".)
+
+    def __str__(self) -> str:
+        return f"SelfAssessment by {self.student} on Assignment {self.assignment_id}"
+
+
+class ReflectionPrompt(models.Model):
+    """One prompt per Gibbs reflective-cycle stage, customisable per assignment."""
+    STAGE_CHOICES = [
+        ('description', 'Description'),
+        ('feelings', 'Feelings'),
+        ('evaluation', 'Evaluation'),
+        ('analysis', 'Analysis'),
+        ('conclusion', 'Conclusion'),
+        ('action_plan', 'Action Plan'),
+    ]
+    assignment: models.ForeignKey = models.ForeignKey(Assignment, on_delete=models.CASCADE)
+    stage: models.CharField = models.CharField(choices=STAGE_CHOICES, max_length=20)
+    prompt_text: models.TextField = models.TextField()
+
+    class Meta:
+        unique_together = ('assignment', 'stage')
+
+    def __str__(self) -> str:
+        return f"{self.assignment_id} - {self.stage}"
+
+
+class SelfAssessmentRubricSelection(models.Model):
+    """Which rubric criteria students self-grade against for this assignment."""
+    assignment: models.ForeignKey = models.ForeignKey(Assignment, on_delete=models.CASCADE)
+    criteria: models.ForeignKey = models.ForeignKey(Criteria, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('assignment', 'criteria')

@@ -1,4 +1,6 @@
-FROM python:3.8-slim
+# Unified runtime: the source branches disagreed (Tomas 3.8, monoliths 3.10).
+# Unified PRD §12.1 pins Python 3.10.
+FROM python:3.10-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
