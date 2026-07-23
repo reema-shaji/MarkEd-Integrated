@@ -26,7 +26,13 @@ router = Router()
 
 @router.get("/", response=List[AssignmentSchema], operation_id="getAssignments")
 @require_auth()
-def list_assignments(request):
+def list_assignments(request, course_id: int = None):
+    """Assignments visible to the current user, optionally scoped to a course.
+
+    The course filter backs the sidebar's course switcher, which the unified
+    navigation treats as a context filter rather than a navigation selector
+    (Design PRD §3.1).
+    """
     if request.user_role == 'Student':
         assignments = Assignment.objects.filter(
             course__course2student__student_id=request.user_id,
@@ -37,7 +43,11 @@ def list_assignments(request):
             course__course2marker__marker_id=request.user_id,
             status=1
         )
-    return assignments.order_by('deadline')
+    if course_id is not None:
+        assignments = assignments.filter(course_id=course_id)
+    # select_related avoids an extra query per assignment when the schema
+    # resolves the self-assessment flags.
+    return assignments.select_related('selfassessmentsetting').order_by('deadline')
 
 @router.get("/{assignment_id}", response=AssignmentSchema, operation_id="getAssignment")
 @require_auth()
