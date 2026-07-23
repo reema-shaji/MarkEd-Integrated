@@ -41,7 +41,10 @@ class TestPeerReviewMatching(TestCase):
             assignmentTitle="Test Assignment",
             deadline=timezone.now() + timezone.timedelta(days=-7),
             status=1,
-            assignment_type='PEER_REVIEW',
+            # Unified model: peer review is a toggle on an INDIVIDUAL/GROUP
+            # assignment rather than its own type (Unified PRD §6.2).
+            assignment_type='INDIVIDUAL',
+            peer_review_enabled=True,
             reviews_per_student=2,
             is_peer_review_matching_complete=False,
             review_deadline=timezone.now() + timezone.timedelta(days=-7),
@@ -183,11 +186,11 @@ class TestPeerReviewMatching(TestCase):
 
     def test_trigger_peer_review_matching_for_non_peer_review_assignment(self):
         """
-        Ensure that we cannot trigger peer review matching if the assignment type
-        is not set to 'PEER_REVIEW'.
+        Ensure that we cannot trigger peer review matching when peer review is
+        not enabled on the assignment.
         """
-        # Change the assignment to a non-peer-review type
-        self.assignment.assignment_type = 'STANDARD'
+        # Unified model: turn the peer review toggle off rather than changing type.
+        self.assignment.peer_review_enabled = False
         self.assignment.save()
 
         request = self._create_staff_request()

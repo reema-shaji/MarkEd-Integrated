@@ -5,7 +5,14 @@ from ..schemas.assignment import AssignmentSchema, PeerAssignmentRequest, PeerAs
 from ..schemas.feedback import CreationResponse
 from ..decorators import require_auth, check_permissions
 from ..permissions import IsCourseStaffFromAssignment, CanCreateAssignment
-from ...models import Assignment, PeerReviewAllocation, Submission, Course2Student
+from ...models import (
+    Assignment,
+    GroupMember,
+    GroupSubmission,
+    PeerReviewAllocation,
+    Submission,
+    Course2Student,
+)
 from ..schemas.peer_review import PeerMatch
 from django.utils import timezone
 from datetime import timedelta
@@ -113,6 +120,146 @@ def get_matched_peers(request, assignment_id: int):
     
     return matches
 
+def _match_group_submissions(assignment):
+    """Allocate peer reviewers to group submissions, cross-group only.
+
+    Unified PRD §8.3. Extends Tomas's round-robin idea to groups: for each
+    group submission, eligible reviewers are every student who is *not* in the
+    submitting group, and we always pick the reviewers who currently carry the
+    fewest reviews so the load stays even. No student ever reviews their own
+    group's work.
+    """
+    if not assignment.group_set_id:
+        return {
+            "success": False,
+            "message": "This group assignment has no group category assigned",
+            "matches": None,
+        }
+
+    # Latest active submission per group.
+    latest_by_group = {}
+    for gs in (
+        GroupSubmission.objects.filter(assignment=assignment, is_active=True)
+        .select_related('group')
+        .order_by('group_id', '-submission_version')
+    ):
+        latest_by_group.setdefault(gs.group_id, gs)
+    submissions = list(latest_by_group.values())
+
+    if len(submissions) < 2:
+        return {
+            "success": False,
+            "message": "Not enough group submissions for peer matching",
+            "matches": None,
+        }
+
+    # Members of every group in this group set, so we know who to exclude and
+    # who is eligible to review. Students in no group are excluded entirely
+    # (Unified PRD §8.5).
+    members_by_group: Dict[int, List] = {}
+    for m in (
+        GroupMember.objects.filter(
+            group__group_set_id=assignment.group_set_id,
+            group__is_active=True,
+            is_active=True,
+        ).select_related('student', 'group')
+    ):
+        members_by_group.setdefault(m.group_id, []).append(m.student)
+
+    r = assignment.reviews_per_student or 0
+    if r < 1:
+        return {
+            "success": False,
+            "message": "reviews_per_student must be at least 1",
+            "matches": None,
+        }
+
+    review_load: Dict[int, int] = {}
+    for students in members_by_group.values():
+        for s in students:
+            review_load.setdefault(s.id, 0)
+
+    if not review_load:
+        return {
+            "success": False,
+            "message": "No students are in groups for this assignment",
+            "matches": None,
+        }
+
+    new_allocations = []
+    student_by_id = {s.id: s for students in members_by_group.values() for s in students}
+
+    for gs in submissions:
+        own_member_ids = {s.id for s in members_by_group.get(gs.group_id, [])}
+        eligible = [sid for sid in review_load if sid not in own_member_ids]
+
+        if len(eligible) < r:
+            return {
+                "success": False,
+                "message": (
+                    f"Only {len(eligible)} student(s) outside {gs.group.name} are available, "
+                    f"but {r} review(s) per submission are required"
+                ),
+                "matches": None,
+            }
+
+        # Fewest reviews first, random tiebreak.
+        random.shuffle(eligible)
+        eligible.sort(key=lambda sid: review_load[sid])
+
+        for sid in eligible[:r]:
+            new_allocations.append(
+                PeerReviewAllocation(
+                    reviewer=student_by_id[sid],
+                    submission=None,
+                    group_submission=gs,
+                    assignment=assignment,
+                    status='PENDING',
+                )
+            )
+            review_load[sid] += 1
+
+    PeerReviewAllocation.objects.filter(assignment=assignment).delete()
+    PeerReviewAllocation.objects.bulk_create(new_allocations)
+
+    # Safety net: assert nobody was allocated their own group's submission.
+    for alloc in PeerReviewAllocation.objects.filter(
+        assignment=assignment
+    ).select_related('group_submission'):
+        own = {s.id for s in members_by_group.get(alloc.group_submission.group_id, [])}
+        if alloc.reviewer_id in own:
+            PeerReviewAllocation.objects.filter(assignment=assignment).delete()
+            return {
+                "success": False,
+                "message": "Could not assign all reviews fairly",
+                "matches": None,
+            }
+
+    assignment.is_peer_review_matching_complete = True
+    assignment.save()
+
+    matches = [
+        {
+            "reviewer_name": getattr(alloc.reviewer, 'userName', ''),
+            "reviewer_email": getattr(alloc.reviewer, 'userEmail', ''),
+            "reviewer_userNumber": getattr(alloc.reviewer, 'userNumber', ''),
+            "submission_owner_name": alloc.group_submission.group.name,
+            "submission_owner_email": '',
+            "submission_owner_userNumber": '',
+            "status": alloc.status,
+        }
+        for alloc in PeerReviewAllocation.objects.filter(
+            assignment=assignment
+        ).select_related('group_submission__group', 'reviewer')
+    ]
+
+    return {
+        "success": True,
+        "message": "Peer matching completed successfully",
+        "matches": matches,
+    }
+
+
 @router.post("/{assignment_id}/trigger-peer-review-matching", response=CreationResponse, operation_id="triggerPeerReviewMatching")
 @require_auth(roles=['Academic', 'Marker', 'TA'])
 @check_permissions(IsCourseStaffFromAssignment)
@@ -127,13 +274,21 @@ def trigger_peer_review_matching(request, assignment_id: int):
                 "matches": None
             }
 
-        # Check that the assignment is indeed a peer-review type
-        if assignment.assignment_type != "PEER_REVIEW":
+        # Peer review is now a configuration toggle rather than an assignment
+        # type, so an INDIVIDUAL *or* a GROUP assignment can reach this point
+        # (Unified PRD §6.2).
+        if not assignment.peer_review_enabled:
             return {
                 "success": False,
                 "message": "This is not a peer review assignment",
                 "matches": None
             }
+
+        # Cross-feature extension (Unified PRD §8): when the assignment is a
+        # GROUP assignment, reviewers are allocated to group submissions and
+        # drawn exclusively from students in *other* groups.
+        if assignment.is_group_assignment():
+            return _match_group_submissions(assignment)
 
         # Grab the latest submissions from each student
         latest_submissions_query = Submission.objects.filter(

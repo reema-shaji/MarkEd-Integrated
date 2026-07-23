@@ -29,7 +29,9 @@ class User(models.Model):
     )
     password: models.CharField = models.CharField(max_length=100)
     must_change_password: models.BooleanField = models.BooleanField(default=False)
-    last_seen: models.DateTimeField = models.DateTimeField(default=datetime.now)
+    # timezone.now, not datetime.now: the project runs with USE_TZ enabled, so
+    # the inherited naive default raised a RuntimeWarning on every user create.
+    last_seen: models.DateTimeField = models.DateTimeField(default=timezone.now)
 
 
 class Course(models.Model):
