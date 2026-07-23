@@ -1,0 +1,8 @@
+FROM nginx:alpine
+
+# Copy the nginx config files to the container in temporary folder 
+# so that the nginx config can be dynamically loaded and not both dev and prod config files
+COPY docker/nginx/dev.conf /etc/nginx/templates/dev.conf
+COPY docker/nginx/prod.conf /etc/nginx/templates/prod.conf
+
+CMD sh -c "cp /etc/nginx/templates/${NGINX_CONFIG:-dev}.conf /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'" 

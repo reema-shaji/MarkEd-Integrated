@@ -1,0 +1,165 @@
+services:
+  db:
+    env_file:
+      - /home/marked_admin/marked/.env.prod
+    image: mysql:8.0
+    container_name: marked-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_USER: ${DATABASE_USER}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          memory: 1G
+    ports:
+      - "127.0.0.1:3306:3306" # For sshing into the prod db
+
+  backend:
+    # env_file:
+    #   - /home/marked_admin/marked/.env.prod
+    build:
+      context: ./MarkEd-back
+      dockerfile: ../docker/Dockerfile.django
+    container_name: marked-backend
+    volumes:
+      - ./MarkEd-back:/app
+      - ./MarkEd-back/logs:/app/logs
+      - static_volume:/app/statics
+      - media_volume:/app/statics/media
+    ports:
+      - "8000"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ALLOWED_HOSTS: marked.tomasmaillo.com,localhost
+      DJANGO_ENV: production
+      STATIC_ROOT: /app/staticfiles
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-markededucation}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-markededucation}
+      MINIO_BUCKET_NAME: assignments
+      MINIO_URL: http://nginx/minio
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      STORAGE_BUCKET_NAME: ${STORAGE_BUCKET_NAME}
+      LOG_DIR: /app/logs
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
+             uvicorn MarkEd.asgi:application --host 0.0.0.0 --port 8000 --workers 3"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/api/health/ping').read().decode())"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    env_file:
+      - /home/marked_admin/marked/.env.prod
+    restart: unless-stopped
+    build:
+      context: ./MarkEd-front
+      dockerfile: ../docker/Dockerfile.nextjs
+      args:
+        NEXT_PUBLIC_API_URL: https://marked.tomasmaillo.com
+    container_name: marked-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: https://marked.tomasmaillo.com
+      NODE_ENV: production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/p/ping/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.nginx
+    container_name: marked-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - static_volume:/var/www/static
+      - media_volume:/var/www/media
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      - NGINX_CONFIG=prod
+
+  redis:
+    image: redis:alpine
+    container_name: marked-redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  celery:
+    build:
+      context: ./MarkEd-back
+      dockerfile: ../docker/Dockerfile.django
+    container_name: marked-celery
+    command: celery -A MarkEd worker --loglevel=info
+    volumes:
+      - ./MarkEd-back:/app
+      - ./MarkEd-back/logs:/app/logs
+      - static_volume:/app/staticfiles
+      - media_volume:/app/statics/media
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - STORAGE_BUCKET_NAME=${STORAGE_BUCKET_NAME}
+
+volumes:
+  static_volume:
+  media_volume:
+  mysql_data:

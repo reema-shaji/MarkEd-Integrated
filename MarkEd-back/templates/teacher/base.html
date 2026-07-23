@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>MarkEd</title>
+        {% load static %}
+        <link rel="stylesheet"
+              href="{% static 'plugins/bootstrap-5.0.1-dist/css/bootstrap.min.css' %}" />
+        <link rel="stylesheet" href="{% static 'plugins/jquery-ui.min.css' %}">
+        <link rel="stylesheet"
+              href="{% static 'plugins/jquery-ui.theme.min.css' %}">
+        <link rel="shortcut icon" href="{% static 'images/favicon.png' %}" />
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/css/bootstrap5-toggle.min.css"
+              rel="stylesheet">
+        <script src="{% static 'plugins/jquery-3.5.1.min.js' %}"></script>
+        <script src="{% static 'plugins/jquery-ui.min.js' %}"></script>
+        <script src="{% static 'plugins/bootstrap-5.0.1-dist/js/bootstrap.bundle.js' %}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/js/bootstrap5-toggle.jquery.min.js"></script>
+
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row flex-nowrap">
+                <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0"
+                     style="background-color : #454574;
+                            box-shadow: 20px 0px 18px -15px lightgrey">
+                    <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
+                        <a href="/"
+                           class="align-items-center pb-3 pt-2 text-white text-decoration-none"
+                           style="width: 100%;
+                                  height : 6%">
+                            <h1 class="text-center" style="width : 100%;">MarkEd</h1>
+                        </a>
+                        <ul class="nav nav-pills flex-column mb-auto"
+                            id="sidebar"
+                            style="width : 100%">
+                            <li>
+                                {% if current_page == "dashboard" %}
+                                    <a href="/teacher/assignment?page=dashboard&assignment={{ assignment.pk }}"
+                                       class="nav-link text-left p-3"
+                                       aria-current="page"
+                                       style="background-color:white;
+                                              color:black">
+                                        <svg t="1623033842152"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8259"
+                                             width="20"
+                                             height="20">
+                                            <path d="M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32z m-696 72h136v656H184V184z m656 656H384V384h456v456zM384 320V184h456v136H384z" p-id="8260" fill="#000000">
+                                            </path>
+                                        </svg>
+                                        Dashboard
+                                    </a>
+                                {% else %}
+                                    <a href="/teacher/assignment?page=dashboard&assignment={{ assignment.pk }}"
+                                       class="nav-link text-left p-3 text-white"
+                                       aria-current="page"
+                                       onMouseOver="this.style.backgroundColor='#7272ba'"
+                                       onMouseOut="this.style.backgroundColor='transparent'">
+                                        <svg t="1623033842152"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8259"
+                                             width="20"
+                                             height="20">
+                                            <path d="M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32z m-696 72h136v656H184V184z m656 656H384V384h456v456zM384 320V184h456v136H384z" p-id="8260" fill="#ffffff">
+                                            </path>
+                                        </svg>
+                                        Dashboard
+                                    </a>
+                                {% endif %}
+                            </li>
+                            <li>
+                                {% if current_page == "submissions" %}
+                                    <a href="/teacher/assignment?page=submissions&assignment={{ assignment.pk }}"
+                                       class="nav-link text-left p-3"
+                                       aria-current="page"
+                                       style="background-color:white;
+                                              color:black">
+                                        <svg t="1623033936287"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8426"
+                                             width="20"
+                                             height="20">
+                                            <path d="M832 64H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32z m-40 824H232V687h97.9c11.6 32.8 32 62.3 59.1 84.7 34.5 28.5 78.2 44.3 123 44.3s88.5-15.7 123-44.3c27.1-22.4 47.5-51.9 59.1-84.7H792v-63H643.6l-5.2 24.7C626.4 708.5 573.2 752 512 752s-114.4-43.5-126.5-103.3l-5.2-24.7H232V136h560v752z" p-id="8427" fill="#000000">
+                                            </path>
+                                            <path d="M320 341h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8zM320 501h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z" p-id="8428" fill="#000000">
+                                            </path>
+                                        </svg>
+                                        Submissions
+                                    </a>
+                                {% else %}
+                                    <a href="/teacher/assignment?page=submissions&assignment={{ assignment.pk }}"
+                                       class="nav-link text-left p-3 text-white"
+                                       aria-current="page"
+                                       onMouseOver="this.style.backgroundColor='#7272ba'"
+                                       onMouseOut="this.style.backgroundColor='transparent'">
+                                        <svg t="1623033936287"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8426"
+                                             width="20"
+                                             height="20">
+                                            <path d="M832 64H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32z m-40 824H232V687h97.9c11.6 32.8 32 62.3 59.1 84.7 34.5 28.5 78.2 44.3 123 44.3s88.5-15.7 123-44.3c27.1-22.4 47.5-51.9 59.1-84.7H792v-63H643.6l-5.2 24.7C626.4 708.5 573.2 752 512 752s-114.4-43.5-126.5-103.3l-5.2-24.7H232V136h560v752z" p-id="8427" fill="#ffffff">
+                                            </path>
+                                            <path d="M320 341h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8zM320 501h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z" p-id="8428" fill="#ffffff">
+                                            </path>
+                                        </svg>
+                                        Submissions
+                                    </a>
+                                {% endif %}
+                            </li>
+                            <li>
+                                {% if current_page == "jobs" %}
+                                    <a href="/teacher/assignment?page=jobs&assignment={{ assignment.pk }}"
+                                       class="nav-link text-left p-3"
+                                       aria-current="page"
+                                       style="background-color:white;
+                                              color:black">
+                                        <svg t="1623034013336"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8594"
+                                             width="20"
+                                             height="20">
+                                            <path d="M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32z m-40 728H184V184h656v656z" p-id="8595" fill="#000000">
+                                            </path>
+                                            <path d="M492 400h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H492c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8zM492 544h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H492c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8zM492 688h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H492c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z" p-id="8596" fill="#000000">
+                                            </path>
+                                            <path d="M380 368m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="8597" fill="#ffffff"></path>
+                                            <path d="M380 512m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="8598" fill="#000000"></path>
+                                            <path d="M380 656m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="8599" fill="#000000"></path>
+                                        </svg>
+                                        Jobs
+                                    </a>
+                                {% else %}
+                                    <a href="/teacher/assignment?page=jobs&assignment={{ assignment.pk }}"
+                                       class="nav-link text-left p-3 text-white"
+                                       aria-current="page"
+                                       onMouseOver="this.style.backgroundColor='#7272ba'"
+                                       onMouseOut="this.style.backgroundColor='transparent'">
+                                        <svg t="1623034013336"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8594"
+                                             width="20"
+                                             height="20">
+                                            <path d="M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32z m-40 728H184V184h656v656z" p-id="8595" fill="#ffffff">
+                                            </path>
+                                            <path d="M492 400h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H492c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8zM492 544h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H492c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8zM492 688h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H492c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z" p-id="8596" fill="#ffffff">
+                                            </path>
+                                            <path d="M380 368m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="8597" fill="#ffffff"></path>
+                                            <path d="M380 512m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="8598" fill="#ffffff"></path>
+                                            <path d="M380 656m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="8599" fill="#ffffff"></path>
+                                        </svg>
+                                        Jobs
+                                    </a>
+                                {% endif %}
+                            </li>
+                            <li>
+                                {% if current_page == "setup" %}
+                                    <a href="/teacher/assignment?page=setup&assignment={{ assignment.pk }}"
+                                       class="nav-link text-left p-3"
+                                       aria-current="page"
+                                       style="background-color:white;
+                                              color:black">
+                                        <svg t="1623034088087"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8765"
+                                             width="20"
+                                             height="20">
+                                            <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="8766" fill="#000000">
+                                            </path>
+                                            <path d="M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-22.7c0-19.7 12.4-37.7 30.9-44.8 59-22.7 97.1-74.7 97.1-132.5 0.1-39.3-17.1-76-48.3-103.3z" p-id="8767" fill="#000000">
+                                            </path>
+                                            <path d="M512 732m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="8768" fill="#000000"></path>
+                                        </svg>
+                                        Assignment Structure
+                                    </a>
+                                {% else %}
+                                    <a href="/teacher/assignment?page=setup&assignment={{ assignment.pk }}"
+                                       class="nav-link text-left p-3 text-white"
+                                       aria-current="page"
+                                       onMouseOver="this.style.backgroundColor='#7272ba'"
+                                       onMouseOut="this.style.backgroundColor='transparent'">
+                                        <svg t="1623034088087"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8765"
+                                             width="20"
+                                             height="20">
+                                            <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="8766" fill="#ffffff">
+                                            </path>
+                                            <path d="M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-22.7c0-19.7 12.4-37.7 30.9-44.8 59-22.7 97.1-74.7 97.1-132.5 0.1-39.3-17.1-76-48.3-103.3z" p-id="8767" fill="#ffffff">
+                                            </path>
+                                            <path d="M512 732m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="8768" fill="#ffffff"></path>
+                                        </svg>
+                                        Assignment Structure
+                                    </a>
+                                {% endif %}
+                            </li>
+                            <li>
+                                {% if current_page == "modules" %}
+                                    <a href="/teacher/assignment?page=modules&assignment={{ assignment.pk }}"
+                                       class="nav-link text-left p-3"
+                                       aria-current="page"
+                                       style="background-color:white;
+                                              color:black">
+                                        <svg t="1623034136509"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8934"
+                                             width="20"
+                                             height="20">
+                                            <path d="M876.6 239.5c-0.5-0.9-1.2-1.8-2-2.5-5-5-13.1-5-18.1 0L684.2 409.3l-67.9-67.9L788.7 169c0.8-0.8 1.4-1.6 2-2.5 3.6-6.1 1.6-13.9-4.5-17.5-98.2-58-226.8-44.7-311.3 39.7-67 67-89.2 162-66.5 247.4l-293 293c-3 3-2.8 7.9 0.3 11l169.7 169.7c3.1 3.1 8.1 3.3 11 0.3l292.9-292.9c85.5 22.8 180.5 0.7 247.6-66.4 84.4-84.5 97.7-213.1 39.7-311.3zM786 499.8c-58.1 58.1-145.3 69.3-214.6 33.6l-8.8 8.8-0.1-0.1-274 274.1-79.2-79.2 230.1-230.1s0 0.1 0.1 0.1l52.8-52.8c-35.7-69.3-24.5-156.5 33.6-214.6 39.2-39.2 92.1-57.3 144-53.5L537 318.9c-12.5 12.5-12.5 32.8 0 45.3l124.5 124.5c12.5 12.5 32.8 12.5 45.3 0l132.8-132.8c3.7 51.8-14.4 104.8-53.6 143.9z" p-id="8935" fill="#000000">
+                                            </path>
+                                        </svg>
+                                        Customization
+                                    </a>
+                                {% else %}
+                                    <a href="/teacher/assignment?page=modules&assignment={{ assignment.pk }}"
+                                       class="nav-link text-left p-3 text-white"
+                                       aria-current="page"
+                                       onMouseOver="this.style.backgroundColor='#7272ba'"
+                                       onMouseOut="this.style.backgroundColor='transparent'">
+                                        <svg t="1623034136509"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8934"
+                                             width="20"
+                                             height="20">
+                                            <path d="M876.6 239.5c-0.5-0.9-1.2-1.8-2-2.5-5-5-13.1-5-18.1 0L684.2 409.3l-67.9-67.9L788.7 169c0.8-0.8 1.4-1.6 2-2.5 3.6-6.1 1.6-13.9-4.5-17.5-98.2-58-226.8-44.7-311.3 39.7-67 67-89.2 162-66.5 247.4l-293 293c-3 3-2.8 7.9 0.3 11l169.7 169.7c3.1 3.1 8.1 3.3 11 0.3l292.9-292.9c85.5 22.8 180.5 0.7 247.6-66.4 84.4-84.5 97.7-213.1 39.7-311.3zM786 499.8c-58.1 58.1-145.3 69.3-214.6 33.6l-8.8 8.8-0.1-0.1-274 274.1-79.2-79.2 230.1-230.1s0 0.1 0.1 0.1l52.8-52.8c-35.7-69.3-24.5-156.5 33.6-214.6 39.2-39.2 92.1-57.3 144-53.5L537 318.9c-12.5 12.5-12.5 32.8 0 45.3l124.5 124.5c12.5 12.5 32.8 12.5 45.3 0l132.8-132.8c3.7 51.8-14.4 104.8-53.6 143.9z" p-id="8935" fill="#ffffff">
+                                            </path>
+                                        </svg>
+                                        Customization
+                                    </a>
+                                {% endif %}
+                            </li>
+                            {% if mark_permission != 0 %}
+                                <li>
+                                    {% if current_page == "marking" %}
+                                        <a href="/teacher/assignment?page=marking&assignment={{ assignment.pk }}"
+                                           class="nav-link text-left p-3"
+                                           aria-current="page"
+                                           style="background-color:white;
+                                                  color:black">
+                                            <svg t="1623034196068"
+                                                 class="icon"
+                                                 viewBox="0 0 1024 1024"
+                                                 version="1.1"
+                                                 xmlns="http://www.w3.org/2000/svg"
+                                                 p-id="9101"
+                                                 width="20"
+                                                 height="20">
+                                                <path d="M880 184H712v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H384v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H144c-17.7 0-32 14.3-32 32v664c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V216c0-17.7-14.3-32-32-32z m-40 656H184V256h128v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h256v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h128v584z" p-id="9102" fill="#000000">
+                                                </path>
+                                                <path d="M688 420h-55.2c-5.1 0-10 2.5-13 6.6L468.9 634.4l-64.7-89c-3-4.1-7.8-6.6-13-6.6H336c-6.5 0-10.3 7.4-6.5 12.7l126.4 174c6.4 8.8 19.6 8.8 26 0l212.6-292.7c3.8-5.4 0-12.8-6.5-12.8z" p-id="9103" fill="#000000">
+                                                </path>
+                                            </svg>
+                                            Marking
+                                        </a>
+                                    {% else %}
+                                        <a href="/teacher/assignment?page=marking&assignment={{ assignment.pk }}"
+                                           class="nav-link text-left p-3 text-white"
+                                           aria-current="page"
+                                           onMouseOver="this.style.backgroundColor='#7272ba'"
+                                           onMouseOut="this.style.backgroundColor='transparent'">
+                                            <svg t="1623034196068"
+                                                 class="icon"
+                                                 viewBox="0 0 1024 1024"
+                                                 version="1.1"
+                                                 xmlns="http://www.w3.org/2000/svg"
+                                                 p-id="9101"
+                                                 width="20"
+                                                 height="20">
+                                                <path d="M880 184H712v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H384v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H144c-17.7 0-32 14.3-32 32v664c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V216c0-17.7-14.3-32-32-32z m-40 656H184V256h128v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h256v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h128v584z" p-id="9102" fill="#ffffff">
+                                                </path>
+                                                <path d="M688 420h-55.2c-5.1 0-10 2.5-13 6.6L468.9 634.4l-64.7-89c-3-4.1-7.8-6.6-13-6.6H336c-6.5 0-10.3 7.4-6.5 12.7l126.4 174c6.4 8.8 19.6 8.8 26 0l212.6-292.7c3.8-5.4 0-12.8-6.5-12.8z" p-id="9103" fill="#ffffff">
+                                                </path>
+                                            </svg>
+                                            Marking
+                                        </a>
+                                    {% endif %}
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="container-fluid">
+                    <div class="col p-0">
+                        <div class="row" style="height : 75px; width : 84%;">
+                            <nav class="navbar navbar-expand-lg"
+                                 style="box-shadow: 0px 16px 18px -15px lightgrey; background:  rgb(255,255,255);">
+                                <div class="container-fluid">
+                                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                                            <li class="nav-item dropdown">
+                                                <div class="btn-group">
+                                                    <button class="btn btn-outline-secondary btn-lg dropdown-toggle"
+                                                            type="button"
+                                                            data-bs-toggle="dropdown"
+                                                            aria-expanded="false">
+                                                        <svg t="1623037042005"
+                                                             class="icon"
+                                                             viewBox="0 0 1024 1024"
+                                                             version="1.1"
+                                                             xmlns="http://www.w3.org/2000/svg"
+                                                             p-id="8088"
+                                                             width="30"
+                                                             height="30">
+                                                            <path d="M894 462c30.9 0 43.8-39.7 18.7-58L530.8 126.2a31.81 31.81 0 0 0-37.6 0L111.3 404c-25.1 18.2-12.2 58 18.8 58H192v374h-72c-4.4 0-8 3.6-8 8v52c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-52c0-4.4-3.6-8-8-8h-72V462h62zM512 196.7l271.1 197.2H240.9L512 196.7zM264 462h117v374H264V462z m189 0h117v374H453V462z m307 374H642V462h118v374z" p-id="8089" fill="#707070">
+                                                            </path>
+                                                        </svg>
+                                                        {{ assignment.assignmentTitle }}
+                                                    </button>
+                                                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                                        {% for other_related_assignment in other_related_assignments %}
+                                                            <li>
+                                                                <a class="dropdown-item"
+                                                                   href="/teacher/assignment?page=dashboard&assignment={{ other_related_assignment.pk }}">{{ other_related_assignment.assignmentTitle }}</a>
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                        <div class="d-flex">
+                                            <button type="button"
+                                                    class="btn btn-lg text-white"
+                                                    style="margin-right: 20px;
+                                                           background-color : #454574">Help</button>
+                                            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                                                <li class="nav-item dropdown">
+                                                    <div class="btn-group">
+                                                        {% comment %} TODO: get useful notifications up and running, how to eval this though? {% endcomment %}
+                                                        {% if new_number > 0 %}
+                                                            <button type="button"
+                                                                    class="btn btn-outline-secondary btn-lg text-white"
+                                                                    style="margin-right: 20px;
+                                                                           background-color : #454574"
+                                                                    data-bs-toggle="dropdown"
+                                                                    aria-expanded="false">
+                                                                Notifications
+                                                                <span style="border-radius: 50%;
+                                                                             height: 20px;
+                                                                             width: 20px;
+                                                                             display: inline-block;
+                                                                             background: #f30303;
+                                                                             vertical-align: top">
+                                                                    <span style="display: block;
+                                                                                 color: #FFFFFF;
+                                                                                 height: 20px;
+                                                                                 line-height: 20px;
+                                                                                 text-align: center"> {{ new_number }}</span>
+                                                                </span>
+                                                            </button>
+                                                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                                                {% for info in new %}
+                                                                    <li>
+                                                                        <a class="dropdown-item" href="{{ info.desc }}">{{ info.subject }}</a>
+                                                                    </li>
+                                                                {% endfor %}
+                                                                <a type="button"
+                                                                   class="btn btn-outline-primary"
+                                                                   style="float: left;
+                                                                          height: 30px;
+                                                                          width:80px"
+                                                                   href="/teacher/assignment?page=dismiss&assignment={{ assignment.pk }}&page2={{ current_page }}">Dismiss</a>
+                                                                <a type="button"
+                                                                   class="btn btn-outline-primary"
+                                                                   style="float: right;
+                                                                          height: 30px;
+                                                                          width: 180px"
+                                                                   href="/teacher/assignment?page=viewAll&assignment={{ assignment.pk }}">View all notifications</a>
+                                                            </ul>
+                                                        {% else %}
+                                                            <button type="button"
+                                                                    class="btn btn-outline-secondary btn-lg text-white"
+                                                                    style="margin-right: 20px;
+                                                                           background-color : #454574"
+                                                                    data-bs-toggle="dropdown"
+                                                                    aria-expanded="false">Notifications</button>
+                                                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                                                <a type="button"
+                                                                   class="btn btn-outline-primary"
+                                                                   style="float: right;
+                                                                          height: 30px;
+                                                                          width: 180px"
+                                                                   href="/teacher/assignment?page=viewAll&assignment={{ assignment.pk }}">View all notifications</a>
+                                                            </ul>
+                                                        {% endif %}
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                            <div class="d-flex dropdown">
+                                                <a href="#"
+                                                   class="d-flex align-items-center text-decoration-none dropdown-toggle"
+                                                   id="dropdownUser1"
+                                                   data-bs-toggle="dropdown"
+                                                   aria-expanded="false">
+                                                    <img src="{% static '/media/' %}{{ request.session.user_profile }}"
+                                                         alt="hugenerd"
+                                                         width="40"
+                                                         height="40"
+                                                         class="rounded-circle" />
+                                                </a>
+                                                <ul class="dropdown-menu dropdown-menu-dark text-small shadow"
+                                                    aria-labelledby="dropdownUser1">
+                                                    {% comment %} TODO: Profile & settings one thing? Or just like Learn where you're profile isn't
+                                                    changeable because it has to go though Euclid?  {% endcomment %}
+                                                    <li>
+                                                        <a class="dropdown-item" href="#">Settings</a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#">Profile</a>
+                                                    </li>
+                                                    <li>
+                                                        <hr class="dropdown-divider" />
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="/logout">Log out</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </nav>
+                        </div>
+                        {% comment %} where is this coming from? Does it actually ever appear? {% endcomment %}
+                        <div class="row">
+                            {% if remind == 1 %}
+                                <div class="alert alert-warning mt-3">You just have 1 day to mark!</div>
+                            {% elif remind == 2 %}
+                                <div class="alert alert-warning mt-3">You just have 2 days to mark!</div>
+                            {% endif %}
+                        </div>
+<!--                        TOOD: fix, the page width, heghts etc.-->
+                        <div class="row" style="width : 100%;">
+                            {% block mainbody %}
+                            <p>original</p>
+                            {% endblock %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

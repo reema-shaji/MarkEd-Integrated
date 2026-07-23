@@ -1,0 +1,76 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_ed25519
+          echo "✓ SSH configured successfully"
+
+      - name: Deploy to Digital Ocean
+        env:
+          DEPLOY_PATH: /home/marked_admin/marked
+          SSH_USER: marked_admin
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+        run: |
+          echo "🚀 Starting deployment..."
+          
+          echo "::group::Updating Code"
+          ssh $SSH_USER@$SERVER_IP "cd $DEPLOY_PATH && \
+          git fetch origin main && \
+          git reset --hard origin/main"
+          echo "::endgroup::"
+          
+          echo "::group::Stopping Services"
+          ssh $SSH_USER@$SERVER_IP "cd $DEPLOY_PATH && \
+          docker-compose --env-file .env.prod -f docker-compose.prod.yml down && \
+          docker system prune -f"
+          echo "::endgroup::"
+          
+          echo "::group::Building Services"
+          ssh $SSH_USER@$SERVER_IP "cd $DEPLOY_PATH && \
+          docker-compose --env-file .env.prod -f docker-compose.prod.yml build"
+          echo "::endgroup::"
+          
+          echo "::group::Starting Database"
+          ssh $SSH_USER@$SERVER_IP "cd $DEPLOY_PATH && \
+          docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d db && \
+          timeout 90s bash -c 'until docker inspect --format=\"{{.State.Health.Status}}\" marked-mysql | grep -q \"healthy\"; do echo \"Waiting for database...\"; sleep 10; done'"
+          echo "::endgroup::"
+          
+          echo "::group::Starting Backend"
+          ssh $SSH_USER@$SERVER_IP "cd $DEPLOY_PATH && \
+          docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d backend && \
+          timeout 120s bash -c 'until docker inspect --format=\"{{.State.Health.Status}}\" marked-backend | grep -q \"healthy\"; do echo \"Waiting for backend...\"; sleep 10; done'"
+          echo "::endgroup::"
+          
+          echo "::group::Starting Frontend & Nginx"
+          ssh $SSH_USER@$SERVER_IP "cd $DEPLOY_PATH && \
+          docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d frontend nginx && \
+          timeout 90s bash -c 'until docker inspect --format=\"{{.State.Health.Status}}\" marked-frontend | grep -q \"healthy\" && \
+                              docker inspect --format=\"{{.State.Health.Status}}\" marked-nginx | grep -q \"healthy\"; do \
+                              echo \"Waiting for frontend and nginx...\"; sleep 30; done'"
+          echo "::endgroup::"
+          
+          echo "::group::Starting Redis & Celery"
+          ssh $SSH_USER@$SERVER_IP "cd $DEPLOY_PATH && \
+          docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d redis && \
+          timeout 30s bash -c 'until docker inspect --format=\"{{.State.Health.Status}}\" marked-redis | grep -q \"healthy\"; do echo \"Waiting for Redis...\"; sleep 5; done' && \
+          docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d celery"
+          echo "::endgroup::"
+          
+          echo "✓ Deployment completed"

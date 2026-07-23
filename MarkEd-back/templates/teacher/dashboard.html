@@ -1,0 +1,678 @@
+{% extends "teacher/base.html" %}
+{% block mainbody %}
+{% load static %}
+
+
+<!--    <style type="text/css">-->
+<!--.circleProgress_wrapper {-->
+<!--    display: flex;-->
+<!--    flex-direction: column;-->
+<!--    width: 200px;-->
+<!--    min-width: 200px;-->
+<!--    height: 200px;-->
+<!--    margin: 10px 0px 0px 25px;-->
+<!--    position: relative;-->
+<!--    justify-content: center;-->
+<!--    align-items: center;-->
+<!--}-->
+
+<!--.wrapper {-->
+<!--    width: 100px;-->
+<!--    height: 200px;-->
+<!--    position: absolute;-->
+<!--    top: 0;-->
+<!--    overflow: hidden;-->
+<!--}-->
+
+<!--.right {-->
+<!--    right: 0;-->
+<!--}-->
+
+<!--.left {-->
+<!--    left: 0;-->
+<!--}-->
+
+<!--.circleProgress {-->
+<!--    width: 200px;-->
+<!--    height: 200px;-->
+<!--    border: 6px solid transparent;-->
+<!--    border-radius: 50%;-->
+<!--    position: absolute;-->
+<!--    top: 0;-->
+<!--    -webkit-transform: rotate(45deg);-->
+<!--}-->
+
+<!--.rightcircle {-->
+<!--    border-top: 6px solid #ccc;-->
+<!--    border-right: 6px solid #ccc;-->
+<!--    border-left: 6px solid #ccc;-->
+<!--    border-bottom: 6px solid #ccc;-->
+<!--    right: 0;-->
+<!--}-->
+
+<!--.leftcircle {-->
+<!--    border-bottom: 6px solid #ccc;-->
+<!--    border-left: 6px solid #ccc;-->
+<!--    border-top: 6px solid #ccc;-->
+<!--    border-right: 6px solid #ccc;-->
+<!--    left: 0;-->
+<!--}-->
+
+<!--span.percent {-->
+<!--    margin-top: -3px;-->
+<!--    font-size: 18px;-->
+<!--    font-weight: bold;-->
+<!--}-->
+
+<!--.circleProgress_wrapper2 {-->
+<!--    display: flex;-->
+<!--    flex-direction: column;-->
+<!--    width: 200px;-->
+<!--    min-width: 200px;-->
+<!--    height: 200px;-->
+<!--    margin: 10px 0px 0px 25px;-->
+<!--    position: relative;-->
+<!--    justify-content: center;-->
+<!--    align-items: center;-->
+<!--}-->
+
+<!--.wrapper2 {-->
+<!--    width: 100px;-->
+<!--    height: 200px;-->
+<!--    position: absolute;-->
+<!--    top: 0;-->
+<!--    overflow: hidden;-->
+<!--}-->
+
+<!--.right2 {-->
+<!--    right: 0;-->
+<!--}-->
+
+<!--.left2 {-->
+<!--    left: 0;-->
+<!--}-->
+
+<!--.circleProgress2 {-->
+<!--    width: 200px;-->
+<!--    height: 200px;-->
+<!--    border: 6px solid transparent;-->
+<!--    border-radius: 50%;-->
+<!--    position: absolute;-->
+<!--    top: 0;-->
+<!--    -webkit-transform: rotate(45deg);-->
+<!--}-->
+
+<!--.rightcircle2 {-->
+<!--    border-top: 6px solid #ccc;-->
+<!--    border-right: 6px solid #ccc;-->
+<!--    border-left: 6px solid #ccc;-->
+<!--    border-bottom: 6px solid #ccc;-->
+<!--    right: 0;-->
+<!--}-->
+
+<!--.leftcircle2 {-->
+<!--    border-bottom: 6px solid #ccc;-->
+<!--    border-left: 6px solid #ccc;-->
+<!--    border-top: 6px solid #ccc;-->
+<!--    border-right: 6px solid #ccc;-->
+<!--    left: 0;-->
+<!--}-->
+
+<!--span.percent2 {-->
+<!--    margin-top: -3px;-->
+<!--    font-size: 18px;-->
+<!--    font-weight: bold;-->
+<!--}-->
+<!--    </style>-->
+<!--    <script>-->
+<!--var deg = {percent: 100, left: 225, leftBC: "#ccc", right: 225, rightBC: "#ccc"};-->
+<!--    var pint;-->
+<!--    var percent = 0;-->
+<!--    $(function () {-->
+<!--        var arr = $('.percent');-->
+<!--        var circle = $('.circleProgress_wrapper');-->
+<!--        colors = [-->
+<!--            "#FC983B",-->
+<!--            "#ED93B5",-->
+<!--            "#32A6A3",-->
+<!--        ];-->
+
+<!--        for (var i = 0; i < arr.length; i++) {-->
+<!--                var itemDeg = arr[i].innerHTML;-->
+<!--                var circleId = circle[i].id;-->
+<!--                loadPercent(itemDeg, circleId,colors[i]);-->
+<!--        }-->
+
+
+<!--        var arr2 = $('.percent2');-->
+<!--        var circle2 = $('.circleProgress_wrapper2');-->
+<!--        colors2 = [-->
+<!--            "#ED93B5",-->
+<!--            "#FC983B",-->
+<!--            "#32A6A3",-->
+<!--        ];-->
+
+<!--        for (var i = 0; i < arr2.length; i++) {-->
+<!--                var itemDeg = arr2[i].innerHTML;-->
+<!--                var circleId = circle2[i].id;-->
+<!--                loadPercent2(itemDeg, circleId,colors2[i]);-->
+<!--        }-->
+
+
+<!--    });-->
+
+
+<!--    function loadPercent(percent, id,color) {-->
+<!--        var allDeg = countDegByPercent(percent);-->
+<!--        if (allDeg >= 180) {-->
+<!--            var tmpDeg = allDeg - 180;-->
+<!--            deg.left = 45 + tmpDeg;-->
+<!--            deg.right = 225-->
+<!--            deg.leftBC = color;-->
+<!--            deg.rightBC = color;-->
+<!--        } else {-->
+<!--            deg.right = 45 + allDeg;-->
+<!--            deg.rightBC = color;-->
+<!--            deg.leftBC = "#ccc";-->
+<!--        }-->
+<!--        // uncommented this for now.-->
+<!--        console.log(deg);-->
+<!--        $("#" + id + " .rightcircle").css({-->
+<!--            "-webkit-transform": "rotate(" + deg.right + "deg)",-->
+<!--            "border-left": "6px solid " + deg.rightBC,-->
+<!--            "border-bottom": "6px solid " + deg.rightBC-->
+<!--        });-->
+<!--        $("#" + id + " .leftcircle").css({-->
+<!--            "-webkit-transform": "rotate(" + deg.left + "deg)",-->
+<!--            "border-top": "6px solid " + deg.leftBC,-->
+<!--            "border-right": "6px solid " + deg.leftBC-->
+<!--        });-->
+<!--    }-->
+
+<!--    function loadPercent2(percent, id,color) {-->
+<!--        var allDeg = countDegByPercent(percent);-->
+<!--        if (allDeg >= 180) {-->
+<!--            var tmpDeg = allDeg - 180;-->
+<!--            deg.left = 45 + tmpDeg;-->
+<!--            deg.right = 225-->
+<!--            deg.leftBC = color;-->
+<!--            deg.rightBC = color;-->
+<!--        } else {-->
+<!--            deg.right = 45 + allDeg;-->
+<!--            deg.rightBC = color;-->
+<!--            deg.leftBC = "#ccc";-->
+<!--        }-->
+<!--        //console.log(deg);-->
+<!--        $("#" + id + " .rightcircle2").css({-->
+<!--            "-webkit-transform": "rotate(" + deg.right + "deg)",-->
+<!--            "border-left": "6px solid " + deg.rightBC,-->
+<!--            "border-bottom": "6px solid " + deg.rightBC-->
+<!--        });-->
+<!--        $("#" + id + " .leftcircle2").css({-->
+<!--            "-webkit-transform": "rotate(" + deg.left + "deg)",-->
+<!--            "border-top": "6px solid " + deg.leftBC,-->
+<!--            "border-right": "6px solid " + deg.leftBC-->
+<!--        });-->
+<!--    }-->
+
+<!--    function countDegByPercent(percent) {-->
+<!--        return percent * 3.6;-->
+<!--    }-->
+<!--    </script>-->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<body class="bg-light">
+<div class="container px-4 bg-light" style="background: rgb(252,247,255);">
+    <div class="p-3 text-black" style="font-size: 30px">
+        &nbsp;
+        <svg t="1623033842152"
+             class="icon"
+             viewBox="0 0 1024 1024"
+             version="1.1"
+             xmlns="http://www.w3.org/2000/svg"
+             p-id="8259"
+             width="40"
+             height="40">
+            <path d="M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32z m-696 72h136v656H184V184z m656 656H384V384h456v456zM384 320V184h456v136H384z"
+                  p-id="8260" fill="#000000">
+            </path>
+        </svg>
+        &nbsp;<b>Dashboard</b>
+    </div>
+    <div class="row gx-10" style="width: 84%;">
+        <div class="col-md-5">
+            <div class="p-3">
+                <div class="card p-3" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                    <div class="card-body">
+                        <h5>
+                            <svg t="1623844844061"
+                                 class="icon"
+                                 viewBox="0 0 1024 1024"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 p-id="6577"
+                                 width="20"
+                                 height="20">
+                                <path d="M617.216 170.666667c114.24 0 206.869333 92.608 206.869333 206.869333 0 72.533333-37.333333 136.32-93.802666 173.269333l168.746666 196.885334A64 64 0 0 1 850.432 853.333333l-101.888 0.021334c11.221333-19.413333 14.293333-42.496 8.746667-64L850.432 789.333333 634.24 537.109333l60.992-39.872a142.869333 142.869333 0 0 0-75.584-262.549333 251.264 251.264 0 0 0-55.424-57.173333A206.976 206.976 0 0 1 617.216 170.666667z m-61.162667 412.757333l140.8 164.266667A64 64 0 0 1 648.213333 853.333333H181.824a64 64 0 0 1-48.597333-105.642666l140.8-164.266667c18.026667 12.373333 37.76 22.442667 58.773333 29.781333L181.824 789.333333h466.410667l-150.997334-176.128c21.034667-7.338667 40.768-17.386667 58.816-29.781333zM415.04 170.666667c114.24 0 206.869333 92.608 206.869333 206.869333 0 114.24-92.629333 206.869333-206.869333 206.869333-114.261333 0-206.869333-92.629333-206.869333-206.869333C208.170667 263.274667 300.778667 170.666667 415.04 170.666667z m0 64a142.869333 142.869333 0 1 0 0 285.738666 142.869333 142.869333 0 0 0 0-285.738666z"
+                                      p-id="6578">
+                                </path>
+                            </svg>
+                            &nbsp;Team
+                        </h5>
+                        <div class="p-3">
+                            <table class="p-3">
+                                {% for info in teams_info %}
+                                <tbody>
+                                <tr style="margin-bottom: 30px">
+                                    <td style="padding: 5px">
+                                        <img src="{% static '/media/' %}{{ info.user.userProfile }}"
+                                             alt="user profile pic"
+                                             width="40"
+                                             height="40"
+                                             class="rounded-circle">
+                                    </td>
+                                    <td>&nbsp;</td>
+                                    <td>{{ info.user.userName }}</td>
+                                </tr>
+                                </tbody>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--                <div class="p-3">-->
+            <!--                    <div class="card p-3" style="box-shadow: 0px 0px 30px -5px lightgrey;">-->
+            <!--                        <div class="card-body">-->
+            <!--                            <h5>-->
+            <!--                            <svg t="1623846063119"-->
+            <!--                                 class="icon"-->
+            <!--                                 viewBox="0 0 1024 1024"-->
+            <!--                                 version="1.1"-->
+            <!--                                 xmlns="http://www.w3.org/2000/svg"-->
+            <!--                                 p-id="3853"-->
+            <!--                                 width="16"-->
+            <!--                                 height="16">-->
+            <!--                                <path d="M199.296 479.36L151.04 512 512 755.328 873.024 512l-48.32-32.64L512 690.176 199.296 479.424z m700.864-50.816l46.08 31.104L1024 512l-123.84 83.456L1024 678.912 512 1024l-512-345.088 123.84-83.456L0 512l79.104-53.312 44.736-30.144L0 345.088 512 0l512 345.088-123.84 83.456z m-75.52 217.792L512 857.088l-312.704-210.752-48.32 32.64L512 922.24l361.024-243.328-48.32-32.576zM512 101.696L150.976 345.152 512 588.416l361.024-243.328L512 101.76z" fill="#262626" p-id="3854">-->
+            <!--                                </path>-->
+            <!--                            </svg>-->
+            <!--                                &nbsp;&nbspStudents</h5>-->
+            <!--                            <p>{{ student_number }} students registered for the assignment</p>-->
+            <!--                        </div>-->
+            <!--                    </div>-->
+            <!--                </div>-->
+            <div class="p-3">
+                <div class="card p-3" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                    <div class="card-body">
+                        <h5>
+                            <svg t="1623846254698"
+                                 class="icon"
+                                 viewBox="0 0 1024 1024"
+                                 version="1.1"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 p-id="2712"
+                                 width="18"
+                                 height="18">
+                                <path d="M320 480h384v-64H320zM320 608h256v-64h-256zM320 736h256v-64h-256z"
+                                      fill="#181818" p-id="2713"></path>
+                                <path d="M832 160h-128V96H320v64H192c-19.2 0-32 12.8-32 32v704c0 19.2 12.8 32 32 32h640c19.2 0 32-12.8 32-32V192c0-19.2-12.8-32-32-32zM384 160h256v64h-256V160z m416 704H224V224h96v64h384V224h96v640z"
+                                      fill="#181818" p-id="2714">
+                                </path>
+                            </svg>
+                            &nbsp;&nbsp;Submissions
+                        </h5>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: {{ percent_student_submitted }}%"
+                                 aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <p>{{ submission_info.total_submissions }} out of {{ student_number }} students submitted</p>
+                        <p>{{ submission_info.complete_number }} marked as complete</p>
+                        <p>{{ submission_info.assign_number }} submissions assigned to you</p>
+                        <p>{{ submission_info.help_number }} elements flagged for help</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-3">
+                <div class="card p-3" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-3">
+                                <h3>
+                                    {{mean}} %
+                                </h3>
+                                <h5>
+                                Mean
+                                </h5>
+                            </div>
+                            <div class="col-3">
+                                <h3>{{ median }} %</h3>
+                                <h5>
+                                    Median
+                                </h5>
+                            </div>
+                            <div class="col-4">
+                                <h4>{{ std_dev }}</h4>
+                                <h5>
+                                    Standard dev
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div class="p-3">
+                <div class="card p-3" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <h5>&nbsp;Team progress</h5>
+                                {% if submission_info.total_submissions == 0 %}
+                                    <p style="font-size: 1em">No submissions received yet.</p>
+                                {% else %}
+                                <!-- Example 3 -->
+                                <div>
+                                    <canvas id="pieChart3" style="width: 55em; height: 20em"></canvas>
+                                </div>
+                                <label style="font-size: 1em">Marking is <strong>{{ total_progress }}%</strong> complete</label>
+                                <!--                                    <label style="float: left; font-size: 1em">{{ submission_info.total_submissions }} submissions made</label>-->
+                                <!--                                    <br>-->
+                                <!--                                    <label style="float: left; font-size: 1em">{{ submission_info.complete_number }} marked as complete</label>-->
+                                <!--                                    <label style="font-size: 25px">-->
+                                <!--                                        <b>Total Progress</b>-->
+                                <!--                                    </label>-->
+                                <!--                                    <div class="circleProgress_wrapper" id="circle1">-->
+                                <!--                                        <label>-->
+                                <!--                                            <span class="percent">{{ total_progress }}</span><b>%</b>-->
+                                <!--                                        </label>-->
+                                {% endif %}
+                            </div>
+                            <!--                                </div>-->
+                            <div class="col-6">
+                                <h5>&nbsp;Your progress</h5>
+                                {% if submission_info.assign_number == 0 %}
+                                    <p style="padding-top:4em; font-size: 1em">No work is assigned to you yet.</p>
+                                    <canvas id="pieChart1"></canvas>
+                                {% else %}
+                                <div>
+                                    <!-- Example 1 -->
+                                    <canvas id="pieChart1" style="width: 55em; height: 20em"></canvas>
+                                </div>
+
+                                <label style="font-size: 1em">You've finished <strong>{{ your_progress }}%</strong> of
+                                    your assigned work</label>
+                                <!--                                    <label style="font-size: 1em">{{ submission_info.your_complete }} submissions completed</label>-->
+                                <!--                                    <label style="font-size: 25px">-->
+                                <!--                                        <b>Your Progress</b>-->
+                                <!--                                    </label>-->
+                                <!--                                    <div class="circleProgress_wrapper2" id="circle2">-->
+                                <!--                                        <div class="wrapper2 right2">-->
+                                <!--                                            <div class="circleProgress2 rightcircle2"></div>-->
+                                <!--                                        </div>-->
+                                <!--                                        <div class="wrapper2 left2">-->
+                                <!--                                            <div class="circleProgress2 leftcircle2"-->
+                                <!--                                                 style="transform: rotate(45deg);-->
+                                <!--                                                        border-top: 5px solid rgb(204, 204, 204);-->
+                                <!--                                                        border-right: 5px solid rgb(204, 204, 204)"></div>-->
+                                <!--                                        </div>-->
+                                <!--                                        <label>-->
+                                <!--                                            <span class="percent2">{{ your_progress }}</span><b>%</b>-->
+                                <!--                                        </label>-->
+                                <!--                                    </div>-->
+                                {% endif %}
+                            </div>
+                            <!--                                <p style=" float: left; font-size: 1em">Marking is <strong>{{ total_progress }}%</strong> complete &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-->
+                            <!--                                You have finished <strong>{{ your_progress }}%</strong> of your assigned work</p>-->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--                <div class="card p-3" style="box-shadow: 0px 0px 30px -5px lightgrey;">-->
+            <!--                        <div class="card-body">-->
+            <!--                            <div class="row">-->
+            <!--                                <div class="col-6">-->
+            <!--                                    &lt;!&ndash; Example 3 &ndash;&gt;-->
+            <!--                                    <div>-->
+            <!--                                        <canvas id="radar1"></canvas>-->
+            <!--                                    </div>-->
+            <!--                                </div>-->
+            <!--                            </div>-->
+            <!--                        </div>-->
+            <!--                </div>-->
+
+            <div class="p-3">
+                <div class="card p-3" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                    <div class="card-body">
+                        <div class="row">
+                            <h5>Grade distribution</h5>
+                            <div>
+                                <!-- Example 1 -->
+                                <canvas id="hist1"></canvas>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+<!--<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+<link src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.css"></link>
+<!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>-->
+
+<script>
+    // MAKE ROUNDED EDGES FOR PIE CHARTS
+    Chart.defaults.RoundedDoughnut = Chart.helpers.clone(Chart.defaults.doughnut);
+    Chart.controllers.RoundedDoughnut = Chart.controllers.doughnut.extend({
+        draw: function (ease) {
+            var ctx = this.chart.ctx;
+            var easingDecimal = ease || 1;
+            var arcs = this.getMeta().data;
+            Chart.helpers.each(arcs, function (arc, i) {
+                arc.transition(easingDecimal).draw();
+
+                var pArc = arcs[i === 0 ? arcs.length - 1 : i - 1];
+                var pColor = pArc._view.backgroundColor;
+
+                var vm = arc._view;
+                var radius = (vm.outerRadius + vm.innerRadius) / 2;
+                var thickness = (vm.outerRadius - vm.innerRadius) / 2;
+                var startAngle = Math.PI - vm.startAngle - Math.PI / 2;
+                var angle = Math.PI - vm.endAngle - Math.PI / 2;
+
+                ctx.save();
+                ctx.translate(vm.x, vm.y);
+
+                ctx.fillStyle = i === 0 ? vm.backgroundColor : pColor;
+                ctx.beginPath();
+                ctx.arc(radius * Math.sin(startAngle), radius * Math.cos(startAngle), thickness, 0, 2 * Math.PI);
+                ctx.fill();
+
+                ctx.fillStyle = vm.backgroundColor;
+                ctx.beginPath();
+                ctx.arc(radius * Math.sin(angle), radius * Math.cos(angle), thickness, 0, 2 * Math.PI);
+                ctx.fill();
+
+                ctx.restore();
+            });
+        }
+    });
+
+    var total_prog = "{{ total_progress }}"
+
+    var total_completed = "{{ submission_info.complete_number }}"
+    var total_submissions = "{{ submission_info.total_submissions }}"
+    var completed_by_user = "{{ submission_info.your_complete }}"
+    var assigned_to_user = "{{ submission_info.assign_number }}"
+    console.log(total_prog)
+
+    var marker_names = "{{ names_on_course }}"
+    console.log("beg", marker_names)
+    marker_names = marker_names.split(/&#x27;/)
+    marker_names.pop()
+    marker_names.shift()
+
+
+    const marker_names2 = marker_names.filter(element => ![', '].includes(element));
+    console.log("names_on_course", marker_names2)
+
+    console.log("total_submissions: ", total_submissions);
+    if (total_submissions==0){
+        console.log("no submissions yet.");
+    } else {
+        const ctx = ctx3 = document.getElementById("pieChart3");
+
+        // EXAMPLE 3
+        new Chart(ctx3, {
+            type: 'pie',
+            options: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        // boxWidth: 10,
+                        fontStyle: 'italic',
+                        fontColor: '#aaa',
+                        usePointStyle: true,
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                    display: false,
+                },
+            },
+            data: {
+                labels: marker_names2,
+                datasets: [
+                    {
+                        data: {{ data }},
+                        borderWidth: 5,
+                        backgroundColor: [
+                            '#F0EDFF',
+                            '#35BC98',
+                            '#00A7A6',
+                            '#0077A4',
+                            '#454574',
+                            '#464555',
+                        ],
+                        hoverBackgroundColor: [
+                            'rgba(240,237,255,0.8)',
+                            'rgba(0,200,147,0.8)',
+                            // "#f5e132",
+                        ]
+                    }]
+            }
+        });
+    }
+
+    console.log("nothing assigned_to_user: "+ assigned_to_user)
+    if (assigned_to_user==0) {
+        console.log("nothing assigned to you yet.");
+    } else {
+        // EXAMPLE 1
+        const ctx1 = document.getElementById("pieChart1");
+        var pieChart1 = new Chart(ctx1, {
+            type: 'doughnut',
+            options: {
+                cutoutPercentage: 50,
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        // boxWidth: 10,
+                        fontStyle: 'italic',
+                        fontColor: '#aaa',
+                        usePointStyle: true,
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                    display: false,
+                },
+            },
+            data: {
+                labels: [
+                    "Completed",
+                    "Remaining",
+                    // "Third",
+                    // "Fourth"
+                ],
+                datasets: [
+                    {
+                        data: [completed_by_user, assigned_to_user - completed_by_user],
+                        borderWidth: 5,
+                        backgroundColor: [
+                            '#00C893',
+                            '#F0EDFF',
+                            // "#110f48",
+                            // "#f8f8fa"
+                        ],
+                        hoverBackgroundColor: [
+                            'rgba(0,200,147,0.8)',
+                            'rgba(240,237,255,0.8)',
+                            // "#110f48",
+                            // "#f8f8fa"
+                        ]
+                    }]
+            }
+        });
+    }
+
+    // HISTOGRAM grades
+    const ctx5 = document.getElementById('hist1');
+
+    new Chart(ctx5, {
+        type: 'bar',
+        data: {
+            labels: ['[ 0, 10 )', '[ 10, 19 )', '[ 20, 29 )', '[ 30, 39 )', '[ 40, 49 )', '[ 50, 59 )', '[ 60, 69 )', '[ 70, 79 )', '[ 80, 89 )', '[ 90, 100 ]'],
+            datasets: [{
+                label: '# of Students',
+                data: {{ hist_data }},
+                borderWidth: 1,
+                backgroundColor: [
+                    "rgba(141,85,136,0.8)",
+                    "rgba(141,85,136,0.8)",
+                    "rgba(141,85,136,0.8)",
+                    "rgba(141,85,136,0.8)",
+                    "rgba(141,85,136,0.8)",
+                    "rgba(141,85,136,0.8)",
+                    "rgba(141,85,136,0.8)",
+                    "rgba(141,85,136,0.8)",
+                    "rgba(141,85,136,0.8)",
+                    "rgba(141,85,136,0.8)",
+                ],
+                borderColor: [
+                    "#8D5588",
+                    "#8D5588",
+                    "#8D5588",
+                    "#8D5588",
+                    "#8D5588",
+                    "#8D5588",
+                    "#8D5588",
+                    "#8D5588",
+                    "#8D5588",
+                    "#8D5588",
+                ]
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            legend: {
+                display: false,
+            },
+        },
+    });
+
+
+</script>
+
+{% endblock %}

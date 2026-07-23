@@ -1,0 +1,38 @@
+from django.urls import path
+
+from MarkEd.teacher import views
+
+urlpatterns = [
+    # path('', views.home),
+    path('home/', views.home),
+    path('assignment/', views.assignment),
+    path('mark/', views.mark, name='mark'),
+    path('compare/', views.compare),
+    path('setupForm/', views.setupForm),
+    path('addElement/', views.addElement),
+    path('deleteElement/<int:pk>', views.deleteElement, name='deleteElement'),
+    path('addTeam/', views.addTeam),
+    path('generate-feedback/', views.generateFeedback, name='generate_feedback'),
+    path('update-reaction/', views.update_reaction, name='update_reaction'),
+    path('save-feedback/', views.save_feedback, name='save_feedback'),
+    path('get-suggestions/', views.get_suggestions, name='get_suggestions'),
+    path('get-search-results/', views.get_search_results, name='get_search_results'),
+    path('get-criteria-data/<int:criteria_id>/', views.get_criteria_data, name='get_criteria_data'),
+    path('get-element-data/<int:element_id>/', views.get_element_data, name='get_element_data'),
+    path('add-criteria/', views.add_criteria, name='add_criteria'),
+    path('update-criteria/', views.update_criteria, name='update_criteria'),
+    path('delete-criteria/', views.delete_criteria, name='delete_criteria'),
+    path('add-element/', views.add_element, name='add_element'),
+    path('update-element/', views.update_element, name='update_element'),
+    path('delete-element/', views.delete_element, name='delete_element'),
+    path('update-marking-scheme/<int:criteria_id>/', views.update_marking_scheme, name='update_marking_scheme'),
+    path('get-criteria-marks-summary/<int:criteria_id>/', views.get_criteria_marks_summary, name='get_criteria_marks_summary'),
+    path('last_update/', views.last_update, name='last_update'),
+    path('module_switch/',views.module_switch, name='module_switch'),
+    path('module_configuration/', views.module_configuration, name='module_configuration'),
+    path('submission_module_configuration/', views.submission_module_configuration, name='submission_module_configuration'),
+    path('save_formats/', views.save_formats, name='save_formats'),
+    path('get_submission_files/', views.get_submission_files, name='get_submission_files'),
+    path('save_size/',views.save_size, name='save_size'),
+    path('save_name/',views.save_name, name='save_name'),
+]

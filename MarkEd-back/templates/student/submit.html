@@ -1,0 +1,245 @@
+{% extends "student/base.html" %}
+{% block mainbody %}
+    {% load static %}
+    <script>
+    function changePDF(select){
+        document.querySelector("#fileContainer").style.display = "none";
+        document.querySelector("#embedContainer").innerHTML = "";
+        document.querySelector("#embedContainer").innerHTML = "<embed src='" + select.value + "' id='fileContainer' style='width: 100%; height: 1000px; ' />";
+    }
+    </script>
+    
+    <div class="p-5 mb-4 rounded-3">
+        <div class="row" style="padding-bottom: 25px">
+            <div class="col">
+                <button type="button"
+                        class="btn btn-secondary"
+                        style="margin-right: 20px;
+                               background-color : #454574"
+                        value="Previous Page"
+                        onClick="javascript:history.go(-1);">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="16"
+                         height="16"
+                         fill="currentColor"
+                         class="bi bi-arrow-return-left"
+                         viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M14.5 1.5a.5.5 0 0 1 .5.5v4.8a2.5 2.5 0 0 1-2.5 2.5H2.707l3.347 3.346a.5.5 0 0 1-.708.708l-4.2-4.2a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 8.3H12.5A1.5 1.5 0 0 0 14 6.8V2a.5.5 0 0 1 .5-.5" />
+                    </svg>
+                    Back
+                </button>
+            </div>
+        </div>
+        <div class="row" style="padding-bottom: 50px">
+            <div class="col">
+                <!--            <div class="row row-cols-auto">-->
+                <!--                <div class="col">-->
+                <!--                <button type="button"
+                        class="btn btn-secondary"
+                        style="margin-right: 20px;
+                               background-color : #454574">-->
+                <!--                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="16"
+                         height="16"
+                         fill="currentColor"
+                         class="bi bi-arrow-return-left"
+                         viewBox="0 0 16 16">-->
+                <!--                        <path fill-rule="evenodd" d="M14.5 1.5a.5.5 0 0 1 .5.5v4.8a2.5 2.5 0 0 1-2.5 2.5H2.707l3.347 3.346a.5.5 0 0 1-.708.708l-4.2-4.2a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 8.3H12.5A1.5 1.5 0 0 0 14 6.8V2a.5.5 0 0 1 .5-.5" />-->
+                <!--                    </svg>-->
+                <!--                    Back-->
+                <!--                </button>-->
+                <!--                    </div>-->
+                <div class="col">
+                    <h2 class="display-6 fw-bold">{{ current_assignment.assignmentTitle }}</h2>
+                    <h3 class="display-7 fw-bold" style="color: gray;">{{ current_course.courseName }}</h3>
+                </div>
+                <!--        </div>-->
+                <div class="alert alert-warning" style="margin-top:20px;">
+                    file number: {{student_submission.file_number}}
+                    <br>
+                    <!-- file name: e.g., {{student_submission.file_name}}
+                    <br>
+                    allowed file format: {{student_submission.allowed_file_format}}
+                    <br>
+                    file size: {{student_submission.file_size}} mb
+                    <br> -->
+                    is multiple submission allowed: {% if student_submission.is_multisubmission_allowed == 1 %}Yes{%else%}No {%endif%}
+                    <br>
+                    submission times Left: {{student_submission.maximum_submissions}}
+                    <br>
+                    is late submission allowed: {% if student_submission.is_late_submission == 1 %}Yes{%else%}No {%endif%}
+                    
+                </div>
+            </div>
+            <div class="col">
+                <div class="container-fluid text-white">
+                    <div class="row h-80 justify-content-center align-items-center">
+                        <div style="max-width: 600px;
+                                    background-color: #20323C;
+                                    box-shadow: 0px 0px 18px 11px lightgrey"
+                             class="col w-200  py-5 px-4 rounded">
+                            <form action="/student/submit/?assignment={{ assignment_id }}"
+                                  method="post"
+                                  enctype="multipart/form-data">
+                                {% csrf_token %}
+                                {% if is_any_submission %}
+                                    <h1 class="text-center">Re-submit your file</h1>
+                                {% else %}
+                                    <h1 class="text-center">Submit your file</h1>
+                                {% endif %}
+                                {%for i in files%}
+                                    
+                                    <h2>File {{i}}</h2>
+                                    <div class="alert alert-warning" style="margin-top:20px">
+                                        file name: e.g., <span id="name{{i}}"></span>
+                                        <br>
+                                        allowed file format: <span id="format{{i}}"></span>
+                                        <br>
+                                        file size: <span id="size{{i}}"></span> mb
+                                        
+                                    </div>
+                                    
+                                    <div class="input-group mb-3">
+                                        <div class="input-group">
+                                            <input type="file"
+                                                class="form-control"
+                                                name="submit_file"
+                                                onchange="checkFile('{{i}}')"
+                                                id="file{{i}}"
+                                                >
+                                        </div>
+                                    </div>
+                                    <div id="error{{i}}" style="display:none" class="alert alert-danger"></div>
+                                {%endfor%}
+
+                                
+                                <!-- <div style="display: none;" name="submissionTimes" value="{{student_submission.maximum_submissions}}"></div> -->
+                                <div class="form-group">
+                                    <button type="submit" id="liveAlertBtn" class="btn btn-primary w-100" {% if student_submission.maximum_submissions == 0 %}disabled{% endif %}>Submit</button>
+                                </div>
+                                <div id="error_message" class="alert alert-warning" style="margin-top:20px;display:none"></div>
+                                
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+
+        <div class="row">
+            <div class="card p-0" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                <div class="card-header">
+                    <div class="card-header"
+                         onmouseover="this.style.backgroundColor = 'lightgray'"
+                         onmouseout="this.style.backgroundColor = '#dee2e6'"
+                         style="background-color : #dee2e6">
+                        <h2>Your previously submitted files</h2>
+                    </div>
+                    {% if is_any_submission %}
+                        <div class="row" style="padding-top: 5px">
+                            <div class="col-8">Student ID: {{ submission.student.userNumber }}</div>
+                            <div class="col-4 text-end">
+                                <select class="form-select"
+                                        onchange="changePDF(this)"
+                                        style="box-shadow: 0px 0px 4px 2px lightgrey inset">
+                                    {% for related_submission in related_submissions %}
+                                        <option value="/statics/media/{{ related_submission.submissionFile }}">
+                                            Attempt {{ forloop.revcounter }}: {{ related_submission.submissionFile|cut:'submission/' }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if is_any_submission %}
+                        <div style="overflow: auto;" id="embedContainer">
+                            <embed src="/statics/media/{{ submission.submissionFile }}"
+                                   id="fileContainer"
+                                   style="width: 100%;
+                                          height: 1000px" />
+                        </div>
+                    {% else %}
+                        <h3 class="text-center fw-bolder" style="justify-center">No submissions to display.</h3>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        var button = document.getElementById("liveAlertBtn")
+        function checkFile(id) {
+            var files = $('#file' + id).get(0); // 获取选中的文件
+            var file = files.files[0]
+            var error = document.getElementById('error' + id)
+            var format = document.getElementById('format' + id)
+            var size = document.getElementById('size' + id)
+
+            if(file.size > size.textContent * 1024 * 1024){
+                error.style = "margin-top:20px;display:block"
+                error.innerHTML = "file's size exceeds!"
+                button.disabled = true
+                return
+            }else{
+                var names = file.name.split(".")
+                var current_format = names[names.length - 1]
+                if(format.textContent == current_format){
+                    
+                }else{
+                    error.style = "margin-top:20px;display:block"
+                    error.innerHTML = "this file format is not allowed!"
+                    button.disabled = true
+                    return
+                }
+            }
+
+            button.disabled = false;
+            error.style = "margin-top:20px;display:none"  
+        }
+
+            
+
+        
+       
+
+        window.onload = function(){
+            getFile()
+
+        }
+        function getFile(){
+
+            for(i = 1; i <= '{{student_submission.file_number}}'; i++){
+                queryAndSet(i)
+            }
+            
+        }
+
+        function queryAndSet(id){
+            var format = document.getElementById('format' + id)
+            var size = document.getElementById('size' + id)
+            var name = document.getElementById('name' + id)
+                $.ajax({
+                    url: "/student/get_file/",
+                    type: 'post',
+                    data: {
+                        "csrfmiddlewaretoken":"{{ csrf_token }}",
+                        fileId : id,
+                        assignment: '{{assignment_id}}'
+                    },
+                    success: function(data) {        
+                        format.textContent = data.format
+                        size.textContent = data.size
+                        name.textContent = data.name
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.log('失败:', textStatus, errorThrown);
+                    }
+                });
+        }
+
+    </script>
+{% endblock %}

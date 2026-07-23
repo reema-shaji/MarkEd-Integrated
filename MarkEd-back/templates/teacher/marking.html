@@ -1,0 +1,526 @@
+{% extends "teacher/base.html" %}
+{% block mainbody %}
+    {% load static %}
+    <div class="p-5 mb-4 rounded-3">
+        {% if messages %}
+        <div class="messages" style="width : 84%;">
+            {% for message in messages %}
+            <div class="alert alert-success alert-dismissible" role="alert">
+                <div>{{ message }}</div>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="container-fluid py-5">
+            <h1 class="display-5 fw-bold">
+                <svg t="1623034196068"
+                     class="icon"
+                     viewBox="0 0 1024 1024"
+                     version="1.1"
+                     xmlns="http://www.w3.org/2000/svg"
+                     p-id="9101"
+                     width="50"
+                     height="50">
+                    <path d="M880 184H712v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H384v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H144c-17.7 0-32 14.3-32 32v664c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V216c0-17.7-14.3-32-32-32z m-40 656H184V256h128v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h256v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h128v584z" p-id="9102" fill="#000000">
+                    </path>
+                    <path d="M688 420h-55.2c-5.1 0-10 2.5-13 6.6L468.9 634.4l-64.7-89c-3-4.1-7.8-6.6-13-6.6H336c-6.5 0-10.3 7.4-6.5 12.7l126.4 174c6.4 8.8 19.6 8.8 26 0l212.6-292.7c3.8-5.4 0-12.8-6.5-12.8z" p-id="9103" fill="#000000">
+                    </path>
+                </svg>
+                Marking
+            </h1>
+            <p class="col-md-8 fs-4" style="color: gray;">
+                Raw data on every student: quickly edit by double tapping or enter the marking view for selected submission(s)
+            </p>
+            <div class="card mt-4 p-4"
+                 style="box-shadow: 0px 0px 30px -5px lightgrey;
+                        width: 84%">
+                <h6 style="color : #d81e06;">
+                    <svg t="1627992099644"
+                         class="icon"
+                         viewBox="0 0 1024 1024"
+                         version="1.1"
+                         xmlns="http://www.w3.org/2000/svg"
+                         p-id="18050"
+                         width="20"
+                         height="20">
+                        <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18051" fill="#d81e06">
+                        </path>
+                        <path d="M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-22.7c0-19.7 12.4-37.7 30.9-44.8 59-22.7 97.1-74.7 97.1-132.5 0.1-39.3-17.1-76-48.3-103.3z" p-id="18052" fill="#d81e06">
+                        </path>
+                        <path d="M512 732m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="18053" fill="#d81e06"></path>
+                    </svg>
+                    #help
+                </h6>
+                <h6 style="color : #1afa29;">
+                    <svg t="1627992190925"
+                         class="icon"
+                         viewBox="0 0 1024 1024"
+                         version="1.1"
+                         xmlns="http://www.w3.org/2000/svg"
+                         p-id="18487"
+                         width="20"
+                         height="20">
+                        <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18488" fill="#1afa29">
+                        </path>
+                        <path d="M512 688m-48 0a48 48 0 1 0 96 0 48 48 0 1 0-96 0Z" p-id="18489" fill="#1afa29"></path>
+                        <path d="M488 576h48c4.4 0 8-3.6 8-8V296c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8z" p-id="18490" fill="#1afa29">
+                        </path>
+                    </svg>
+                    #moderate
+                </h6>
+                <div class="row text-end">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle"
+                                type="button"
+                                id="dropdownMenuButton1"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">Mark By Question</button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                            {% for page_element in page_elements %}
+                                <li>
+                                    <a class="dropdown-item"
+                                       href="/teacher/mark?submission={{ page_info.0.submission_id }}&question={{ page_element.pk }}">{{ page_element.elementName }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="card"
+                     style="overflow: auto;
+                            margin-top: 10px;
+                            box-shadow: 0px 0px 4px 2px lightgrey inset">
+                    <table class="table table-hover align-middle text-center"
+                           style="table-layout:fixed;
+                                  word-break:break-all">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="width:80px;">TAGS</th>
+                                <th scope="col" style="width:120px;">STUDENT ID</th>
+                                <th scope="col" style="width:110px;">ATTEMPTS</th>
+                                <th scope="col" style="width:210px;">LAST SUBMISSION</th>
+                                <th scope="col" style="width:150px;">TOTAL SCORE</th>
+                                {% for page_element in page_elements %}
+                                    <th scope="col" style="width:80px;">{{ page_element.elementName }}</th>
+                                {% endfor %}
+                                {% for page_element in page_elements %}
+                                    <th scope="col" style="width:155px;">{{ page_element.elementName }} FEEDBACK</th>
+                                {% endfor %}
+                                {% if mark_permission == 2 %}<th scope="col" style="width:180px;">Operate</th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for info in page_info %}
+                                <tr style="height:80px;">
+                                    <td>
+                                        {% if info.tags.0 %}
+                                            <svg t="1627992099644"
+                                                 class="icon"
+                                                 viewBox="0 0 1024 1024"
+                                                 version="1.1"
+                                                 xmlns="http://www.w3.org/2000/svg"
+                                                 p-id="18050"
+                                                 width="20"
+                                                 height="20">
+                                                <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18051" fill="#d81e06">
+                                                </path>
+                                                <path d="M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-22.7c0-19.7 12.4-37.7 30.9-44.8 59-22.7 97.1-74.7 97.1-132.5 0.1-39.3-17.1-76-48.3-103.3z" p-id="18052" fill="#d81e06">
+                                                </path>
+                                                <path d="M512 732m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="18053" fill="#d81e06"></path>
+                                            </svg>
+                                        {% endif %}
+                                        {% if info.tags.1 %}
+                                            <svg t="1627992190925"
+                                                 class="icon"
+                                                 viewBox="0 0 1024 1024"
+                                                 version="1.1"
+                                                 xmlns="http://www.w3.org/2000/svg"
+                                                 p-id="18487"
+                                                 width="20"
+                                                 height="20">
+                                                <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18488" fill="#1afa29">
+                                                </path>
+                                                <path d="M512 688m-48 0a48 48 0 1 0 96 0 48 48 0 1 0-96 0Z" p-id="18489" fill="#1afa29"></path>
+                                                <path d="M488 576h48c4.4 0 8-3.6 8-8V296c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8z" p-id="18490" fill="#1afa29">
+                                                </path>
+                                            </svg>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ info.student_number }}</td>
+                                    <td>{{ info.attempts }}</td>
+                                    <td>{{ info.last_submission }}</td>
+                                    <td>{{ info.total_score }}</td>
+                                    {% for score in info.elements_score %}
+                                        <td>
+                                            {% if score.0.0 %}
+                                                <svg t="1627992099644"
+                                                     class="icon"
+                                                     viewBox="0 0 1024 1024"
+                                                     version="1.1"
+                                                     xmlns="http://www.w3.org/2000/svg"
+                                                     p-id="18050"
+                                                     width="20"
+                                                     height="20">
+                                                    <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18051" fill="#d81e06">
+                                                    </path>
+                                                    <path d="M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-22.7c0-19.7 12.4-37.7 30.9-44.8 59-22.7 97.1-74.7 97.1-132.5 0.1-39.3-17.1-76-48.3-103.3z" p-id="18052" fill="#d81e06">
+                                                    </path>
+                                                    <path d="M512 732m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="18053" fill="#d81e06"></path>
+                                                </svg>
+                                            {% endif %}
+                                            {% if score.0.1 %}
+                                                <svg t="1627992190925"
+                                                     class="icon"
+                                                     viewBox="0 0 1024 1024"
+                                                     version="1.1"
+                                                     xmlns="http://www.w3.org/2000/svg"
+                                                     p-id="18487"
+                                                     width="20"
+                                                     height="20">
+                                                    <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18488" fill="#1afa29">
+                                                    </path>
+                                                    <path d="M512 688m-48 0a48 48 0 1 0 96 0 48 48 0 1 0-96 0Z" p-id="18489" fill="#1afa29"></path>
+                                                    <path d="M488 576h48c4.4 0 8-3.6 8-8V296c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8z" p-id="18490" fill="#1afa29">
+                                                    </path>
+                                                </svg>
+                                            {% endif %}
+                                            {{ score.1 }}
+                                        </td>
+                                    {% endfor %}
+                                    {% for feedback in info.elements_feedback %}
+                                        <td style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">
+                                            {% if feedback.0.0 %}
+                                                <svg t="1627992099644"
+                                                     class="icon"
+                                                     viewBox="0 0 1024 1024"
+                                                     version="1.1"
+                                                     xmlns="http://www.w3.org/2000/svg"
+                                                     p-id="18050"
+                                                     width="20"
+                                                     height="20">
+                                                    <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18051" fill="#d81e06">
+                                                    </path>
+                                                    <path d="M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-22.7c0-19.7 12.4-37.7 30.9-44.8 59-22.7 97.1-74.7 97.1-132.5 0.1-39.3-17.1-76-48.3-103.3z" p-id="18052" fill="#d81e06">
+                                                    </path>
+                                                    <path d="M512 732m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="18053" fill="#d81e06"></path>
+                                                </svg>
+                                            {% endif %}
+                                            {% if feedback.0.1 %}
+                                                <svg t="1627992190925"
+                                                     class="icon"
+                                                     viewBox="0 0 1024 1024"
+                                                     version="1.1"
+                                                     xmlns="http://www.w3.org/2000/svg"
+                                                     p-id="18487"
+                                                     width="20"
+                                                     height="20">
+                                                    <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18488" fill="#1afa29">
+                                                    </path>
+                                                    <path d="M512 688m-48 0a48 48 0 1 0 96 0 48 48 0 1 0-96 0Z" p-id="18489" fill="#1afa29"></path>
+                                                    <path d="M488 576h48c4.4 0 8-3.6 8-8V296c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8z" p-id="18490" fill="#1afa29">
+                                                    </path>
+                                                </svg>
+                                            {% endif %}
+                                            {{ feedback.1 }}
+                                        </td>
+                                    {% endfor %}
+                                    {% if mark_permission == 2 %}
+                                        {% if info.status == "Finished" %}
+                                            {% if request.session.user_role == "Academic" %}
+                                                <td>
+                                                    <a type="button"
+                                                       class="btn btn-outline-primary"
+                                                       href="/teacher/mark?submission={{ info.submission_id }}">Moderate</a>
+                                                </td>
+                                            {% else %}
+                                                <td>
+                                                    <a type="button"
+                                                       class="btn btn-outline-primary"
+                                                       href="/teacher/mark?submission={{ info.submission_id }}">View Feedback</a>
+                                                </td>
+                                            {% endif %}
+                                        {% else %}
+                                            <td>
+                                                <a type="button"
+                                                   class="btn btn-outline-primary"
+                                                   href="/teacher/mark?submission={{ info.submission_id }}">Mark</a>
+                                            </td>
+                                        {% endif %}
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+
+                            {% if are_subs_enabled == 0 %}
+                                {% for info in unsubmitted_page_info %}
+                                    <tr style="height:80px;">
+                                    <td>
+                                        {% if info.tags.0 %}
+                                            <svg t="1627992099644"
+                                                 class="icon"
+                                                 viewBox="0 0 1024 1024"
+                                                 version="1.1"
+                                                 xmlns="http://www.w3.org/2000/svg"
+                                                 p-id="18050"
+                                                 width="20"
+                                                 height="20">
+                                                <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18051" fill="#d81e06">
+                                                </path>
+                                                <path d="M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-22.7c0-19.7 12.4-37.7 30.9-44.8 59-22.7 97.1-74.7 97.1-132.5 0.1-39.3-17.1-76-48.3-103.3z" p-id="18052" fill="#d81e06">
+                                                </path>
+                                                <path d="M512 732m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="18053" fill="#d81e06"></path>
+                                            </svg>
+                                        {% endif %}
+                                        {% if info.tags.1 %}
+                                            <svg t="1627992190925"
+                                                 class="icon"
+                                                 viewBox="0 0 1024 1024"
+                                                 version="1.1"
+                                                 xmlns="http://www.w3.org/2000/svg"
+                                                 p-id="18487"
+                                                 width="20"
+                                                 height="20">
+                                                <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18488" fill="#1afa29">
+                                                </path>
+                                                <path d="M512 688m-48 0a48 48 0 1 0 96 0 48 48 0 1 0-96 0Z" p-id="18489" fill="#1afa29"></path>
+                                                <path d="M488 576h48c4.4 0 8-3.6 8-8V296c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8z" p-id="18490" fill="#1afa29">
+                                                </path>
+                                            </svg>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ info.student_number }}</td>
+                                    <td>{{ info.attempts }}</td>
+                                    <td>{{ info.last_submission }}</td>
+                                    <td>{{ info.total_score }}</td>
+                                    {% for score in info.elements_score %}
+                                        <td>
+                                            {% if score.0.0 %}
+                                                <svg t="1627992099644"
+                                                     class="icon"
+                                                     viewBox="0 0 1024 1024"
+                                                     version="1.1"
+                                                     xmlns="http://www.w3.org/2000/svg"
+                                                     p-id="18050"
+                                                     width="20"
+                                                     height="20">
+                                                    <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18051" fill="#d81e06">
+                                                    </path>
+                                                    <path d="M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-22.7c0-19.7 12.4-37.7 30.9-44.8 59-22.7 97.1-74.7 97.1-132.5 0.1-39.3-17.1-76-48.3-103.3z" p-id="18052" fill="#d81e06">
+                                                    </path>
+                                                    <path d="M512 732m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="18053" fill="#d81e06"></path>
+                                                </svg>
+                                            {% endif %}
+                                            {% if score.0.1 %}
+                                                <svg t="1627992190925"
+                                                     class="icon"
+                                                     viewBox="0 0 1024 1024"
+                                                     version="1.1"
+                                                     xmlns="http://www.w3.org/2000/svg"
+                                                     p-id="18487"
+                                                     width="20"
+                                                     height="20">
+                                                    <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18488" fill="#1afa29">
+                                                    </path>
+                                                    <path d="M512 688m-48 0a48 48 0 1 0 96 0 48 48 0 1 0-96 0Z" p-id="18489" fill="#1afa29"></path>
+                                                    <path d="M488 576h48c4.4 0 8-3.6 8-8V296c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8z" p-id="18490" fill="#1afa29">
+                                                    </path>
+                                                </svg>
+                                            {% endif %}
+                                            {{ score.1 }}
+                                        </td>
+                                    {% endfor %}
+                                    {% for feedback in info.elements_feedback %}
+                                        <td style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">
+                                            {% if feedback.0.0 %}
+                                                <svg t="1627992099644"
+                                                     class="icon"
+                                                     viewBox="0 0 1024 1024"
+                                                     version="1.1"
+                                                     xmlns="http://www.w3.org/2000/svg"
+                                                     p-id="18050"
+                                                     width="20"
+                                                     height="20">
+                                                    <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18051" fill="#d81e06">
+                                                    </path>
+                                                    <path d="M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-22.7c0-19.7 12.4-37.7 30.9-44.8 59-22.7 97.1-74.7 97.1-132.5 0.1-39.3-17.1-76-48.3-103.3z" p-id="18052" fill="#d81e06">
+                                                    </path>
+                                                    <path d="M512 732m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="18053" fill="#d81e06"></path>
+                                                </svg>
+                                            {% endif %}
+                                            {% if feedback.0.1 %}
+                                                <svg t="1627992190925"
+                                                     class="icon"
+                                                     viewBox="0 0 1024 1024"
+                                                     version="1.1"
+                                                     xmlns="http://www.w3.org/2000/svg"
+                                                     p-id="18487"
+                                                     width="20"
+                                                     height="20">
+                                                    <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" p-id="18488" fill="#1afa29">
+                                                    </path>
+                                                    <path d="M512 688m-48 0a48 48 0 1 0 96 0 48 48 0 1 0-96 0Z" p-id="18489" fill="#1afa29"></path>
+                                                    <path d="M488 576h48c4.4 0 8-3.6 8-8V296c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8z" p-id="18490" fill="#1afa29">
+                                                    </path>
+                                                </svg>
+                                            {% endif %}
+                                            {{ feedback.1 }}
+                                        </td>
+                                    {% endfor %}
+                                    {% if mark_permission == 2 %}
+                                        {% if info.status == "Finished" %}
+                                            {% if request.session.user_role == "Academic" %}
+                                                <td>
+                                                    <a type="button"
+                                                       class="btn btn-outline-primary"
+                                                       href="/teacher/mark?submission={{ info.submission_id }}">Moderate</a>
+                                                </td>
+                                            {% else %}
+                                                <td>
+                                                    <a type="button"
+                                                       class="btn btn-outline-primary"
+                                                       href="/teacher/mark?submission={{ info.submission_id }}">View Feedback</a>
+                                                </td>
+                                            {% endif %}
+                                        {% else %}
+                                            <td>
+                                                <a type="button"
+                                                   class="btn btn-outline-primary disabled"
+                                                   href="/teacher/mark?submission={{ info.submission_id }}">Mark</a>
+                                            </td>
+                                        {% endif %}
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- adjust marks -->
+                <div class="row text-end" style="margin-top: 10px">
+                    <!-- Button trigger modal -->
+<!--                    {{ criteria_count }}-->
+                    <div>
+                        {% if user_role == "A" and criteria_count == 1 %}
+                        <button type="button" class="btn btn-primary" type="button" data-bs-toggle="modal"
+                                data-bs-target="#exampleModal">
+                            Bulk adjust marks
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-primary disabled" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            Bulk adjust marks
+                        </button>
+                        {% endif %}
+                        <button type="button" class="btn btn-primary disabled" type="button">
+                            Release marks
+                        </button>
+                    </div>
+                </div>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                         aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLabel">Bulk Adjust Marks</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+
+                                    <form action="/teacher/assignment/?page=marking&assignment={{ assignment.pk }}" method="post" name="bulkAssignForm" id="bulkAssignForm">
+                                        {% csrf_token %}
+                                        <table class="table table-hover align-middle text-center"
+                                               style="table-layout:fixed;
+                                  word-break:break-all">
+                                            <thead>
+                                            <tr>
+<!--                                                <th scope="col" style="width: 85px">Select</th>-->
+                                                <th scope="col" style="width:120px;">STUDENT ID</th>
+                                                <th scope="col" style="width: 120px;">TOTAL SCORE</th>
+<!--                                                {% for page_element in page_elements %}-->
+<!--                                                <th scope="col" style="width:80px;">{{ page_element.elementName }}</th>-->
+<!--                                                {% endfor %}-->
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for info in page_info %}
+                                                <tr style="height:80px;">
+<!--                                                    <td>-->
+<!--                                                          <input class="form-check-input" type="checkbox" id="checkboxNoLabel" value="" aria-label="select to adjust marks">-->
+<!--                                                    </td>-->
+                                                    <td>
+                                                        <div class="form-check form-check-inline">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                   id="inlineCheckbox1" value="{{ info.submission_id }}" name="bulkStudentSub">
+                                                            <label class="form-check-label"
+                                                                   for="inlineCheckbox1">&nbsp;{{ info.student_number }}</label>
+                                                        </div>
+<!--                                                        <input type="checkbox" value=""-->
+<!--                                                               id="flexCheckDefault">-->
+<!--                                                        <label class="form-check-label" for="flexCheckDefault">-->
+<!--                                                            -->
+<!--                                                        </label>-->
+                                                    </td>
+                                                    <td>{{ info.total_score }}</td>
+<!--                                                    {% for score in info.elements_score %}-->
+<!--                                                    <td>-->
+<!--                                                        {{ score.1 }}-->
+<!--                                                    </td>-->
+<!--                                                    {% endfor %}-->
+                                                </tr>
+                                                {% endfor %}
+
+                                            </tbody>
+                                        </table>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="bulkRadios"
+                                                   id="exampleRadios1" value="option1" checked>
+                                            <label class="form-check-label" for="exampleRadios1">
+                                                Scale marks by factor (i.e. 1.1)
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="bulkRadios"
+                                                   id="exampleRadios2" value="option2">
+                                            <label class="form-check-label" for="exampleRadios2">
+                                                Enter raw marks (i.e. 3)
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="bulkRadios"
+                                                   id="exampleRadios3" value="option3">
+                                            <label class="form-check-label" for="exampleRadios3">
+                                                Enter percentage (i.e. 60)
+                                            </label>
+                                        </div>
+
+                                        <div class="input-group mb-3">
+                                            <input type="number" min="0" max="100" step="0.01" class="form-control" id="validationCustom01" name="bulkAssignValue" required />
+                                            <div class="input-group-append">
+                                                <button type="submit" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+                                            </div>
+                                        </div>
+                                    </form>
+
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

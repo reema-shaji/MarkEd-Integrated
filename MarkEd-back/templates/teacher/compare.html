@@ -1,0 +1,683 @@
+{% extends "teacher/base.html" %}
+{% block mainbody %}
+    {% load static %}
+    <script>
+    function changeComparePDF(select){
+        var fileContainer = select.parentNode.parentNode.parentNode.parentNode.parentNode;
+        fileContainer.querySelector("#fileContainer").style.display = "none";
+        fileContainer.querySelector("#embedContainer").innerHTML = "";
+        fileContainer.querySelector("#embedContainer").innerHTML = "<embed src='" + select.value + "' id='fileContainer' style='width: 100%; height: 500px; ' />";
+    }
+    </script>
+    <div class="p-5 mb-4 rounded-3">
+        <div class="container-fluid py-2">
+            <div class="row">
+                <h1 class="display-5 fw-bold">Compare</h1>
+            </div>
+            <div class="row mt-4">
+                <div class="col-6">
+                    <div class="card p-0" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                        <div class="card-header">
+                            <div class="row">
+                                <div class="col-8">Student ID: {{ left_submission.student.userNumber }}</div>
+                                <div class="col-4 text-end">
+                                    <select class="form-select"
+                                            onchange="changeComparePDF(this)"
+                                            style="box-shadow: 0px 0px 4px 2px lightgrey inset">
+                                        {% for left_related_submission in left_related_submissions %}
+                                            <option value="/static/media/{{ left_related_submission.submissionFile }}">
+                                                Attempt {{ forloop.counter }}: {{ left_related_submission.submissionFile|cut:'submission/' }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="overflow: auto;" id="embedContainer">
+                            <embed src="/static/media/{{ left_submission.submissionFile }}"
+                                   id="fileContainer"
+                                   style="width: 100%;
+                                          height: 500px" />
+                        </div>
+                    </div>
+                    <form action="/teacher/compare/?element={{ left_element.pk }}"
+                          method="post"
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row" style="margin: 16px 0 0 0;">
+                            <div class="card p-0" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                                <div class="card-header"
+                                     type="button"
+                                     onmouseover="this.style.backgroundColor = 'lightgray'"
+                                     onmouseout="this.style.backgroundColor = '#dee2e6'"
+                                     data-bs-toggle="collapse"
+                                     data-bs-target="#collapse{{ left_element.pk }}"
+                                     aria-expanded="false"
+                                     aria-controls="collapse{{ left_element.pk }}"
+                                     style="background-color : #dee2e6">
+                                    <h5>{{ left_element.element.elementName }}</h5>
+                                </div>
+                                <div class="collapse show" id="collapse{{ left_element.pk }}">
+                                    <div class="card-body"
+                                         style="box-shadow: 0px 7px 10px -5px lightgrey inset">
+                                        <div class="card">
+                                            <div class="card-header"
+                                                 type="button"
+                                                 onmouseover="this.style.backgroundColor = 'lightgray'"
+                                                 onmouseout="this.style.backgroundColor = '#dee2e6'"
+                                                 data-bs-toggle="collapse"
+                                                 data-bs-target="#collapseGuide{{ left_element.pk }}"
+                                                 aria-expanded="false"
+                                                 aria-controls="collapseGuide{{ left_element.pk }}"
+                                                 style="background-color : #dee2e6">Marking Guide</div>
+                                            <div class="collapse" id="collapseGuide{{ left_element.pk }}">
+                                                <div class="card-body"
+                                                     style="box-shadow: 0px 7px 10px -5px lightgrey inset">
+                                                    <p>{{ left_element.element.markingGuide }}</p>
+                                                    <hr class="dropdown-divider">
+                                                    <p>Max Input: {{ left_element.element.maxInput }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% if error_element %}
+                                            {% if error_element == left_element.pk %}<div class="alert alert-warning mt-3">Input Invalid!</div>{% endif %}
+                                        {% endif %}
+                                        <div class="mb-3 mt-3" style="display: none;">
+                                            <input type="text"
+                                                   class="form-control"
+                                                   id="left_element"
+                                                   name="left_element"
+                                                   value="{{ left_element.pk }}"
+                                                   required>
+                                            <input type="text"
+                                                   class="form-control"
+                                                   id="right_element"
+                                                   name="right_element"
+                                                   value="{{ right_element.pk }}"
+                                                   required>
+                                        </div>
+                                        <div class="mb-3 mt-3">
+                                            <label for="element_score" class="form-label">Mark</label>
+                                            {% if left_element.score %}
+                                                {% if left_element.status != 2 and left_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="text"
+                                                           class="form-control"
+                                                           id="element_score"
+                                                           name="score"
+                                                           value="{{ left_element.score }}"
+                                                           required>
+                                                {% else %}
+                                                    <input type="text"
+                                                           class="form-control"
+                                                           id="element_score"
+                                                           name="score"
+                                                           value="{{ left_element.score }}"
+                                                           disabled>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if left_element.status != 2 and left_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="text"
+                                                           class="form-control"
+                                                           id="element_score"
+                                                           name="score"
+                                                           required>
+                                                {% else %}
+                                                    <input type="text"
+                                                           class="form-control"
+                                                           id="element_score"
+                                                           name="score"
+                                                           disabled>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="element_feedback_sandwich" class="form-label">Feedback</label>
+                                            <div id="element_feedback_sandwich" class="card">
+                                                <ul class="list-group list-group-flush">
+                                                    {% if left_element.feedback %}
+                                                        {% if left_element.status != 2 and left_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_start"
+                                                                          name="feedback_start"
+                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                          required>{{ left_element.feedback.start }}</textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_middle"
+                                                                          name="feedback_middle"
+                                                                          placeholder="Then write about what the student can improve on"
+                                                                          required>{{ left_element.feedback.middle }}</textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_end"
+                                                                          name="feedback_end"
+                                                                          placeholder="Finish with something positive"
+                                                                          required>{{ left_element.feedback.end }}</textarea>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_start"
+                                                                          name="feedback_start"
+                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                          disabled>{{ left_element.feedback.start }}</textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_middle"
+                                                                          name="feedback_middle"
+                                                                          placeholder="Then write about what the student can improve on"
+                                                                          disabled>{{ left_element.feedback.middle }}</textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_end"
+                                                                          name="feedback_end"
+                                                                          placeholder="Finish with something positive"
+                                                                          disabled>{{ left_element.feedback.end }}</textarea>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {% if left_element.status != 2 and left_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_start"
+                                                                          name="feedback_start"
+                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                          required></textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_middle"
+                                                                          name="feedback_middle"
+                                                                          placeholder="Then write about what the student can improve on"
+                                                                          required></textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_end"
+                                                                          name="feedback_end"
+                                                                          placeholder="Finish with something positive"
+                                                                          required></textarea>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_start"
+                                                                          name="feedback_start"
+                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                          disabled></textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_middle"
+                                                                          name="feedback_middle"
+                                                                          placeholder="Then write about what the student can improve on"
+                                                                          disabled></textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_end"
+                                                                          name="feedback_end"
+                                                                          placeholder="Finish with something positive"
+                                                                          disabled></textarea>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3 form-check">
+                                            {% if left_element.needHelp %}
+                                                {% if left_element.status != 2 and left_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_help"
+                                                           name="needHelp"
+                                                           checked="checked">
+                                                {% else %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_help"
+                                                           name="needHelp"
+                                                           checked="checked"
+                                                           disabled>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if left_element.status != 2 and left_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_help"
+                                                           name="needHelp">
+                                                {% else %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_help"
+                                                           name="needHelp"
+                                                           disabled>
+                                                {% endif %}
+                                            {% endif %}
+                                            <label class="form-check-label" for="element_help">Help</label>
+                                        </div>
+                                        <div class="mb-3 form-check">
+                                            {% if left_element.needModerate %}
+                                                {% if left_element.status != 2 and left_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_moderate"
+                                                           name="needModerate"
+                                                           checked="checked">
+                                                {% else %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_moderate"
+                                                           name="needModerate"
+                                                           checked="checked"
+                                                           disabled>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if left_element.status != 2 and left_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_moderate"
+                                                           name="needModerate">
+                                                {% else %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_moderate"
+                                                           name="needModerate"
+                                                           disabled>
+                                                {% endif %}
+                                            {% endif %}
+                                            <label class="form-check-label" for="element_moderate">Moderate</label>
+                                        </div>
+                                        {% if left_element.status != 2 or request.session.user_role == "Academic" %}
+                                            <div class="text-end w-100">
+                                                <button type="submit" name="complete" class="btn btn-primary mt-3">
+                                                    <svg t="1624521421125"
+                                                         class="icon"
+                                                         viewBox="0 0 1024 1024"
+                                                         version="1.1"
+                                                         xmlns="http://www.w3.org/2000/svg"
+                                                         p-id="8811"
+                                                         width="20"
+                                                         height="20">
+                                                        <path d="M893.3 293.3L730.7 130.7c-7.5-7.5-16.7-13-26.7-16V112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V338.5c0-17-6.7-33.2-18.7-45.2zM384 184h256v104H384V184z m456 656H184V184h136v136c0 17.7 14.3 32 32 32h320c17.7 0 32-14.3 32-32V205.8l136 136V840z" p-id="8812" fill="#fff">
+                                                        </path>
+                                                        <path d="M512 442c-79.5 0-144 64.5-144 144s64.5 144 144 144 144-64.5 144-144-64.5-144-144-144z m0 224c-44.2 0-80-35.8-80-80s35.8-80 80-80 80 35.8 80 80-35.8 80-80 80z" p-id="8813" fill="#fff">
+                                                        </path>
+                                                    </svg>
+                                                    Complete
+                                                </button>
+                                                <button type="submit" name="draft" class="btn btn-primary mt-3">
+                                                    <svg t="1624521496976"
+                                                         class="icon"
+                                                         viewBox="0 0 1024 1024"
+                                                         version="1.1"
+                                                         xmlns="http://www.w3.org/2000/svg"
+                                                         p-id="9053"
+                                                         width="20"
+                                                         height="20">
+                                                        <path d="M779.3 196.6c-94.2-94.2-247.6-94.2-341.7 0l-261 260.8c-1.7 1.7-2.6 4-2.6 6.4s0.9 4.7 2.6 6.4l36.9 36.9c3.5 3.5 9.2 3.5 12.7 0l261-260.8c32.4-32.4 75.5-50.2 121.3-50.2s88.9 17.8 121.2 50.2c32.4 32.4 50.2 75.5 50.2 121.2 0 45.8-17.8 88.8-50.2 121.2l-266 265.9-43.1 43.1c-40.3 40.3-105.8 40.3-146.1 0-19.5-19.5-30.2-45.4-30.2-73s10.7-53.5 30.2-73l263.9-263.8c6.7-6.6 15.5-10.3 24.9-10.3h0.1c9.4 0 18.1 3.7 24.7 10.3 6.7 6.7 10.3 15.5 10.3 24.9 0 9.3-3.7 18.1-10.3 24.7L372.4 653c-1.7 1.7-2.6 4-2.6 6.4s0.9 4.7 2.6 6.4l36.9 36.9c3.5 3.5 9.2 3.5 12.7 0l215.6-215.6c19.9-19.9 30.8-46.3 30.8-74.4s-11-54.6-30.8-74.4c-41.1-41.1-107.9-41-149 0L463 364 224.8 602.1C192 634.9 174 678.4 174 724.8c0 46.3 18.1 89.8 50.8 122.5 33.9 33.8 78.3 50.7 122.7 50.7 44.4 0 88.8-16.9 122.6-50.7l309.2-309C824.8 492.7 850 432 850 367.5c0.1-64.6-25.1-125.3-70.7-170.9z" p-id="9054" fill="#fff">
+                                                        </path>
+                                                    </svg>
+                                                    Save Draft
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-6">
+                    <div class="card p-0" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                        <div class="card-header">
+                            <div class="row">
+                                <div class="col-8">Student ID: {{ right_submission.student.userNumber }}</div>
+                                <div class="col-4 text-end">
+                                    <select class="form-select"
+                                            onchange="changeComparePDF(this)"
+                                            style="box-shadow: 0px 0px 4px 2px lightgrey inset">
+                                        {% for right_related_submission in right_related_submissions %}
+                                            <option value="/static/media/{{ right_related_submission.submissionFile }}">
+                                                Attempt {{ forloop.counter }}: {{ right_related_submission.submissionFile|cut:'submission/' }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="overflow: auto;" id="embedContainer">
+                            <embed src="/static/media/{{ right_submission.submissionFile }}"
+                                   id="fileContainer"
+                                   style="width: 100%;
+                                          height: 500px" />
+                        </div>
+                    </div>
+                    <form action="/teacher/compare/?element={{ right_element.pk }}"
+                          method="post"
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row" style="margin: 16px 0 0 0;">
+                            <div class="card p-0" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                                <div class="card-header"
+                                     type="button"
+                                     onmouseover="this.style.backgroundColor = 'lightgray'"
+                                     onmouseout="this.style.backgroundColor = '#dee2e6'"
+                                     data-bs-toggle="collapse"
+                                     data-bs-target="#collapse{{ right_element.pk }}"
+                                     aria-expanded="false"
+                                     aria-controls="collapse{{ right_element.pk }}"
+                                     style="background-color : #dee2e6">
+                                    <h5>{{ right_element.element.elementName }}</h5>
+                                </div>
+                                <div class="collapse show" id="collapse{{ right.pk }}">
+                                    <div class="card-body"
+                                         style="box-shadow: 0px 7px 10px -5px lightgrey inset">
+                                        <div class="card">
+                                            <div class="card-header"
+                                                 type="button"
+                                                 onmouseover="this.style.backgroundColor = 'lightgray'"
+                                                 onmouseout="this.style.backgroundColor = '#dee2e6'"
+                                                 data-bs-toggle="collapse"
+                                                 data-bs-target="#collapseGuide{{ right_element.pk }}"
+                                                 aria-expanded="false"
+                                                 aria-controls="collapseGuide{{ right_element.pk }}"
+                                                 style="background-color : #dee2e6">Marking Guide</div>
+                                            <div class="collapse" id="collapseGuide{{ right_element.pk }}">
+                                                <div class="card-body"
+                                                     style="box-shadow: 0px 7px 10px -5px lightgrey inset">
+                                                    <p>{{ right_element.element.markingGuide }}</p>
+                                                    <hr class="dropdown-divider">
+                                                    <p>Max Input: {{ right_element.element.maxInput }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% if error_element %}
+                                            {% if error_element == right_element.pk %}<div class="alert alert-warning mt-3">Input Invalid!</div>{% endif %}
+                                        {% endif %}
+                                        <div class="mb-3 mt-3" style="display: none;">
+                                            <input type="text"
+                                                   class="form-control"
+                                                   id="left_element"
+                                                   name="left_element"
+                                                   value="{{ left_element.pk }}"
+                                                   required>
+                                            <input type="text"
+                                                   class="form-control"
+                                                   id="right_element"
+                                                   name="right_element"
+                                                   value="{{ right_element.pk }}"
+                                                   required>
+                                        </div>
+                                        <div class="mb-3 mt-3">
+                                            <label for="element_score" class="form-label">Mark</label>
+                                            {% if right_element.score %}
+                                                {% if right_element.status != 2 and right_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="text"
+                                                           class="form-control"
+                                                           id="element_score"
+                                                           name="score"
+                                                           value="{{ right_element.score }}"
+                                                           required>
+                                                {% else %}
+                                                    <input type="text"
+                                                           class="form-control"
+                                                           id="element_score"
+                                                           name="score"
+                                                           value="{{ right_element.score }}"
+                                                           disabled>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if left_element.status != 2 and left_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="text"
+                                                           class="form-control"
+                                                           id="element_score"
+                                                           name="score"
+                                                           required>
+                                                {% else %}
+                                                    <input type="text"
+                                                           class="form-control"
+                                                           id="element_score"
+                                                           name="score"
+                                                           disabled>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="element_feedback_sandwich" class="form-label">Feedback</label>
+                                            <div id="element_feedback_sandwich" class="card">
+                                                <ul class="list-group list-group-flush">
+                                                    {% if right_element.feedback %}
+                                                        {% if right_element.status != 2 and right_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_start"
+                                                                          name="feedback_start"
+                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                          required>{{ right_element.feedback.start }}</textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_middle"
+                                                                          name="feedback_middle"
+                                                                          placeholder="Then write about what the student can improve on"
+                                                                          required>{{ right_element.feedback.middle }}</textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_end"
+                                                                          name="feedback_end"
+                                                                          placeholder="Finish with something positive"
+                                                                          required>{{ right_element.feedback.end }}</textarea>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_start"
+                                                                          name="feedback_start"
+                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                          disabled>{{ right_element.feedback.start }}</textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_middle"
+                                                                          name="feedback_middle"
+                                                                          placeholder="Then write about what the student can improve on"
+                                                                          disabled>{{ right_element.feedback.middle }}</textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_end"
+                                                                          name="feedback_end"
+                                                                          placeholder="Finish with something positive"
+                                                                          disabled>{{ right_element.feedback.end }}</textarea>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {% if right_element.status != 2 and right_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_start"
+                                                                          name="feedback_start"
+                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                          required></textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_middle"
+                                                                          name="feedback_middle"
+                                                                          placeholder="Then write about what the student can improve on"
+                                                                          required></textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control mb-1"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_end"
+                                                                          name="feedback_end"
+                                                                          placeholder="Finish with something positive"
+                                                                          required></textarea>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_start"
+                                                                          name="feedback_start"
+                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                          disabled></textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_middle"
+                                                                          name="feedback_middle"
+                                                                          placeholder="Then write about what the student can improve on"
+                                                                          disabled></textarea>
+                                                            </li>
+                                                            <li class="list-group-item p-0">
+                                                                <textarea class="form-control"
+                                                                          style="border: 0"
+                                                                          id="element_feedback_end"
+                                                                          name="feedback_end"
+                                                                          placeholder="Finish with something positive"
+                                                                          disabled></textarea>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3 form-check">
+                                            {% if right_element.needHelp %}
+                                                {% if right_element.status != 2 and right_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_help"
+                                                           name="needHelp"
+                                                           checked="checked">
+                                                {% else %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_help"
+                                                           name="needHelp"
+                                                           checked="checked"
+                                                           disabled>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if right_element.status != 2 and right_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_help"
+                                                           name="needHelp">
+                                                {% else %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_help"
+                                                           name="needHelp"
+                                                           disabled>
+                                                {% endif %}
+                                            {% endif %}
+                                            <label class="form-check-label" for="element_help">Help</label>
+                                        </div>
+                                        <div class="mb-3 form-check">
+                                            {% if right_element.needModerate %}
+                                                {% if right_element.status != 2 and right_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_moderate"
+                                                           name="needModerate"
+                                                           checked="checked">
+                                                {% else %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_moderate"
+                                                           name="needModerate"
+                                                           checked="checked"
+                                                           disabled>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if right_element.status != 2 and right_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_moderate"
+                                                           name="needModerate">
+                                                {% else %}
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="element_moderate"
+                                                           name="needModerate"
+                                                           disabled>
+                                                {% endif %}
+                                            {% endif %}
+                                            <label class="form-check-label" for="element_moderate">Moderate</label>
+                                        </div>
+                                        {% if right_element.status != 2 or request.session.user_role == "Academic" %}
+                                            <div class="text-end w-100">
+                                                <button type="submit" name="complete" class="btn btn-primary mt-3">
+                                                    <svg t="1624521421125"
+                                                         class="icon"
+                                                         viewBox="0 0 1024 1024"
+                                                         version="1.1"
+                                                         xmlns="http://www.w3.org/2000/svg"
+                                                         p-id="8811"
+                                                         width="20"
+                                                         height="20">
+                                                        <path d="M893.3 293.3L730.7 130.7c-7.5-7.5-16.7-13-26.7-16V112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V338.5c0-17-6.7-33.2-18.7-45.2zM384 184h256v104H384V184z m456 656H184V184h136v136c0 17.7 14.3 32 32 32h320c17.7 0 32-14.3 32-32V205.8l136 136V840z" p-id="8812" fill="#fff">
+                                                        </path>
+                                                        <path d="M512 442c-79.5 0-144 64.5-144 144s64.5 144 144 144 144-64.5 144-144-64.5-144-144-144z m0 224c-44.2 0-80-35.8-80-80s35.8-80 80-80 80 35.8 80 80-35.8 80-80 80z" p-id="8813" fill="#fff">
+                                                        </path>
+                                                    </svg>
+                                                    Complete
+                                                </button>
+                                                <button type="submit" name="draft" class="btn btn-primary mt-3">
+                                                    <svg t="1624521496976"
+                                                         class="icon"
+                                                         viewBox="0 0 1024 1024"
+                                                         version="1.1"
+                                                         xmlns="http://www.w3.org/2000/svg"
+                                                         p-id="9053"
+                                                         width="20"
+                                                         height="20">
+                                                        <path d="M779.3 196.6c-94.2-94.2-247.6-94.2-341.7 0l-261 260.8c-1.7 1.7-2.6 4-2.6 6.4s0.9 4.7 2.6 6.4l36.9 36.9c3.5 3.5 9.2 3.5 12.7 0l261-260.8c32.4-32.4 75.5-50.2 121.3-50.2s88.9 17.8 121.2 50.2c32.4 32.4 50.2 75.5 50.2 121.2 0 45.8-17.8 88.8-50.2 121.2l-266 265.9-43.1 43.1c-40.3 40.3-105.8 40.3-146.1 0-19.5-19.5-30.2-45.4-30.2-73s10.7-53.5 30.2-73l263.9-263.8c6.7-6.6 15.5-10.3 24.9-10.3h0.1c9.4 0 18.1 3.7 24.7 10.3 6.7 6.7 10.3 15.5 10.3 24.9 0 9.3-3.7 18.1-10.3 24.7L372.4 653c-1.7 1.7-2.6 4-2.6 6.4s0.9 4.7 2.6 6.4l36.9 36.9c3.5 3.5 9.2 3.5 12.7 0l215.6-215.6c19.9-19.9 30.8-46.3 30.8-74.4s-11-54.6-30.8-74.4c-41.1-41.1-107.9-41-149 0L463 364 224.8 602.1C192 634.9 174 678.4 174 724.8c0 46.3 18.1 89.8 50.8 122.5 33.9 33.8 78.3 50.7 122.7 50.7 44.4 0 88.8-16.9 122.6-50.7l309.2-309C824.8 492.7 850 432 850 367.5c0.1-64.6-25.1-125.3-70.7-170.9z" p-id="9054" fill="#fff">
+                                                        </path>
+                                                    </svg>
+                                                    Save Draft
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

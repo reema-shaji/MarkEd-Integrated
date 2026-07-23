@@ -1,0 +1,119 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: marked-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: new_password
+      MYSQL_DATABASE: markeddb1
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./MarkEd-back
+      dockerfile: ../docker/Dockerfile.django
+    container_name: marked-backend
+    volumes:
+      - ./MarkEd-back:/app
+      - ./MarkEd-back/logs:/app/logs
+      - static_volume:/app/statics
+      - media_volume:/app/statics/media
+    ports:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      # Add AWS environment variables
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - STORAGE_BUCKET_NAME=${STORAGE_BUCKET_NAME}
+    command: >
+      sh -c "python manage.py migrate --fake-initial &&
+             uvicorn MarkEd.asgi:application --host 0.0.0.0 --port 8000 --reload"
+
+  frontend:
+    build:
+      context: ./MarkEd-front
+      dockerfile: ../docker/Dockerfile.nextjs
+    container_name: marked-frontend
+    volumes:  
+      - ./MarkEd-front:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost
+      - NODE_ENV=development
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.nginx
+    container_name: marked-nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+    environment:
+      - NGINX_CONFIG=dev
+    volumes:
+      - static_volume:/var/www/static
+      - media_volume:/var/www/media
+
+  redis:
+    image: redis:alpine
+    container_name: marked-redis
+    ports:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  celery:
+    build:
+      context: ./MarkEd-back
+      dockerfile: ../docker/Dockerfile.django
+    container_name: marked-celery
+    command: >
+      sh -c "pip install watchfiles &&
+             watchfiles 'celery -A MarkEd worker --loglevel=info' ./MarkEd"
+    volumes:
+      - ./MarkEd-back:/app
+      - ./MarkEd-back/logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+volumes:
+  mysql_data:
+  static_volume:
+  media_volume:

@@ -1,0 +1,2147 @@
+{% extends "teacher/base.html" %}
+{% block mainbody %}
+    {% load static %}
+    <style>
+#one {
+    /*border-top-left-radius: 5px;*/
+    /*border-top-right-radius: 10px;*/
+    /*border-bottom-left-radius: 5px;*/
+    /*border-bottom-right-radius: 10px;*/
+    /*border-top:    2px solid lightgrey;*/
+border-right: 5px solid lightgrey;
+/*border-bottom: 2px solid lightgrey;*/
+/*border-left: 5px solid lightgrey;*/
+  /*background: #d5d5d5;*/
+  height: 100%;
+}
+
+#two {
+    /*border-top-left-radius: 10px;*/
+    /*border-top-right-radius: 5px;*/
+    /*border-bottom-left-radius: 10px;*/
+    /*border-bottom-right-radius: 5px;*/
+    /*border-top:    2px solid lightgrey;*/
+/*border-right: 2px solid lightgrey;*/
+/*border-bottom: 2px solid lightgrey;*/
+border-left: 5px solid lightgrey;
+  /*background:  #d5d5d5;*/
+  height: 100%;
+}
+
+.flex {
+  display: flex;
+  flex-direction: row;
+
+
+    /* MarkEd practice */
+
+.digit {
+    font-size: 50px;
+    color: #403c00c8;
+    font-family: monospace;
+}
+
+/*.txt {*/
+/*    font-size: 30px;*/
+/*    color: #1a1f6956;*/
+/*    font-family: monospace;*/
+/*}*/
+
+.btn-timer {
+    width: 100px;
+    padding: 10px 15px;
+    margin: 0px 20px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 4px;
+    border-top-left-radius: 4px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: 0.5s;
+    color: white;
+    font-weight: 500;
+}
+
+#start {
+    background: rgba(0, 100, 0, 0.80);
+}
+
+#stop {
+    background: rgba(139, 0, 0, 0.80);
+}
+
+#reset {
+    background: rgba(169, 169, 169, 0.9);
+}
+}
+
+.tag-badge {
+    font-size: 0.8m; /* Keeps the font size relative to parent */
+    line-height: 1 !important; /* Controls the height of the text line */
+    padding: 0.25rem 0.7rem !important; /* Adjusts the padding */
+    display: inline-flex; /* Keeps the badge inline */
+    align-items: center; /* Aligns items vertically in the center */
+    white-space: nowrap; /* Prevents wrapping of text */
+    margin: 0; /* Removes any default margin */
+    border: 0; /* Removes any default border */
+}
+
+.tag-close-btn {
+    font-size: 0.6em;
+    line-height: 0;
+    margin-left: 0.5em; /* Adjust as needed */
+}
+    </style>
+    <script>
+    function changePDF(select) {
+        document.querySelector("#fileContainer").style.display = "none";
+        document.querySelector("#embedContainer").innerHTML = "";
+        document.querySelector("#embedContainer").innerHTML = "<embed src='" + select.value + "' id='fileContainer' style='width: 100%; height: 1000px; ' />";
+    }
+    </script>
+    <div class=".container-fluid p-2"
+         style="width: 84%; height : 100px; background: #F0EDFF;">
+        <div class="row">
+            <div class="col">
+                <p style="margin-bottom: -2px;text-align: right;">
+                Submissions marked for this course:&nbsp;&nbsp;&nbsp;&nbsp;<br>
+                    &nbsp;&nbsp;<strong>{{ total_subs_marker }}</strong>&nbsp;/&nbsp;<strong>{{ students_submitted_total }}</strong>
+                </p>
+                <p style="margin-top: -2px;text-align: right;">
+                Submissions marked today:&nbsp;&nbsp;
+                    &nbsp;&nbsp;<strong>{{ total_marked_today }}</strong>
+                </p>
+            </div>
+            <div class="col">
+                <p>Total time marking this assignment:</p>
+                <p style="text-align: left;font-family: monospace;font-size: 16px; color: #554574">
+                    &nbsp;&nbsp;
+                        <strong>{{ total_time.hours }}</strong> Hr
+                        <strong>{{ total_time.minutes }}</strong> Min
+                        <strong>{{ total_time.seconds }}</strong> Sec
+                </p>
+            </div>
+            <div class="col-4">
+                <div class="container" style="margin-top: -10px; align-items: center; align-content: center">
+                    <form method="post" action="/teacher/mark/?submission={{ submission.pk }}" style="align-items: center; align-content: center">
+                        {% csrf_token %}
+                        <p style="font-family: monospace; text-align: center; align-content: center; font-size: 19px;"><strong>
+                            <div id="timerdigits" style="font-family: monospace; margin-top: -4px;margin-bottom: -2px;font-size: 18px;align-content: center;">
+
+                                <span class="digit" id="hr">
+                                    {{ hours }}</span>
+                                <span class="txt">Hr</span>
+                                <span class="digit" id="min">
+                                    {{ minutes }}</span>
+                                <span class="txt">Min</span>
+                                <span class="digit" id="sec">
+                                    {{ seconds }}</span>
+                                <span class="txt">Sec</span>
+                                <!-- <span class="digit" id="millisec">
+                                    00</span>  -->
+
+                            </div>
+                        </strong>
+                        hours spent on current submission
+                        </p>
+
+                        <div id="buttons" style="margin-top: -6px; align-items: center;">
+
+                            <input class="btn btn-sm btn-outline-secondary" id="start" name="btnStart" type="submit" value="Start" />
+
+                            <input class="btn btn-sm btn-outline-danger" id="stop" name="btnStop" type="submit" value="Pause Timer" />
+<!--                            <button class="btn btn-sm btn-outline-secondary" id="">-->
+<!--                            ((Edit?))</button>-->
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="col">
+                <p>Avg. time taken per submission:</p>
+                <p style="text-align: left; font-family: monospace; font-size: 16px; color: #554574">
+                    &nbsp;&nbsp;
+                    {% if avg_per_sub.hours != 0 %}
+                        <strong>{{ avg_per_sub.hours }}</strong> Hr
+                        <strong>{{ avg_per_sub.minutes }}</strong> Min
+                        <strong>{{ avg_per_sub.seconds }}</strong> Sec
+                    {% else %}
+                    <strong>{{ avg_per_sub.minutes }}</strong>&nbsp;:&nbsp;<strong>{{ avg_per_sub.seconds }}</strong> minutes
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+<!-- Modal -->
+<div class="modal fade" id="timerModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Timer paused</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+          When you're ready, press "continue marking".
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Continue marking</button>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="p-5 mb-4 bg-light" style="width: 84%">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col">
+                    <h1 class="display-5 fw-bold">Mark</h1>
+                </div>
+                <div class="col text-end">
+                    {% if previous_submission %}
+                        {% if question %}
+                            {% if is_shuffle %}
+                            <a type="button"
+                               class="btn btn-primary"
+                               href="/teacher/mark?submission={{ previous_submission.pk }}&question={{ question }}&shuffle=True"
+                               style="background-color : #454574;
+                                      width: 120px">
+                                <svg t="1624520847156"
+                                     class="icon"
+                                     viewBox="0 0 1024 1024"
+                                     version="1.1"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     p-id="8574"
+                                     width="15"
+                                     height="15">
+                                    <path d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8c-16.4 12.8-16.4 37.5 0 50.3l450.8 352.1c5.3 4.1 12.9 0.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z" p-id="8575" fill="#ffffff">
+                                    </path>
+                                </svg>
+                                Previous
+                            </a>
+                            {% else %}
+                            <a type="button"
+                               class="btn btn-primary"
+                               href="/teacher/mark?submission={{ previous_submission.pk }}&question={{ question }}"
+                               style="background-color : #454574;
+                                      width: 120px">
+                                <svg t="1624520847156"
+                                     class="icon"
+                                     viewBox="0 0 1024 1024"
+                                     version="1.1"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     p-id="8574"
+                                     width="15"
+                                     height="15">
+                                    <path d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8c-16.4 12.8-16.4 37.5 0 50.3l450.8 352.1c5.3 4.1 12.9 0.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z" p-id="8575" fill="#ffffff">
+                                    </path>
+                                </svg>
+                                Previous
+                            </a>
+                            {% endif %}
+                        {% else %}
+                            <a type="button"
+                               class="btn btn-primary"
+                               href="/teacher/mark?submission={{ previous_submission.pk }}"
+                               style="background-color : #454574;
+                                      width: 120px">
+                                <svg t="1624520847156"
+                                     class="icon"
+                                     viewBox="0 0 1024 1024"
+                                     version="1.1"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     p-id="8574"
+                                     width="15"
+                                     height="15">
+                                    <path d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8c-16.4 12.8-16.4 37.5 0 50.3l450.8 352.1c5.3 4.1 12.9 0.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z" p-id="8575" fill="#ffffff">
+                                    </path>
+                                </svg>
+                                Previous
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <a type="button"
+                           class="btn btn-primary disabled"
+                           style="background-color : #454574;
+                                  width: 120px">
+                            <svg t="1624520847156"
+                                 class="icon"
+                                 viewBox="0 0 1024 1024"
+                                 version="1.1"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 p-id="8574"
+                                 width="15"
+                                 height="15">
+                                <path d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8c-16.4 12.8-16.4 37.5 0 50.3l450.8 352.1c5.3 4.1 12.9 0.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z" p-id="8575" fill="#ffffff">
+                                </path>
+                            </svg>
+                            Previous
+                        </a>
+                    {% endif %}
+                    {% if next_submission %}
+                        {% if question %}
+                            {% if is_shuffle %}
+                            <!-- shuffle off-->
+                            <a type="button"
+                                   class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off"
+                                   href="/teacher/mark?submission={{ submission.pk }}&question={{ question }}"
+                                   style="background-color : #454574;
+                                          width: 140px">
+                                    SHUFFLE&nbsp;ON
+                                        </a>
+                                <a type="button"
+                               class="btn btn-primary"
+                               href="/teacher/mark?submission={{ next_submission.pk }}&question={{ question }}&shuffle=True"
+                               style="background-color : #454574;
+                                      width: 120px">
+                                Next
+                                <svg t="1624520782675"
+                                     class="icon"
+                                     viewBox="0 0 1024 1024"
+                                     version="1.1"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     p-id="8245"
+                                     width="15"
+                                     height="15">
+                                    <path d="M765.7 486.8L314.9 134.7c-5.3-4.1-12.9-0.4-12.9 6.3v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1c16.4-12.8 16.4-37.6 0-50.4z" p-id="8246" fill="#ffffff">
+                                    </path>
+                                </svg>
+                            </a>
+                            {% else %}
+                                <a type="button"
+                                   class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off"
+                                   href="/teacher/mark?submission={{ submission.pk }}&question={{ question }}&new_shuffle=True"
+                                   style="background-color : #454574;
+                                          width: 140px">
+                                    SHUFFLE&nbsp;
+                                    <svg fill="#FFFFFF"
+                                         height="20px"
+                                         width="20px"
+                                         version="1.1"
+                                         id="Capa_1"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink"
+                                         viewBox="5 5 60 60"
+                                         xml:space="preserve">
+                                        <g>
+                                        <path d="M27,13.85h9v8.964l13.7-9.964L36,2.886v8.964h-9c-7.168,0-13,5.832-13,13c0,6.065-4.935,11-11,11H1c-0.553,0-1,0.447-1,1 s0.447,1,1,1h2c7.168,0,13-5.832,13-13C16,18.785,20.935,13.85,27,13.85z M38,6.814l8.3,6.036L38,18.886V6.814z" />
+                                        <path d="M1,13.85h2c2.713,0,5.318,0.994,7.336,2.799c0.191,0.171,0.43,0.255,0.667,0.255c0.274,0,0.548-0.112,0.745-0.333 c0.368-0.412,0.333-1.044-0.078-1.412C9.285,13.025,6.206,11.85,3,11.85H1c-0.553,0-1,0.447-1,1S0.447,13.85,1,13.85z" />
+                                        <path d="M36,35.85h-9c-2.685,0-5.27-0.976-7.278-2.748c-0.411-0.365-1.044-0.327-1.411,0.089c-0.365,0.414-0.326,1.046,0.089,1.411 c2.374,2.095,5.429,3.248,8.601,3.248h9v8.964l13.7-9.964L36,26.886V35.85z M38,30.814l8.3,6.036L38,42.886V30.814z" />
+                                        </g>
+                                            </svg>
+                                        </a>
+                    <a type="button"
+                               class="btn btn-primary"
+                               href="/teacher/mark?submission={{ next_submission.pk }}&question={{ question }}"
+                               style="background-color : #454574;
+                                      width: 120px">
+                                Next
+                                <svg t="1624520782675"
+                                     class="icon"
+                                     viewBox="0 0 1024 1024"
+                                     version="1.1"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     p-id="8245"
+                                     width="15"
+                                     height="15">
+                                    <path d="M765.7 486.8L314.9 134.7c-5.3-4.1-12.9-0.4-12.9 6.3v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1c16.4-12.8 16.4-37.6 0-50.4z" p-id="8246" fill="#ffffff">
+                                    </path>
+                                </svg>
+                            </a>
+                            {% endif %}
+
+                        {% else %}
+                            <a type="button"
+                               class="btn btn-primary"
+                               href="/teacher/mark?submission={{ next_submission.pk }}"
+                               style="background-color : #454574;
+                                      width: 120px">
+                                Next
+                                <svg t="1624520782675"
+                                     class="icon"
+                                     viewBox="0 0 1024 1024"
+                                     version="1.1"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     p-id="8245"
+                                     width="15"
+                                     height="15">
+                                    <path d="M765.7 486.8L314.9 134.7c-5.3-4.1-12.9-0.4-12.9 6.3v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1c16.4-12.8 16.4-37.6 0-50.4z" p-id="8246" fill="#ffffff">
+                                    </path>
+                                </svg>
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <a type="button"
+                           class="btn btn-primary disabled"
+                           style="background-color : #454574;
+                                  width: 120px">
+                            Next
+                            <svg t="1624520782675"
+                                 class="icon"
+                                 viewBox="0 0 1024 1024"
+                                 version="1.1"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 p-id="8245"
+                                 width="15"
+                                 height="15">
+                                <path d="M765.7 486.8L314.9 134.7c-5.3-4.1-12.9-0.4-12.9 6.3v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1c16.4-12.8 16.4-37.6 0-50.4z" p-id="8246" fill="#ffffff">
+                                </path>
+                            </svg>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row mt-4 split">
+                <section class="flex" class="container px-4">
+                    <div id="one" class="container">
+                        <div class="card p-0" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                            <div class="card-header">
+                                <div class="row">
+                                    <div class="col-8">Student ID: {{ submission.student.userNumber }}</div>
+                                    <div class="col-4 text-end">
+                                        <select class="form-select"
+                                                onchange="changePDF(this)"
+                                                style="box-shadow: 0px 0px 4px 2px lightgrey inset">
+                                            {% for related_submission in related_submissions %}
+                                                <option value="/statics/media/{{ related_submission.submissionFile }}">
+                                                    Attempt {{ forloop.counter }}: {{ related_submission.submissionFile|cut:'submission/' }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="overflow: auto;" id="embedContainer">
+                                <embed src="/statics/media/{{ submission.submissionFile }}"
+                                       id="fileContainer"
+                                       style="width: 100%;
+                                              height: 1000px" />
+                            </div>
+                        </div>
+                    </div>
+                    <!--                <div class="col" style="width: 30%">-->
+                    <div id="two" class="container">
+                        <form action="/teacher/mark/?submission={{ submission.pk }}"
+                              method="post"
+                              enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {% if submission_status != "Finished" or request.session.user_role == "Academic" %}
+                            <!-- # TODO: make right justified    -->
+                                <button type="submit" name="complete" class="btn btn-primary mb-3">
+                                    <svg t="1624521421125"
+                                         class="icon"
+                                         viewBox="0 0 1024 1024"
+                                         version="1.1"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         p-id="8811"
+                                         width="20"
+                                         height="20">
+                                        <path d="M893.3 293.3L730.7 130.7c-7.5-7.5-16.7-13-26.7-16V112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V338.5c0-17-6.7-33.2-18.7-45.2zM384 184h256v104H384V184z m456 656H184V184h136v136c0 17.7 14.3 32 32 32h320c17.7 0 32-14.3 32-32V205.8l136 136V840z" p-id="8812" fill="#fff">
+                                        </path>
+                                        <path d="M512 442c-79.5 0-144 64.5-144 144s64.5 144 144 144 144-64.5 144-144-64.5-144-144-144z m0 224c-44.2 0-80-35.8-80-80s35.8-80 80-80 80 35.8 80 80-35.8 80-80 80z" p-id="8813" fill="#fff">
+                                        </path>
+                                    </svg>
+                                    Complete
+                                </button>
+                                <button type="submit" name="draft" class="btn btn-primary mb-3">
+                                    <svg t="1624521496976"
+                                         class="icon"
+                                         viewBox="0 0 1024 1024"
+                                         version="1.1"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         p-id="9053"
+                                         width="20"
+                                         height="20">
+                                        <path d="M779.3 196.6c-94.2-94.2-247.6-94.2-341.7 0l-261 260.8c-1.7 1.7-2.6 4-2.6 6.4s0.9 4.7 2.6 6.4l36.9 36.9c3.5 3.5 9.2 3.5 12.7 0l261-260.8c32.4-32.4 75.5-50.2 121.3-50.2s88.9 17.8 121.2 50.2c32.4 32.4 50.2 75.5 50.2 121.2 0 45.8-17.8 88.8-50.2 121.2l-266 265.9-43.1 43.1c-40.3 40.3-105.8 40.3-146.1 0-19.5-19.5-30.2-45.4-30.2-73s10.7-53.5 30.2-73l263.9-263.8c6.7-6.6 15.5-10.3 24.9-10.3h0.1c9.4 0 18.1 3.7 24.7 10.3 6.7 6.7 10.3 15.5 10.3 24.9 0 9.3-3.7 18.1-10.3 24.7L372.4 653c-1.7 1.7-2.6 4-2.6 6.4s0.9 4.7 2.6 6.4l36.9 36.9c3.5 3.5 9.2 3.5 12.7 0l215.6-215.6c19.9-19.9 30.8-46.3 30.8-74.4s-11-54.6-30.8-74.4c-41.1-41.1-107.9-41-149 0L463 364 224.8 602.1C192 634.9 174 678.4 174 724.8c0 46.3 18.1 89.8 50.8 122.5 33.9 33.8 78.3 50.7 122.7 50.7 44.4 0 88.8-16.9 122.6-50.7l309.2-309C824.8 492.7 850 432 850 367.5c0.1-64.6-25.1-125.3-70.7-170.9z" p-id="9054" fill="#fff">
+                                        </path>
+                                    </svg>
+                                    Save Draft
+                                </button>
+                            {% endif %}
+                            {% for submission_criteria in submission_criterias %}
+                                <div class="row mb-3">
+                                    <div class="card p-0" style="box-shadow: 0px 0px 30px -5px lightgrey;">
+                                        <div class="card-header"
+                                             type="button"
+                                             onmouseover="this.style.backgroundColor = 'lightgray'"
+                                             onmouseout="this.style.backgroundColor = '#dee2e6'"
+                                             data-bs-toggle="collapse"
+                                             data-bs-target="#collapse{{ submission_criteria.pk }}"
+                                             aria-expanded="false"
+                                             aria-controls="collapse{{ submission_criteria.pk }}"
+                                             style="background-color : #dee2e6">
+                                            <h5>{{ submission_criteria.name}}</h5>
+                                        </div>
+                                        {% if question %}
+                                            <div class="collapse show" id="collapse{{ submission_criteria.pk }}">
+                                            {% else %}
+                                                <div class="collapse" id="collapse{{ submission_criteria.pk }}">
+                                                {% endif %}
+                                                <div class="card-body"
+                                                     style="box-shadow: 0px 7px 10px -5px lightgrey inset">
+                                                    <div class="card">
+                                                        <div class="card-header"
+                                                             type="button"
+                                                             onmouseover="this.style.backgroundColor = 'lightgray'"
+                                                             onmouseout="this.style.backgroundColor = '#dee2e6'"
+                                                             data-bs-toggle="collapse"
+                                                             data-bs-target="#collapseGuide{{ submission_criteria.pk }}"
+                                                             aria-expanded="false"
+                                                             aria-controls="collapseGuide{{ submission_criteria.pk }}"
+                                                             style="background-color : #dee2e6">Marking Guide</div>
+                                                        <div class="collapse" id="collapseGuide{{ submission_criteria.pk }}">
+                                                            <div class="card-body"
+                                                                 style="box-shadow: 0px 7px 10px -5px lightgrey inset">
+                                                                <p>{{ submission_criteria.element.markingGuide }}</p>
+                                                                <hr class="dropdown-divider">
+                                                                <p>Max Input: {{ submission_criteria.maxInput }}</p>
+                                                                <p>Marking Scheme:
+                                                                    {% if not submission_criteria.elements %}
+                                                                        Numeric
+                                                                    {% elif submission_criteria.marking_scheme == 'ADD' %}
+                                                                        Additive
+                                                                    {% elif submission_criteria.marking_scheme == 'SEL' %}
+                                                                        Selective
+                                                                    {% else %}
+                                                                        Unknown
+                                                                    {% endif %}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% if error_element %}
+                                                        {% if error_element == submission_criteria.pk %}<div class="alert alert-warning mt-3">Input Invalid!</div>{% endif %}
+                                                    {% endif %}
+                                                    <div class="mb-3 mt-3">
+                                                        {% if submission_criteria.elements %}
+                                                        <label for="element_score_{{ submission_criteria.pk }}" id="mark_label_{{ submission_criteria.pk }}" class="form-label"> Mark ({{ submission_criteria.maxInput }}) 
+                                                            <i class="fas fa-info-circle ms-auto"
+                                                            title="For additive marking scheme, click button to give maximum marks for the criteria or input partial marks for each criteria, for selective marking scheme, click button to select the element."
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-placement="top"></i></label>
+                                                        <div id="elements_buttons_{{ submission_criteria.pk }}" class="mb-3 d-flex flex-column w-100">
+                                                            {% for element in submission_criteria.elements %}
+                                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                    <!-- Main button for the element -->
+                                                                    <button type="button" class="element-button btn btn-outline-secondary flex-grow-1 me-2"
+                                                                            data-element-id="{{ element.id }}"
+                                                                            data-element-marks="{{ element.marks }}"
+                                                                            data-marking-scheme="{{ submission_criteria.marking_scheme }}"
+                                                                            data-max-input="{{ submission_criteria.maxInput }}"
+                                                                            onclick="toggleElementSelection(this, '{{ submission_criteria.pk }}');">
+                                                                        {{ element.name }} ({{ element.marks }} marks)
+                                                                    </button>
+                                                                    <!-- Conditionally render input field for ADD marking scheme -->
+                                                                    {% if submission_criteria.marking_scheme == 'ADD' %}
+                                                                    <div class="col-3 me-2"> <!-- Adjust the column size as needed -->
+                                                                        <input type="number" class="form-control" 
+                                                                            id="element_score_{{ element.id }}" 
+                                                                            name="{{ element.id }}_score" 
+                                                                            max="{{ element.marks }}"
+                                                                            min="0"
+                                                                            oninput="updateSelectedElements('{{ submission_criteria.pk }}', '{{ submission_criteria.maxInput }}', '{{ submission_criteria.marking_scheme }}')" 
+                                                                            required>                                                                    </div>
+                                                                    {% endif %}
+                                                                    <!-- Separate arrow span for expanding description -->
+                                                                    {% if element.description %}
+                                                                        <span class="expand-arrow btn btn-outline-secondary btn-sm" onclick="event.stopPropagation(); toggleDescriptionVisibility('{{ element.id }}');">&#9660;</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <!-- Hidden container for the description -->
+                                                                <div id="description-{{ element.id }}" class="element-description w-100" style="display: none;">
+                                                                    <p class="m-0 p-2 pb-3">{{ element.description }}</p>
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                        <!-- Hidden Input to Store Selected Elements' Marks -->
+                                                        <input type="hidden" id="selected_elements_marks_{{ submission_criteria.pk }}" name="{{ submission_criteria.pk }}_selected_elements_marks">
+                                                        {% else %}
+                                                            <label for="element_score_{{ submission_criteria.pk }}" class="form-label">Mark</label>
+                                                            <!-- Display the score input field if there are no Elements -->
+                                                            {% if submission_criteria.score %}
+                                                                {% if submission_criteria.status != 2 and submission_criteria.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                                    <input type="number" class="form-control" id="element_score_{{ submission_criteria.pk }}" name="{{ submission_criteria.pk }}_score" value="{{ submission_criteria.score }}" required>
+                                                                {% else %}
+                                                                    <input type="number" class="form-control" id="element_score_{{ submission_criteria.pk }}" name="{{ submission_criteria.pk }}_score" value="{{ submission_criteria.score }}" disabled>
+                                                                {% endif %}
+                                                            {% else %}
+                                                                {% if submission_criteria.status != 2 and submission_criteria.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                                    <input type="number" class="form-control" id="element_score_{{ submission_criteria.pk }}" name="{{ submission_criteria.pk }}_score" aria-describedby="scoreHelp" required>
+                                                                {% else %}
+                                                                    <input type="number" class="form-control" id="element_score_{{ submission_criteria.pk }}" name="{{ submission_criteria.pk }}_score" aria-describedby="scoreHelp" disabled>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    </div>
+                                                    <script>
+                                                        // Function to toggle the selection state of an element button
+                                                        function toggleElementSelection(button, criteriaPk) {
+                                                            const markingScheme = button.getAttribute('data-marking-scheme');
+                                                            console.log("Marking Scheme: " + markingScheme)
+
+                                                            if (markingScheme === 'ADD') {
+                                                                // Multi-select logic for ADD marking scheme
+                                                                button.classList.toggle('btn-outline-secondary');
+                                                                button.classList.toggle('btn-secondary');
+                                                            } else {
+                                                                // Single-choice logic for SEL marking scheme
+                                                                const buttonsContainer = document.getElementById('elements_buttons_' + criteriaPk);
+                                                                Array.from(buttonsContainer.getElementsByClassName('element-button')).forEach(btn => {
+                                                                    btn.classList.add('btn-outline-secondary');
+                                                                    btn.classList.remove('btn-secondary');
+                                                                });
+                                                                button.classList.add('btn-secondary');
+                                                                button.classList.remove('btn-outline-secondary');
+                                                            }
+
+                                                            // Update the hidden input with selected elements' marks or IDs
+                                                            updateSelectedElements(criteriaPk, button.dataset.maxInput, markingScheme);
+                                                        }
+
+                                                        // Adjust the function to handle input changes for ADD marking scheme more dynamically
+                                                        function updateSelectedElements(criteriaPk, maxInput, markingScheme) {
+                                                            const buttonsContainer = document.getElementById('elements_buttons_' + criteriaPk);
+                                                            let totalMark = 0;
+
+                                                            if (markingScheme === 'ADD') {
+                                                                const inputFields = buttonsContainer.querySelectorAll('input[type="number"]');
+                                                                inputFields.forEach(inputField => {
+                                                                    const elementId = inputField.getAttribute('id').replace('element_score_', '');
+                                                                    const btn = document.querySelector('.element-button[data-element-id="' + elementId + '"]');
+                                                                    const elementMark = btn ? parseFloat(btn.getAttribute('data-element-marks')) || 0 : 0;
+                                                                    const inputValue = parseFloat(inputField.value) || 0;
+                                                                    // If the button has been pressed, use elementMark, otherwise use inputValue
+                                                                    totalMark += btn.classList.contains('btn-secondary') ? elementMark : inputValue;
+                                                                });
+                                                            } else { // For SEL
+                                                                const selectedButton = buttonsContainer.querySelector('.btn-secondary');
+                                                                if (selectedButton) {
+                                                                    totalMark = parseFloat(selectedButton.getAttribute('data-element-marks')) || 0;
+                                                                }
+                                                            }
+
+                                                            // Ensure total does not exceed maxInput for display purposes
+                                                            totalMark = Math.min(totalMark, parseFloat(maxInput));
+                                                            
+                                                            const hiddenInput = document.getElementById('selected_elements_marks_' + criteriaPk);
+                                                            hiddenInput.value = totalMark.toString();
+
+                                                            const markLabel = document.getElementById('mark_label_' + criteriaPk);
+                                                            if(markLabel) {
+                                                                markLabel.innerHTML = `Mark (${maxInput}): ${totalMark.toFixed(1)}/${maxInput} <i class="fas fa-info-circle ms-auto"
+                                                                title="Click button to give maximum marks for the criteria or input partial marks for each criteria"
+                                                                data-bs-toggle="tooltip"
+                                                                data-bs-placement="top"></i>`;
+
+                                                                // After updating the HTML, reinitialize the tooltips for the newly added elements
+                                                                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                                                                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                                                                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                                                                });
+                                                            }
+                                                        }
+                                                        
+                                                        function toggleDescriptionVisibility(elementId) {
+                                                            var descriptionDiv = document.getElementById('description-' + elementId);
+                                                            var arrowSpan = document.querySelector('.expand-arrow[onclick*="' + elementId + '"]');
+                                                            
+                                                            if (descriptionDiv.style.display === "none") {
+                                                                descriptionDiv.style.display = "block";
+                                                                arrowSpan.innerHTML = '&#9650;'; // Upwards arrow
+                                                            } else {
+                                                                descriptionDiv.style.display = "none";
+                                                                arrowSpan.innerHTML = '&#9660;'; // Downwards arrow
+                                                            }
+                                                        }                                              
+                                                    </script>
+                                                    <div class="mb-3">
+                                                        <label for="element_feedback_sandwich" class="form-label">Feedback</label>
+                                                        <!-- Buttons in a column format using Flexbox -->
+                                                        <div class="mb-3 d-flex flex-column w-100">
+                                                            <button type="button"
+                                                                    class="btn btn-outline-primary w-100 feedback-bank-btn mb-1"
+                                                                    name="{{ submission_criteria.pk }}_feedback"
+                                                                    data-element-id="{{ submission_criteria.element.pk }}"
+                                                                    data-feedback-element-id="{{ submission_criteria.pk }}"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#feedbackBankModal"
+                                                                    data-tag-name="{{ submission_criteria.name }} - {{ submission_criteria.submission.assignment.assignmentTitle }}">
+                                                                Browse Feedback Bank
+                                                                <i class="fas fa-info-circle ms-auto"
+                                                                   title="Access saved feedback from your feedback bank"
+                                                                   data-bs-toggle="tooltip"
+                                                                   data-bs-placement="top"></i>
+                                                                <button type="button"
+                                                                        class="btn btn-outline-primary w-100 mb-1"
+                                                                        name="{{ submission_criteria.pk }}_generate"
+                                                                        data-element-id="{{submission_criteria.pk }}">
+                                                                    Generate Feedback
+                                                                    <i class="fas fa-info-circle ms-auto"
+                                                                       title="Automatically generate feedback for each question"
+                                                                       data-bs-toggle="tooltip"
+                                                                       data-bs-placement="top"></i>
+                                                                    <span class="loading-animation" style="display: none;">
+                                                                        <i class="fas fa-spinner fa-spin"></i>
+                                                                        <span class="timer"></span>
+                                                                    </span>
+                                                                </button>
+                                                                <button type="button"
+                                                                        class="btn btn-outline-primary w-100 mb-1"
+                                                                        data-bs-toggle="modal"
+                                                                        data-bs-target="#compareModal"
+                                                                        onclick="document.querySelector('#inputQuestionName').value='{{ submission_criteria.element.elementName }}';document.querySelector('#inputQuestionID').value='{{ submission_criteria.element.pk }}';">
+                                                                    Compare Submissions
+                                                                    <i class="fas fa-info-circle ms-auto"
+                                                                       title="Compare submissions to find similarities and differences"
+                                                                       data-bs-toggle="tooltip"
+                                                                       data-bs-placement="top"></i>
+                                                                </button>
+                                                            </div>
+                                                            <div id="element_feedback_sandwich" class="card">
+                                                                <ul class="list-group list-group-flush">
+                                                                    {% if submission_criteria.feedback %}
+                                                                        {% if submission_criteria.status != 2 and submission_criteria.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input mb-1"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_start"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_start"
+                                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                                          required>{{ submission_criteria.feedback.start }}</textarea>
+                                                                            </li>
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input mb-1"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_middle"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_middle"
+                                                                                          placeholder="Then write about what the student can improve on"
+                                                                                          required>{{ submission_criteria.feedback.middle }}</textarea>
+                                                                            </li>
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input mb-1"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_end"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_end"
+                                                                                          placeholder="Finish with something positive"
+                                                                                          required>{{ submission_criteria.feedback.end }}</textarea>
+                                                                            </li>
+                                                                        {% else %}
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_start"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_start"
+                                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                                          disabled>{{ submission_criteria.feedback.start }}</textarea>
+                                                                            </li>
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_middle"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_middle"
+                                                                                          placeholder="Then write about what the student can improve on"
+                                                                                          disabled>{{ submission_criteria.feedback.middle }}</textarea>
+                                                                            </li>
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_end"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_end"
+                                                                                          placeholder="Finish with something positive"
+                                                                                          disabled>{{ submission_criteria.feedback.end }}</textarea>
+                                                                            </li>
+                                                                        {% endif %}
+                                                                    {% else %}
+                                                                        {% if submission_criteria.status != 2 and submission_criteria.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input mb-1"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_start"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_start"
+                                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                                          required></textarea>
+                                                                            </li>
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input mb-1"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_middle"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_middle"
+                                                                                          placeholder="Then write about what the student can improve on"
+                                                                                          required></textarea>
+                                                                            </li>
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input mb-1"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_end"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_end"
+                                                                                          placeholder="Finish with something positive"
+                                                                                          required></textarea>
+                                                                            </li>
+                                                                        {% else %}
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_start"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_start"
+                                                                                          placeholder="Start with something positive: i.e. what the student did well"
+                                                                                          disabled></textarea>
+                                                                            </li>
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_middle"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_middle"
+                                                                                          placeholder="Then write about what the student can improve on"
+                                                                                          disabled></textarea>
+                                                                            </li>
+                                                                            <li class="list-group-item p-0">
+                                                                                <textarea class="form-control feedback-input"
+                                                                                          style="border: 0"
+                                                                                          id="element_feedback_end"
+                                                                                          name="{{ submission_criteria.pk }}_feedback_end"
+                                                                                          placeholder="Finish with something positive"
+                                                                                          disabled></textarea>
+                                                                            </li>
+                                                                        {% endif %}
+                                                                    {% endif %}
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    <p>System tags</p>
+                                                    <div class="mb-3 form-check form-check-inline">
+                                                        <div class="mb-3 form-check form-check-inline">
+                                                            {% if submission_element.needHelp %}
+                                                                {% if submission_element.status != 2 and submission_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input"
+                                                                           id="element_help"
+                                                                           name="{{ submission_criteria.pk }}_needHelp"
+                                                                           checked="checked">
+                                                                {% else %}
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input"
+                                                                           id="element_help"
+                                                                           name="{{ submission_criteria.pk }}_needHelp"
+                                                                           checked="checked"
+                                                                           disabled>
+                                                                {% endif %}
+                                                            {% else %}
+                                                                {% if submission_criteria.status != 2 and submission_criteria.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input"
+                                                                           id="element_help"
+                                                                           name="{{ submission_criteria.pk }}_needHelp">
+                                                                {% else %}
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input"
+                                                                           id="element_help"
+                                                                           name="{{ submission_criteria.pk }}_needHelp"
+                                                                           disabled>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                            <label class="form-check-label" for="element_help">Help</label>
+                                                        </div>
+                                                        <div class="mb-3 form-check form-check-inline">
+                                                            {% if submission_element.needModerate %}
+                                                                {% if submission_element.status != 2 and submission_element.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input"
+                                                                           id="element_moderate"
+                                                                           name="{{ submission_criteria.pk }}_needModerate"
+                                                                           checked="checked">
+                                                                {% else %}
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input"
+                                                                           id="element_moderate"
+                                                                           name="{{ submission_criteria.pk }}_needModerate"
+                                                                           checked="checked"
+                                                                           disabled>
+                                                                {% endif %}
+                                                            {% else %}
+                                                                {% if submission_criteria.status != 2 and submission_criteria.marker.pk == request.session.user_id or request.session.user_role == "Academic" %}
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input"
+                                                                           id="element_moderate"
+                                                                           name="{{ submission_criteria.pk }}_needModerate">
+                                                                {% else %}
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input"
+                                                                           id="element_moderate"
+                                                                           name="{{ submission_criteria.pk }}_needModerate"
+                                                                           disabled>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                            <label class="form-check-label" for="element_moderate">Moderate</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- custom tags s -->
+                                                    <p>Custom tags</p>
+                                                    <div>
+                                                        {% if tag_list %}
+                                                        <ul>
+                                                            {% for tag in tag_list %}
+                                                                {% if tag.subElement_id == submission_element.pk %}
+                                                                    {% if tag.visibility == 1 %}
+                                                                        {% if user_id == tag.owner.pk %}
+                                                                            <li>
+                                                                                <div class="btn-group" role="group"
+                                                                                     aria-label="Basic mixed styles example">
+                                                                                    <button type="button" class="btn btn-sm"
+                                                                                            style="border-color:#8D5588; color: #8D5588;">
+                                                                                        {{ tag.name }}
+                                                                                    </button>
+                                                                                    <a type="button"
+                                                                                       class="btn btn-danger-outline btn-sm"
+                                                                                       href="/teacher/mark/?submission={{ submission.pk }}&tag_delete={{ tag.id }}"
+                                                                                       style="background-color:#8D5588; color: white;">
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                             width="16" height="16"
+                                                                                             fill="currentColor" class="bi bi-x-lg"
+                                                                                             viewBox="0 0 16 16">
+                                                                                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                                                                                        </svg>
+                                                                                    </a>
+                                                                                </div>
+                                                                            </li>
+                                                                        {% endif %}
+
+                                                                    {% elif tag.visibility == 2 %}
+                                                                        {% if user_role == 'M' or user_role == 'T' %}
+                                                                            <li>
+                                                                                <div class="btn-group" role="group"
+                                                                                     aria-label="Basic mixed styles example">
+                                                                                    <button type="button" class="btn btn-sm"
+                                                                                            style="border-color:#8D5588; color: #8D5588;">
+                                                                                        {{ tag.name }}
+                                                                                    </button>
+                                                                                    <a type="button"
+                                                                                       class="btn btn-danger-outline btn-sm"
+                                                                                       href="/teacher/mark/?submission={{ submission.pk }}&tag_delete={{ tag.id }}"
+                                                                                       style="background-color:#8D5588; color: white;">
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                             width="16" height="16"
+                                                                                             fill="currentColor" class="bi bi-x-lg"
+                                                                                             viewBox="0 0 16 16">
+                                                                                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                                                                                        </svg>
+                                                                                    </a>
+                                                                                </div>
+                                                                            </li>
+                                                                        {% endif %}
+
+                                                                    {% elif tag.visibility == 3 %}
+                                                                        {% if user_role == 'A' %}
+                                                                            <li>
+                                                                                <div class="btn-group" role="group"
+                                                                                     aria-label="Basic mixed styles example">
+                                                                                    <button type="button" class="btn btn-sm"
+                                                                                            style="border-color:#8D5588; color: #8D5588;">
+                                                                                        {{ tag.name }}
+                                                                                    </button>
+                                                                                    <a type="button"
+                                                                                       class="btn btn-danger-outline btn-sm"
+                                                                                       href="/teacher/mark/?submission={{ submission.pk }}&tag_delete={{ tag.id }}"
+                                                                                       style="background-color:#8D5588; color: white;">
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                             width="16" height="16"
+                                                                                             fill="currentColor" class="bi bi-x-lg"
+                                                                                             viewBox="0 0 16 16">
+                                                                                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                                                                                        </svg>
+                                                                                    </a>
+                                                                                </div>
+                                                                            </li>
+                                                                        {% endif %}
+
+                                                                    {% else %}
+                                                                        <li>
+                                                                            <div class="btn-group" role="group"
+                                                                                 aria-label="Basic mixed styles example">
+                                                                                <button type="button" class="btn btn-sm"
+                                                                                        style="border-color:#8D5588; color: #8D5588;">
+                                                                                    {{ tag.name }}
+                                                                                </button>
+                                                                                <a type="button"
+                                                                                   class="btn btn-danger-outline btn-sm"
+                                                                                   href="/teacher/mark/?submission={{ submission.pk }}&tag_delete={{ tag.id }}"
+                                                                                   style="background-color:#8D5588; color: white;">
+                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                         width="16" height="16"
+                                                                                         fill="currentColor" class="bi bi-x-lg"
+                                                                                         viewBox="0 0 16 16">
+                                                                                        <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                                                                                    </svg>
+                                                                                </a>
+                                                                            </div>
+                                                                        </li>
+                                                                    {% endif %}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        </ul>
+                                                        {% else %}
+                                                        <p><em>You have not created any cutom tags.</em></p>
+                                                        {% endif %}
+
+                                                        <p>
+                                                            <button class="btn btn-light" type="button"
+                                                                    data-bs-toggle="collapse"
+                                                                    data-bs-target="#collapseExample-{{ submission_element.pk }}"
+                                                                    aria-expanded="false"
+                                                                    aria-controls="collapseExample-{{ submission_element.pk }}"
+                                                                    id="collapseExampleBTN-{{ submission_element.pk }}">
+                                                                Add a Tag
+                                                            </button>
+                                                        </p>
+
+                                                        <div class="collapse" id="collapseExample-{{ submission_element.pk }}">
+                                                            <div class="card card-body">
+<!--                                                                <form method="POST" action="/teacher/mark/?submission={{ submission.pk }}" id="ctag-{{ submission_element.pk }}" name="ctag-{{ submission_element.pk }}">-->
+<!--                                                                    {% csrf_token %}-->
+                                                                    <div class="row mb-3">
+                                                                        <p>Select the visibility</p>
+                                                                        <div class="btn-group"
+                                                                             data-toggle="buttons"
+                                                                             aria-label="Basic radio toggle button group">
+
+                                                                            <input type="radio" class="btn-check"
+                                                                                   name="btnradio" id="btnradio1-{{ submission_element.pk }}"
+                                                                                   value="radio1-{{ submission_element.pk }}" autocomplete="off">
+<!--                                                                                   required="required"-->
+                                                                            <label class="btn btn-outline-primary"
+                                                                                   for="btnradio1-{{ submission_element.pk }}">Me only</label>
+
+                                                                            <input type="radio" class="btn-check"
+                                                                                   name="btnradio" id="btnradio2-{{ submission_element.pk }}"
+                                                                                   value="radio2-{{ submission_element.pk }}" autocomplete="off">
+<!--                                                                                   required="required"-->
+                                                                            <label class="btn btn-outline-primary"
+                                                                                   for="btnradio2-{{ submission_element.pk }}">Markers only</label>
+
+                                                                            {% if user_role == 'A' %}
+                                                                            <input type="radio" class="btn-check"
+                                                                                   name="btnradio" id="btnradio3-{{ submission_element.pk }}"
+                                                                                   value="radio3-{{ submission_element.pk }}" autocomplete="off">
+<!--                                                                                   required="required"-->
+                                                                            <label class="btn btn-outline-primary"
+                                                                                   for="btnradio3-{{ submission_element.pk }}">Academics
+                                                                                only</label>
+                                                                            {% endif %}
+
+                                                                            <input type="radio" class="btn-check"
+                                                                                   name="btnradio" id="btnradio4-{{ submission_element.pk }}"
+                                                                                   value="radio4-{{ submission_element.pk }}" autocomplete="off">
+<!--                                                                                   required="required"-->
+                                                                            <label class="btn btn-outline-primary"
+                                                                                   for="btnradio4-{{ submission_element.pk }}">Everyone</label>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col mb-3">
+                                                                        <input class="form-control" type="text"
+                                                                               name="tagname" id="tagname-{{ submission_element.pk }}"
+                                                                               placeholder="Your tag"
+                                                                               aria-label="default input example">
+                                                                    </div>
+<!--                                                                </form>-->
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <!-- custom tag f -->
+
+                                                </div>
+
+                                                    <div class="modal"
+                                                         id="feedbackBankModal"
+                                                         tabindex="-1"
+                                                         aria-labelledby="feedbackBankModalLabel"
+                                                         aria-hidden="true">
+                                                        <div class="modal-dialog modal-xl">
+                                                            <!-- Consider using modal-xl for a wider modal -->
+                                                            <div class="modal-content"
+                                                                 style="background-color: #FFFFFF;
+                                                                        box-shadow: 0px 0px 18px 11px lightgrey">
+                                                                <div class="modal-header d-flex justify-content-center"
+                                                                     style="background-color: #20323C">
+                                                                    <h5 class="modal-title text-white"
+                                                                        id="feedbackBankModalLabel"
+                                                                        style="flex-grow: 1;
+                                                                               text-align: center">Feedback Bank</h5>
+                                                                    <button type="button"
+                                                                            class="btn-close btn-close-white"
+                                                                            data-bs-dismiss="modal"
+                                                                            aria-label="Close"
+                                                                            style="position: absolute;
+                                                                                   right: 1rem;
+                                                                                   top: 1rem"></button>
+                                                                </div>
+                                                                <div class="modal-body d-flex" style="height: 500px;">
+                                                                    <!-- Sidebar for Courses and Saved Feedback -->
+                                                                    <div class="modal-sidebar d-flex flex-column justify-content-start me-3 position-relative"
+                                                                         style="overflow-y: auto;
+                                                                                max-height: 500px">
+                                                                        <div>
+                                                                            <div class="form-check mb-2">
+                                                                                <input class="form-check-input" type="checkbox" id="savedFeedbackCheckbox">
+                                                                                <label class="form-check-label" for="savedFeedbackCheckbox">My Favourites</label>
+                                                                            </div>
+                                                                        </div>
+                                                                        <!-- My Feedback Checkbox -->
+                                                                        <div class="form-check mb-2">
+                                                                            <input class="form-check-input" type="checkbox" id="myFeedbackCheckbox">
+                                                                            <label class="form-check-label" for="myFeedbackCheckbox">My Feedback</label>
+                                                                        </div>
+                                                                        <!-- Course Checkboxes -->
+                                                                        <h6 class="mt-3">Courses</h6>
+                                                                        {% for course in courses %}
+                                                                            <div class="form-check mb-2">
+                                                                                <input class="form-check-input course-checkbox"
+                                                                                       type="checkbox"
+                                                                                       id="courseCheckbox{{ course.id }}"
+                                                                                       name="courseCheckbox"
+                                                                                       value="{{ course.id }}">
+                                                                                <label class="form-check-label" for="courseCheckbox{{ course.id }}">{{ course.courseName }}</label>
+                                                                            </div>
+                                                                        {% endfor %}
+                                                                        <!-- Placeholder for Assignment Checkboxes -->
+                                                                        <h6 id="assignmentsHeading" class="mt-3" style="display: none;">Assignments</h6>
+                                                                        <div id="assignmentsContainer" style="display: none;">
+                                                                            {% for course in courses %}
+                                                                                {% for assignment in course.assignment_set.all %}
+                                                                                    <div class="form-check mb-2 assignment-checkbox"
+                                                                                         data-course-id="{{ course.id }}"
+                                                                                         style="display: none">
+                                                                                        <input class="form-check-input"
+                                                                                               type="checkbox"
+                                                                                               id="assignmentCheckbox{{ assignment.id }}"
+                                                                                               name="assignmentCheckbox"
+                                                                                               value="{{ assignment.id }}">
+                                                                                        <label class="form-check-label" for="assignmentCheckbox{{ assignment.id }}">{{ assignment.assignmentTitle }}</label>
+                                                                                    </div>
+                                                                                {% endfor %}
+                                                                            {% endfor %}
+                                                                        </div>
+                                                                        <!-- Placeholder for Question Checkboxes -->
+                                                                        <h6 id="questionsHeading" class="mt-3" style="display: none;">Questions</h6>
+                                                                        <div id="questionsContainer" style="display: none;">
+                                                                            {% for course in courses %}
+                                                                                {% for assignment in course.assignment_set.all %}
+                                                                                    {% for question in assignment.assignmentelement_set.all %}
+                                                                                        <div class="form-check mb-2 question-checkbox"
+                                                                                             data-assignment-id="{{ assignment.id }}"
+                                                                                             style="display: none">
+                                                                                            <input class="form-check-input"
+                                                                                                   type="checkbox"
+                                                                                                   id="questionCheckbox{{ question.id }}"
+                                                                                                   name="questionCheckbox"
+                                                                                                   value="{{ question.id }}">
+                                                                                            <label class="form-check-label" for="questionCheckbox{{ question.id }}">{{ question.elementName }}</label>
+                                                                                        </div>
+                                                                                    {% endfor %}
+                                                                                {% endfor %}
+                                                                            {% endfor %}
+                                                                        </div>
+                                                                        {% comment %} <div class="mt-auto">
+                                                                            <!-- Toggle for Show Suggestions at the bottom of the sidebar -->
+                                                                            <div class="form-check form-switch mb-2">
+                                                                                <input class="form-check-input" type="checkbox" id="showSuggestions">
+                                                                                <label class="form-check-label" for="showSuggestions">Show suggestions</label>
+                                                                            </div>
+                                                                        </div> {% endcomment %}
+                                                                    </div>
+                                                                    <!-- Main Content Area -->
+                                                                    <div class="modal-main-content flex-grow-1"
+                                                                         style="width: 80%;
+                                                                                max-height: 500px;
+                                                                                overflow-y: auto">
+                                                                        <!-- Search and Sort Bar -->
+                                                                        <div class="d-flex justify-content-between mb-2">
+                                                                            <input type="text"
+                                                                                   id="search-bar"
+                                                                                   class="form-control me-2"
+                                                                                   placeholder="Search...">
+                                                                            <div class="btn-group">
+                                                                                <button type="button"
+                                                                                        class="btn btn-outline-primary"
+                                                                                        style="width: 100px"
+                                                                                        data-bs-toggle="dropdown"
+                                                                                        aria-haspopup="true"
+                                                                                        aria-expanded="false">
+                                                                                    Sort By
+                                                                                </button>
+                                                                                <ul class="dropdown-menu">
+                                                                                    <li>
+                                                                                        <a class="dropdown-item" href="#" id="sortByRecent">Recent</a>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <a class="dropdown-item" href="#" id="sortByLikes">Likes</a>
+                                                                                    </li>
+                                                                                </ul>
+                                                                            </div>
+                                                                        </div>
+                                                                        <!-- Tags and Feedback Items -->
+                                                                        <div>
+                                                                            <!-- Tags -->
+                                                                            <div class="mb-2 tags-container">
+                                                                                <!-- Dynamic tags will be appended here -->
+                                                                            </div>
+                                                                            <!-- Inside your feedback bank modal -->
+                                                                            <div>
+                                                                                {% if feedback_items %}
+                                                                                    {% for feedback in feedback_items %}
+                                                                                        <div class="card mb-2 feedback-item"
+                                                                                             data-feedback-id="{{ feedback.id }}"
+                                                                                             data-tag-name="{{ feedback.tag.name }}"
+                                                                                             data-author-id="{{ feedback.author.id }}"
+                                                                                             data-course-id="{{ feedback.element.element.assignment.course.id }}"
+                                                                                             data-assignment-id="{{ feedback.element.element.assignment.id }}"
+                                                                                             data-question-id="{{ feedback.element.element.id }}"
+                                                                                             data-feedback-start="{{ feedback.start }}"
+                                                                                             data-feedback-middle="{{ feedback.middle }}"
+                                                                                             data-feedback-end="{{ feedback.end }}"
+                                                                                             data-likes="{{ feedback.likes }}"
+                                                                                             data-dislikes="{{ feedback.dislikes }}"
+                                                                                             data-feedback-date="{{ feedback.date }}"
+                                                                                             {% if feedback.is_saved %}data-saved="true"{% endif %}>
+                                                                                            <div class="card-body">
+                                                                                                <!-- Tag Label on Top Right -->
+                                                                                                <div class="d-flex justify-content-between">
+                                                                                                    <h5 class="card-title font-weight-bold">{{ feedback.author.userName }}</h5>
+                                                                                                    <span class="badge bg-primary tag-badge">{{ feedback.tag.name }}</span>
+                                                                                                </div>
+                                                                                                <p class="card-text">{{ feedback.marks_given }}/{{ feedback.total_marks }} marks</p>
+                                                                                                <div style="max-width: 900px;">
+                                                                                                    <p class="text-truncate" id="truncated-text-{{ forloop.counter }}">{{ feedback.truncated_text }}</p>
+                                                                                                    <p class="full-text"
+                                                                                                       id="full-text-{{ forloop.counter }}"
+                                                                                                       style="display: none">
+                                                                                                        {{ feedback.full_text }}
+                                                                                                    </p>
+                                                                                                </div>
+                                                                                                <!-- Display tags -->
+                                                                                                <div>
+                                                                                                    {% for tag in feedback.tags %}<span class="badge bg-primary me-1">{{ tag.name }}</span>{% endfor %}
+                                                                                                </div>
+                                                                                                <!-- Feedback action buttons -->
+                                                                                                <div class="d-flex justify-content-between align-items-end">
+                                                                                                    <div>
+                                                                                                        <button type="button"
+                                                                                                                class="btn btn-outline-primary btn-sm view-more"
+                                                                                                                data-target="full-text-{{ forloop.counter }}">
+                                                                                                            View More
+                                                                                                        </button>
+                                                                                                        {% comment %} <button type="button" class="btn btn-outline-secondary btn-sm copy-to-clipboard" data-target="full-text-{{ forloop.counter }}">
+                                                                                                            Copy to clipboard
+                                                                                                        </button> {% endcomment %}
+                                                                                                        <button type="button"
+                                                                                                                class="btn btn-outline-secondary btn-sm fill-feedback-btn"
+                                                                                                                data-target="full-text-{{ forloop.counter }}">
+                                                                                                            Add Feedback
+                                                                                                        </button>
+                                                                                                        <button type="button"
+                                                                                                                class="btn btn-outline-success btn-sm save-feedback-btn"
+                                                                                                                data-feedback-id="{{ feedback.id }}">
+                                                                                                            {% if feedback.id in saved_feedback_ids %}
+                                                                                                                Remove from My Favourites
+                                                                                                            {% else %}
+                                                                                                                Add to My Favourites
+                                                                                                            {% endif %}
+                                                                                                        </button>
+                                                                                                    </div>
+                                                                                                    <div class="d-flex align-items-center">
+                                                                                                        <button type="button"
+                                                                                                                class="btn btn-outline-danger btn-sm reaction-btn"
+                                                                                                                data-feedback-id="{{ feedback.id }}"
+                                                                                                                data-reaction-type="dislike">
+                                                                                                            👎 {{ feedback.dislikes }}
+                                                                                                        </button>
+                                                                                                        <button type="button"
+                                                                                                                class="btn btn-outline-success btn-sm ms-1 reaction-btn"
+                                                                                                                data-feedback-id="{{ feedback.id }}"
+                                                                                                                data-reaction-type="like">
+                                                                                                            👍 {{ feedback.likes }}
+                                                                                                        </button>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    {% endfor %}
+                                                                                {% else %}
+                                                                                    <p>No feedback items found.</p>
+                                                                                {% endif %}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                            {% endfor %}
+                        </form>
+                                <div class="modal fade"
+                                     id="compareModal"
+                                     tabindex="-1"
+                                     aria-labelledby="compareModalLabel"
+                                     aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                                        <div class="modal-content">
+                                            <form action="/teacher/mark/?submission={{ submission.pk }}"
+                                                  method="post"
+                                                  enctype="multipart/form-data">
+                                                {% csrf_token %}
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="compareModalLabel">Compare</h5>
+                                                    <button type="button"
+                                                            class="btn-close"
+                                                            data-bs-dismiss="modal"
+                                                            aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body" align="left">
+                                                    <div class="mb-1 row" style="display: none;">
+                                                        <div class="mb-3">
+                                                            <label for="inputQuestionID" class="form-label">Question ID</label>
+                                                            <input type="text"
+                                                                   class="form-control"
+                                                                   id="inputQuestionID"
+                                                                   name="questionID">
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-1 row">
+                                                        <div class="mb-3">
+                                                            <label for="inputQuestionName" class="form-label">Question ID</label>
+                                                            <input type="text"
+                                                                   class="form-control"
+                                                                   id="inputQuestionName"
+                                                                   name="questionName"
+                                                                   style="box-shadow: 0px 0px 4px 2px lightgrey inset"
+                                                                   disabled>
+                                                        </div>
+                                                    </div>
+                                                    <label class="form-label">Compare List</label>
+                                                    <div class="card"
+                                                         style="width: 100%;
+                                                                height: 500px;
+                                                                overflow: auto;
+                                                                background-color: rgb(240,240,240);
+                                                                box-shadow: 0px 0px 4px 2px lightgrey inset">
+                                                        <table class="table table-hover align-middle text-center"
+                                                               style="table-layout:fixed;
+                                                                      word-break:break-all">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th scope="col" style="width:80px;"></th>
+                                                                    <th scope="col" style="width:120px;">STUDENT ID</th>
+                                                                    {% for page_element in page_elements %}
+                                                                        <th scope="col" style="width:80px;">{{ page_element.elementName }}</th>
+                                                                    {% endfor %}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for info in page_info %}
+                                                                    {% if info.submission_id != submission.pk %}
+                                                                        <tr style="height:80px;">
+                                                                            <td>
+                                                                                <input class="form-check-input"
+                                                                                       type="radio"
+                                                                                       name="inputSelectedSubmission"
+                                                                                       id="inputSelectedSubmission1"
+                                                                                       value="{{ info.submission_id }}">
+                                                                            </td>
+                                                                            <td>{{ info.student_number }}</td>
+                                                                            {% for score in info.elements_score %}<td>{{ score }}</td>{% endfor %}
+                                                                        </tr>
+                                                                    {% endif %}
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button class="btn btn-primary" type="submit" name="compare">Compare</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.3.5/split.min.js"></script>
+            </div>
+            <!-- Warning Modal -->
+            <div class="modal fade"
+                 id="warningModal"
+                 tabindex="-1"
+                 role="dialog"
+                 aria-labelledby="warningModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content"
+                         style="background-color: #FFFFFF;
+                                box-shadow: 0px 0px 18px 11px lightgrey">
+                        <div class="modal-header d-flex justify-content-center"
+                             style="background-color: #20323C">
+                            <h5 class="modal-title text-white"
+                                id="warningModalLabel"
+                                style="flex-grow: 1;
+                                       text-align: center">Replace Text?</h5>
+                            <button type="button"
+                                    class="btn-close btn-close-white close-replace-button"
+                                    aria-label="Close"
+                                    style="position: absolute;
+                                           right: 1rem;
+                                           top: 1rem"></button>
+                        </div>
+                        <div class="modal-body">The text areas already have content. Are you sure you want to replace it?</div>
+                        <div class="modal-footer">
+                            <button type="button"
+                                    class="btn btn-secondary close-replace-button"
+                                    data-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmReplace">Replace</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script language="javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+                // Get references to all buttons with the "generate-feedback-btn" and "fill-feedback-btn" classes
+                var generateFeedbackButtons = document.querySelectorAll('button[name$="_generate"]');
+                var fillFeedbackButtons = document.querySelectorAll('.fill-feedback-btn');
+                
+                // Function to check if any of the text areas have content
+                function hasContent(elementId) {
+                    var startTextarea = document.querySelector(`textarea[name="${elementId}_feedback_start"]`);
+                    var middleTextarea = document.querySelector(`textarea[name="${elementId}_feedback_middle"]`);
+                    var endTextarea = document.querySelector(`textarea[name="${elementId}_feedback_end"]`);
+                    
+                    return (
+                        startTextarea.value.trim() !== '' ||
+                        middleTextarea.value.trim() !== '' ||
+                        endTextarea.value.trim() !== ''
+                    );
+                }
+                
+                document.querySelectorAll('button[name$="_generate"]').forEach(button => {
+                    button.addEventListener('click', function () {
+                        // Extract the element_id from the button's name
+                        var element_id = this.getAttribute('data-element-id');
+                        var element_name = this.getAttribute('name').split('_')[0];
+
+                        function generateFeedbackFunctionality(button, submission_element_id, assignment_element_id) {
+                            // Extract assignment_id and submission_id
+                            var assignmentLinkElement = document.querySelector('a.nav-link[href*="/teacher/assignment?page=marking"]');
+                            var assignment_id = null;
+                            if (assignmentLinkElement) {
+                                var assignmentLink = assignmentLinkElement.getAttribute('href');
+                                var urlParams = new URLSearchParams(assignmentLink);
+                                assignment_id = urlParams.get('assignment');
+                            }
+
+                            var currentUrlParams = new URLSearchParams(window.location.search);
+                            var submission_id = currentUrlParams.get('submission');
+
+                            // Show loading animation and start timer
+                            var loadingAnimation = button.querySelector('.loading-animation');
+                            var timerSpan = button.querySelector('.timer');
+                            loadingAnimation.style.display = 'inline-block';
+                            timerSpan.textContent = ' 0s';
+                            var startTime = Date.now();
+
+                            var interval = setInterval(function() {
+                                var elapsedTime = Math.round((Date.now() - startTime) / 1000);
+                                timerSpan.textContent = ` ${elapsedTime}s`;
+                            }, 1000);
+
+                            // Make AJAX call to Django view
+                            if (assignment_id && submission_id) {
+                                fetch(`/teacher/generate-feedback/?element_id=${assignment_element_id}&assignment=${assignment_id}&submission=${submission_id}`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        clearInterval(interval);
+                                        // Hide the loading animation
+                                        loadingAnimation.style.display = 'none';
+                                        if (data.status === 'success') {
+                                            // Update textareas with the feedback
+                                            document.getElementsByName(submission_element_id + "_feedback_start")[0].value = data.feedback.positive_start;
+                                            document.getElementsByName(submission_element_id + "_feedback_middle")[0].value = data.feedback.constructive_middle;
+                                            document.getElementsByName(submission_element_id + "_feedback_end")[0].value = data.feedback.positive_end;
+                                        } else {
+                                            alert("Error: " + data.message);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        clearInterval(interval);
+                                        console.error('Error:', error);
+                                        loadingAnimation.style.display = 'none';
+                                    });
+                            } else {
+                                console.error('Assignment ID or Submission ID not found');
+                                clearInterval(interval);
+                                // Hide the loading animation
+                                loadingAnimation.style.display = 'none';
+                            }
+                        }
+
+                        function fillFeedbackFunctionality(feedbackElement, elementId) {
+                            // Get references to the textareas
+                            var startTextarea = document.querySelector(`textarea[name="${elementId}_feedback_start"]`);
+                            var middleTextarea = document.querySelector(`textarea[name="${elementId}_feedback_middle"]`);
+                            var endTextarea = document.querySelector(`textarea[name="${elementId}_feedback_end"]`);
+
+                            // Get the feedback text from the feedback element
+                            var startText = feedbackElement.getAttribute('data-feedback-start');
+                            var middleText = feedbackElement.getAttribute('data-feedback-middle');
+                            var endText = feedbackElement.getAttribute('data-feedback-end');
+
+                            // Fill in the textareas with the feedback text
+                            startTextarea.value = startText;
+                            middleTextarea.value = middleText;
+                            endTextarea.value = endText;
+
+                            $('#feedbackBankModal').modal('hide');
+                        }
+
+                        // Add event listeners for "Generate Feedback" buttons
+                        generateFeedbackButtons.forEach(button => {
+                            button.addEventListener('click', function () {
+                                // Extract the element_id from the button's data attribute
+                                var submission_element_id = this.parentElement.querySelector('[data-feedback-element-id]').getAttribute('data-feedback-element-id');
+                                var assignment_element_id = this.getAttribute('data-element-id');
+
+                                // Check if any of the text areas have content
+                                if (hasContent(submission_element_id)) {
+                                    // Show the warning modal if there is content
+                                    $('#warningModal').modal('show');
+
+                                    // Handle the user's choice in the modal
+                                    document.getElementById('confirmReplace').addEventListener('click', function() {
+                                        // Close the modal manually
+                                        $('#warningModal').modal('hide');
+
+                                        // Call the function to generate feedback
+                                        generateFeedbackFunctionality(button, submission_element_id, assignment_element_id);
+                                    });
+
+                                    return; // Stop further execution
+                                } else {
+                                    // Call the function to generate feedback
+                                    generateFeedbackFunctionality(button, submission_element_id, assignment_element_id);
+                                }
+                            });
+                        });
+
+                        // Add event listeners for "Fill in Feedback" buttons
+                        fillFeedbackButtons.forEach(button => {
+                            button.addEventListener('click', function() {
+                                // Get entire feedback element
+                                var feedbackElement = this.parentElement.parentElement.parentElement.parentElement;
+
+                                // Get the element ID from the button's data attribute
+                                var elementId = document.getElementById('feedbackBankModal').getAttribute('data-selected-element-id');
+
+                                // Check if any of the text areas have content
+                                if (hasContent(elementId)) {
+                                    // Show the warning modal if there is content
+                                    $('#warningModal').modal('show');
+
+                                    // Handle the user's choice in the modal
+                                    document.getElementById('confirmReplace').addEventListener('click', function() {
+                                        // Proceed with filling in the text areas
+                                        // Replace the text or perform the desired action
+                                        
+                                        // Close the modal manually
+                                        $('#warningModal').modal('hide');
+
+                                        // Call the function to fill in the feedback
+                                        fillFeedbackFunctionality(feedbackElement, elementId);
+                                    });
+                                    
+                                    return; // Stop further execution
+                                } else {
+                                    // Call the function to fill in the feedback
+                                    fillFeedbackFunctionality(feedbackElement, elementId);
+                                }
+                            });
+                        });
+                    });
+
+                    // Get references to the elements with the "close-button" class
+                    var closeButtonElements = document.querySelectorAll('.close-replace-button');
+
+                    // Add event listeners to close the modal when any element with the "close-button" class is clicked
+                    closeButtonElements.forEach(function(closeButton) {
+                        closeButton.addEventListener('click', function() {
+                            // Close the modal manually
+                            $('#warningModal').modal('hide');
+                        });
+                    });
+                    
+                    $(function () {
+                        $('[data-bs-toggle="tooltip"]').tooltip();  // Initialize tooltips
+                    });
+                });
+            });
+            </script>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Function to replace '\n' with '<br>'
+                function convertNewlinesToBreaks(element) {
+                    if (element) {
+                        element.innerHTML = element.textContent.replace(/\\n/g, '<br>');
+                    }
+                }
+        
+                // Apply the function to each 'full-text' element
+                document.querySelectorAll('.full-text').forEach(convertNewlinesToBreaks);
+        
+                // Existing functionality for 'View more' buttons
+                document.querySelectorAll('.view-more').forEach(button => {
+                    button.addEventListener('click', function() {
+                        var targetId = this.getAttribute('data-target');
+                        var fullText = document.getElementById(targetId);
+                        var truncatedTextId = 'truncated-' + targetId.substring(5);
+                        var truncatedText = document.getElementById(truncatedTextId);
+        
+                        if (fullText && truncatedText) {
+                            if (fullText.style.display === 'none') {
+                                fullText.style.display = 'block';
+                                truncatedText.style.display = 'none';
+                                this.textContent = 'View less';
+                            } else {
+                                fullText.style.display = 'none';
+                                truncatedText.style.display = 'block';
+                                this.textContent = 'View more';
+                            }
+                        }
+                    });
+                });
+            });
+            </script>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('.copy-to-clipboard').forEach(button => {
+                    button.addEventListener('click', function() {
+                        var targetId = this.getAttribute('data-target');
+                        var fullTextElement = document.getElementById(targetId);
+
+                        if (fullTextElement) {
+                            // Create a temporary element with the HTML content
+                            var tempElement = document.createElement('div');
+                            tempElement.style.position = 'absolute';
+                            tempElement.style.left = '-9999px';
+                            tempElement.style.whiteSpace = 'pre-wrap'; // Preserve white spaces and line breaks
+                            tempElement.innerHTML = fullTextElement.innerHTML.replace(/<br\s *[\/]?>/gi, '\n'); // Replace only <br> with \n
+                            document.body.appendChild(tempElement);
+
+                            // Use the Selection and Range APIs to select the text
+                            var selection = window.getSelection();
+                            var range = document.createRange();
+                            range.selectNodeContents(tempElement);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+
+                            // Execute the copy command
+                            var successful = document.execCommand('copy');
+                            if (!successful) {
+                                console.error('Failed to copy text.');
+                            }
+
+                            // Cleanup
+                            selection.removeAllRanges();
+                            document.body.removeChild(tempElement);
+
+                            // Alert the user
+                            alert('Formatted text copied to clipboard');
+                        }
+                    });
+                });
+            });
+            </script>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('.reaction-btn').forEach(button => {
+                    button.addEventListener('click', function () {
+                        var feedbackId = this.getAttribute('data-feedback-id');
+                        var reactionType = this.getAttribute('data-reaction-type');
+                        var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                        fetch('/teacher/update-reaction/', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrftoken,
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: `feedback_id=${feedbackId}&reaction_type=${reactionType}`
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update the buttons' text with the new like/dislike counts
+                                var buttons = this.parentElement.querySelectorAll('.reaction-btn');
+                                buttons.forEach(btn => {
+                                    if (btn.getAttribute('data-reaction-type') === 'like') {
+                                        btn.innerText = `👍 ${data.likes}`;
+                                    } else if (btn.getAttribute('data-reaction-type') === 'dislike') {
+                                        btn.innerText = `👎 ${data.dislikes}`;
+                                    }
+                                });
+                            } else {
+                                console.error('Error:', data.error);
+                            }
+                        })
+                        .catch(error => console.error('Error:', error));
+                    });
+                });
+            });
+            </script>
+            <script>
+            document.querySelectorAll('.save-feedback-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    var feedbackId = this.getAttribute('data-feedback-id');
+                    var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                    fetch('/teacher/save-feedback/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken,
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: `feedback_id=${feedbackId}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            var feedbackItem = document.querySelector(`[data-feedback-id="${feedbackId}"]`);
+                            if (feedbackItem) {
+                                if (feedbackItem.getAttribute('data-saved') === 'true') {
+                                    feedbackItem.removeAttribute('data-saved');
+                                    this.innerText = 'Add to My Favourites';
+                                } else {
+                                    feedbackItem.setAttribute('data-saved', 'true');
+                                    this.innerText = 'Remove from My Favourites';
+                                }
+                            }
+                        } else {
+                            console.error('Error:', data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                });
+            });
+            </script>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Event listener for "Feedback Bank" buttons (Tag filtering)
+                document.querySelectorAll('.feedback-bank-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const tagName = this.getAttribute('data-tag-name');
+                        displayRelevantTagOnly(tagName);
+                        
+                        const selectedElementId = this.getAttribute('data-feedback-element-id');
+
+                        // Store the selectedElementId in the modal element
+                        const modal = document.getElementById('feedbackBankModal');
+                        modal.setAttribute('data-selected-element-id', selectedElementId);
+
+                        filterFeedback();
+                    });
+                });
+
+                // Event listeners for new checkboxes
+                document.getElementById('savedFeedbackCheckbox').addEventListener('change', filterFeedback);
+                document.getElementById('myFeedbackCheckbox').addEventListener('change', filterFeedback);
+
+                // Function to display only the relevant tag
+                function displayRelevantTagOnly(tagName) {
+                    const tagsContainer = document.querySelector('.tags-container');
+                    tagsContainer.innerHTML = ''; // Clear existing tags
+                
+                    const tagSpan = document.createElement('span');
+                    tagSpan.className = 'badge bg-primary tag-badge active-tag';
+                    tagSpan.setAttribute('data-tag-name', tagName);
+                    tagSpan.textContent = tagName;
+                
+                    const closeButton = document.createElement('button');
+                    closeButton.className = 'btn-close btn-close-white btn-sm tag-close-btn';
+                    closeButton.setAttribute('aria-label', 'Close');
+                    closeButton.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        showAllFeedbackItems();
+                        tagsContainer.innerHTML = ''; // Clear the tag
+                    });
+                
+                    tagSpan.appendChild(closeButton);
+                    tagsContainer.appendChild(tagSpan);
+                }                
+
+                // Function to attach event listeners to course checkboxes
+                function attachDynamicCheckboxListeners() {
+                    // Attach event listeners to course checkboxes
+                    document.querySelectorAll('.course-checkbox').forEach(checkbox => {
+                        checkbox.addEventListener('change', function() {
+                            console.log('Course checkbox changed:', this.value, this.checked);
+                            let courseId = this.value;
+                            toggleAssignmentsDisplay(courseId, this.checked);
+                            filterFeedback();
+                        });
+                    });
+
+                    // Attach event listeners to assignment checkboxes
+                    document.querySelectorAll('.assignment-checkbox input').forEach(checkbox => {
+                        checkbox.addEventListener('change', function() {
+                            console.log('Assignment checkbox changed:', this.value, this.checked);
+                            let assignmentId = this.value;
+                            toggleQuestionsDisplay(assignmentId, this.checked);
+                            filterFeedback();
+                        });
+                    });
+
+                    // Question checkbox listeners
+                    document.querySelectorAll('.question-checkbox input').forEach(checkbox => {
+                        checkbox.addEventListener('change', function() {
+                            console.log('Question checkbox changed:', this.value, this.checked);
+                            filterFeedback(); // Call filterFeedback when a question checkbox changes
+                        });
+                    });
+
+                    function toggleAssignmentsDisplay(courseId, isChecked) {
+                        let assignments = document.querySelectorAll('.assignment-checkbox[data-course-id="' + courseId + '"]');
+                        assignments.forEach(assignment => assignment.style.display = isChecked ? 'block' : 'none');
+                        document.getElementById('assignmentsHeading').style.display = isChecked ? 'block' : 'none';
+                        document.getElementById('assignmentsContainer').style.display = isChecked ? 'block' : 'none';
+                    }
+
+                    function toggleQuestionsDisplay(assignmentId, isChecked) {
+                        let questions = document.querySelectorAll('.question-checkbox[data-assignment-id="' + assignmentId + '"]');
+                        questions.forEach(question => question.style.display = isChecked ? 'block' : 'none');
+                        document.getElementById('questionsHeading').style.display = isChecked ? 'block' : 'none';
+                        document.getElementById('questionsContainer').style.display = isChecked ? 'block' : 'none';
+                    }
+                }
+
+                // Attach listeners to dynamic checkboxes
+                attachDynamicCheckboxListeners();
+
+                function filterFeedback() {
+                    console.log('Filtering feedback items...');
+                    const showSaved = document.getElementById('savedFeedbackCheckbox').checked;
+                    const showMyFeedback = document.getElementById('myFeedbackCheckbox').checked;
+                    const selectedCourses = Array.from(document.querySelectorAll('[name="courseCheckbox"]:checked')).map(cb => cb.value);
+                    const selectedAssignments = Array.from(document.querySelectorAll('[name="assignmentCheckbox"]:checked')).map(cb => cb.value);
+                    const selectedQuestions = Array.from(document.querySelectorAll('[name="questionCheckbox"]:checked')).map(cb => cb.value);
+                    const activeTagName = document.querySelector('.active-tag') ? document.querySelector('.active-tag').getAttribute('data-tag-name') : null;
+
+                    console.log('selectedCourses:', selectedCourses);
+                    console.log('selectedAssignments:', selectedAssignments);
+                    console.log('selectedQuestions:', selectedQuestions);
+
+                    document.querySelectorAll('.feedback-item').forEach(item => {
+                        const isSaved = item.getAttribute('data-saved') === 'true';
+                        const isMyFeedback = item.getAttribute('data-author-id') === '{{ request.session.user_id }}';
+                        const itemCourseId = item.getAttribute('data-course-id');
+                        const itemAssignmentId = item.getAttribute('data-assignment-id');
+                        const itemQuestionId = item.getAttribute('data-question-id');
+                        const itemTagName = item.getAttribute('data-tag-name');
+
+                        let display = true;
+
+                        if (showSaved && !isSaved) display = false;
+                        if (showMyFeedback && !isMyFeedback) display = false;
+                        if (selectedCourses.length > 0 && !selectedCourses.includes(itemCourseId)) display = false;
+                        if (selectedAssignments.length > 0 && !selectedAssignments.includes(itemAssignmentId)) display = false;
+                        if (selectedQuestions.length > 0 && !selectedQuestions.includes(itemQuestionId)) display = false;
+                        if (activeTagName && itemTagName !== activeTagName) display = false;
+
+                        item.style.display = display ? '' : 'none';
+                    });
+                }
+
+                // Function to show all feedback items (clearing any active filter)
+                function showAllFeedbackItems() {
+                    document.querySelectorAll('.feedback-item').forEach(item => {
+                        item.style.display = '';
+                    });
+                    // Reset any checkbox state if necessary
+                    document.getElementById('savedFeedbackCheckbox').checked = false;
+                    document.getElementById('myFeedbackCheckbox').checked = false;
+                    document.querySelectorAll('.courseCheckbox').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    document.querySelectorAll('.questionCheckbox').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                }
+
+                // Sorting buttons event listeners
+                document.getElementById('sortByRecent').addEventListener('click', function(event) {
+                    event.preventDefault();
+                    sortFeedbackByRecent();
+                });
+
+                document.getElementById('sortByLikes').addEventListener('click', function(event) {
+                    event.preventDefault();
+                    sortFeedbackByLikesAndDislikes();
+                });
+
+                // Function to sort feedback items by recent
+                function sortFeedbackByRecent() {
+                    const feedbackItems = Array.from(document.querySelectorAll('.feedback-item'));
+
+                    feedbackItems.sort(function(a, b) {
+                        const dateA = new Date(a.getAttribute('data-feedback-date'));
+                        const dateB = new Date(b.getAttribute('data-feedback-date'));
+                        return dateB - dateA; // Sort in descending order (most recent first)
+                    });
+
+                    // Reorder the feedback items on the page
+                    feedbackItems.forEach(item => {
+                        const parent = item.parentElement;
+                        parent.insertBefore(item, parent.firstChild); // Move the item to the top
+                    });
+                }
+
+                // Function to sort feedback items by likes and dislikes
+                function sortFeedbackByLikesAndDislikes() {
+                    const feedbackItems = Array.from(document.querySelectorAll('.feedback-item'));
+
+                    feedbackItems.sort(function(a, b) {
+                        const likesA = parseInt(a.getAttribute('data-feedback-likes'));
+                        const likesB = parseInt(b.getAttribute('data-feedback-likes'));
+                        const dislikesA = parseInt(a.getAttribute('data-feedback-dislikes'));
+                        const dislikesB = parseInt(b.getAttribute('data-feedback-dislikes'));
+
+                        // Calculate a weighted score based on likes and dislikes
+                        const scoreA = likesA - dislikesA;
+                        const scoreB = likesB - dislikesB;
+
+                        return scoreB - scoreA; // Sort in descending order (higher score first)
+                    });
+
+                    // Reorder the feedback items on the page
+                    feedbackItems.forEach(item => {
+                        const parent = item.parentElement;
+                        parent.insertBefore(item, parent.firstChild); // Move the item to the top
+                    });
+                }
+            });
+            </script>
+            <script>
+            $(document).ready(function() {
+                $('.feedback-input').each(function() {
+                    // Extracting the feedback type from the ID of the textarea
+                    var feedbackType = this.id.split('_')[2]; // Gets 'start', 'middle', or 'end'
+
+                    $(this).autocomplete({
+                        source: function(request, response) {
+                            $.ajax({
+                                url: '/teacher/get-suggestions/',
+                                dataType: 'json',
+                                data: {
+                                    text: request.term, // The text typed by the user
+                                    feedback_type: feedbackType // The type of feedback
+                                },
+                                success: function(data) {
+                                    response(data.suggestions);
+                                }
+                            });
+                        },
+                        minLength: 2, // Minimum length of term to start suggesting
+                        select: function(event, ui) {
+                            $(this).val(ui.item.label);
+                            return false;
+                        }
+                    });
+                });
+            });
+            </script>
+            <script>
+            $(document).ready(function() {
+                $('#search-bar').on('keypress', function(e) {
+                    if (e.which === 13) {
+                        e.preventDefault(); // Prevent the default action on Enter key press
+                    }
+                });
+        
+                $('#search-bar').on('keyup', function() {
+                    var searchTerm = $(this).val().toLowerCase().split(' '); // Split search term into words
+        
+                    // Filter feedback items based on the search term
+                    $('.feedback-item').each(function() {
+                        var feedbackText = $(this).text().toLowerCase();
+                        var match = searchTerm.every(function(word) { // Check if every word in search term is present in feedback
+                            return feedbackText.includes(word);
+                        });
+        
+                        if (match) {
+                            $(this).show();
+                        } else {
+                            $(this).hide();
+                        }
+                    });
+                });
+            });
+            </script>
+            <script>
+            const GUTTER_SIZE = 30;
+            const gutterStyle = dimension => ({
+              'flex-basis': `${GUTTER_SIZE}px`,
+            });
+
+            const elementStyle = (dimension, size) => ({
+              'flex-basis': `calc(${size}% - ${GUTTER_SIZE}px)`,
+            })
+
+                // set default split.
+            Split(['#one', '#two'], {
+              sizes: [400, 200],
+              minSize: 300,
+              elementStyle,
+              gutterStyle
+            });
+        </script>
+
+        <!-- Timer script -->
+        <script>
+            // MarkEd practice
+
+            var total_completed = "{{ dummy }}"
+            console.log(total_completed)
+
+            var button_pressed = "{{ btn_pressed }}"
+            console.log(button_pressed)
+
+            var special = false;
+
+            let startBtn = document.getElementById('start');
+            let stopBtn = document.getElementById('stop');
+            let resetBtn = document.getElementById('reset');
+
+            let hour = parseInt(document.getElementById("hr").textContent)
+            let minute = parseInt(document.getElementById("min").textContent);
+            let second = parseInt(document.getElementById("sec").textContent);
+            let millisec = 0o0;
+
+            function pad_single_digits(variable) {
+                if (variable < 10) {
+                    variable = "0" + variable;
+                }
+
+                return variable;
+            }
+
+            document.getElementById('hr').innerHTML = pad_single_digits(hour);
+            document.getElementById('min').innerHTML = pad_single_digits(minute);
+            document.getElementById('sec').innerHTML = pad_single_digits(second);
+
+            // onload now sart automatically? <- check a flag.
+            window.addEventListener("load", (event) => {
+                // if start pressed:
+                if (button_pressed == "start") {
+                    timer = true;
+                    stopWatch();
+                }
+                // else don't
+            });
+
+            startBtn.addEventListener('click', function () {
+                timer = true;
+                special = true;
+                stopWatch();
+            });
+
+            stopBtn.addEventListener('click', function () {
+                timer = false;
+            });
+
+            // resetBtn.addEventListener('click', function () {
+            //     timer = false;
+            //     hour = 0;
+            //     minute = 0;
+            //     second = 0;
+            //     millisec = 0;
+            //     document.getElementById('hr').innerHTML = "00";
+            //     document.getElementById('min').innerHTML = "00";
+            //     document.getElementById('sec').innerHTML = "00";
+            //     // document.getElementById('millisec').innerHTML = "00";
+            // });
+
+            function stopWatch() {
+                if (timer) {
+                    millisec++;
+
+                    if (millisec == 100) {
+                        second++;
+                        millisec = 0;
+                    }
+
+                    if (second == 60) {
+                        minute++;
+                        second = 0;
+                    }
+
+                    if (minute == 60) {
+                        hour++;
+                        minute = 0;
+                        second = 0;
+                    }
+
+                    let hrString = hour;
+                    let minString = minute;
+                    let secString = second;
+                    let countString = millisec;
+
+                    if (hour < 10) {
+                        hrString = "0" + hrString;
+                    }
+
+                    if (minute < 10) {
+                        minString = "0" + minString;
+                    }
+
+                    if (second < 10) {
+                        secString = "0" + secString;
+                    }
+
+                    if (millisec < 10) {
+                        countString = "0" + countString;
+                    }
+
+                    document.getElementById('hr').innerHTML = hrString;
+                    document.getElementById('min').innerHTML = minString;
+                    document.getElementById('sec').innerHTML = secString;
+                    // document.getElementById('millisec').innerHTML = countString;
+                    setTimeout(stopWatch, 10);
+                }
+            }
+
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            // Trigger update when the user leaves the page
+            document.addEventListener("visibilitychange", function logData() {
+                if (document.visibilityState === "hidden") {
+                    var formData = new FormData();
+                    //add django csrf_token
+                    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                    //add file item into formData
+                    formData.append('student', '{{ submission.student.pk }}');
+                    formData.append('assignment', '{{ assignment.pk }}');
+                    // formData.append('assignment', '{{ assignment }}');
+
+                    console.log("here START");
+                    console.log("special", special);
+                    if (special == false) {
+                        var data = document.createElement("data", "hi");
+                        data.append('csrfmiddlewaretoken', csrftoken);
+                        navigator.sendBeacon('/teacher/last_update/', formData);
+                        console.log("here END");
+                    }
+                }
+            });
+        </script>
+    {% endblock %}

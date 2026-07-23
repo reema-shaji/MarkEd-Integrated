@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>MarkEd</title>
+        {% load static %}
+        <link rel="stylesheet"
+              href="{% static '/plugins/bootstrap-5.0.1-dist/css/bootstrap.min.css' %}">
+        <link rel="shortcut icon" href="{% static '/images/favicon.png' %}" />
+        <script src="{% static '/plugins/jquery-3.5.1.min.js' %}"></script>
+        <script src="{% static '/plugins/bootstrap-5.0.1-dist/js/bootstrap.bundle.js' %}"></script>
+        <script src="{% static '/plugins/bootstrap-5.0.1-dist/js/bootrstrap.min.js' %}"></script>
+        <script>$("[data-toggle=popover]").popover();</script>
+        {# <link rel="stylesheet" type="text/css" href="/static/css/main.css"> #}
+    </head>
+    <body>
+
+        <div class="container-fluid p-0">
+            <div class="row m-0">
+                <div class="row m-0 p-0" style="height : 80px;">
+                    <nav class="navbar navbar-expand-lg navbar-light bg-light"
+                         style="box-shadow: 0px 16px 18px -15px lightgrey">
+                        <div class="container-fluid">
+                            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                                <a class="navbar-nav me-auto mb-2 mb-lg-0 text-decoration-none" href="/">
+                                    <h1 style="color: black;">MarkEd</h1>
+                                </a>
+                                <div class="d-flex">
+                                    <!-- <button type="button"
+                                            class="btn btn-lg text-white"
+                                            style="margin-right: 20px;
+                                                   background-color : #454574">Help</button> -->
+                                    {% comment %} This is where the notifications start. {% endcomment %}
+                                    <!-- <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                                        <li class="nav-item dropdown">
+                                            <div class="btn-group">
+                                                {% comment %} TODO: get useful notifications up and running, how to eval this though? {% endcomment %}
+                                                {% if new_number > 0 %}
+                                                    <button type="button"
+                                                            class="btn btn-lg btn-outline-secondary text-white"
+                                                            style="margin-right: 20px;
+                                                                   background-color : #454574"
+                                                            data-bs-toggle="dropdown"
+                                                            aria-expanded="false">Notifications</button>
+                                                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                                        {% for info in new %}
+                                                            <li>
+                                                                <a class="dropdown-item" href="{{ info.desc }}">{{ info.subject }}</a>
+                                                            </li>
+                                                        {% endfor %}
+                                                        <a type="button"
+                                                           class="btn btn-outline-primary"
+                                                           style="float: left;
+                                                                  height: 30px;
+                                                                  width:80px"
+                                                           href="/teacher/assignment?page=dismiss&assignment={{ assignment.pk }}&page2={{ current_page }}">Dismiss</a>
+                                                        <a type="button"
+                                                           class="btn btn-outline-primary"
+                                                           style="float: right;
+                                                                  height: 30px;
+                                                                  width: 180px"
+                                                           href="/student/notification.html">View all
+                                                        notifications</a>
+                                                    </ul>
+                                                {% else %}
+                                                    <button type="button"
+                                                            class="btn rounded btn-lg btn-outline-secondary text-white"
+                                                            style="margin-right: 20px;
+                                                                   background-color : #454574"
+                                                            data-bs-toggle="dropdown"
+                                                            aria-expanded="false">Notifications</button>
+                                                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                                        <a type="button"
+                                                           class="btn btn-outline-primary"
+                                                           style="float: right;
+                                                                  height: 30px;
+                                                                  width: 180px"
+                                                           href="/student/notification">View all
+                                                        notifications</a>
+                                                    </ul>
+                                                {% endif %}
+                                            </div>
+                                        </li>
+                                    </ul> -->
+                                    <div class="d-flex dropdown">
+                                        <a href="#"
+                                           class="d-flex align-items-center text-decoration-none dropdown-toggle"
+                                           id="dropdownUser1"
+                                           data-bs-toggle="dropdown"
+                                           aria-expanded="false">
+                                            <img src="{% static '/media/' %}{{ request.session.user_profile }}"
+                                                 alt="hugenerd"
+                                                 width="40"
+                                                 height="40"
+                                                 class="rounded-circle">
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow"
+                                            aria-labelledby="dropdownUser1">
+                                            <!-- <li>
+                                                <a class="dropdown-item" href="#">Settings</a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="#">Profile</a>
+                                            </li>
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li> -->
+                                            <li>
+                                                <a class="dropdown-item" href="/logout">Log out</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+            <div class="row">
+                {% block mainbody %}<p>original</p>{% endblock %}
+            </div>
+        </div>
+        <script src="{% static '/js/base.js' %}"></script>
+    </body>
+</html>

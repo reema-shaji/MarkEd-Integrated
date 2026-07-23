@@ -1,0 +1,460 @@
+{% extends "teacher/base.html" %}
+{% block mainbody %}
+    {% load static %}
+    <script>
+        function show() {
+            window.open("/teacher/assignment?page=child&assignment={{ assignment.pk }}" );
+          }
+
+        function able() {
+            window.location.href = "/teacher/assignment?page=able&assignment={{ assignment.pk }}" ;
+          }
+    </script>
+    <style type="text/css">
+        /*.edit {
+            cursor: pointer;*/ /* 确保默认情况下标签的鼠标样式是指针 */
+        /*}*/
+        /*.edit:hover {
+            cursor: url("{% static '/media/modules/pencil.cur' %}"), pointer;
+        }*/
+
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta2/dist/css/bootstrap-select.min.css">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta2/dist/js/bootstrap-select.min.js"></script>
+
+    <!-- (Optional) Latest compiled and minified JavaScript translation files -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta2/dist/js/i18n/defaults-*.min.js"></script>
+
+    <div class="container px-4">
+        <div class="p-3 text-black" style="font-size: 30px">
+            &nbsp;
+            <svg t="1623033936287"
+                 class="icon"
+                 viewBox="0 0 1024 1024"
+                 version="1.1"
+                 xmlns="http://www.w3.org/2000/svg"
+                 p-id="8426"
+                 width="40"
+                 height="40">
+                <path d="M832 64H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32z m-40 824H232V687h97.9c11.6 32.8 32 62.3 59.1 84.7 34.5 28.5 78.2 44.3 123 44.3s88.5-15.7 123-44.3c27.1-22.4 47.5-51.9 59.1-84.7H792v-63H643.6l-5.2 24.7C626.4 708.5 573.2 752 512 752s-114.4-43.5-126.5-103.3l-5.2-24.7H232V136h560v752z" p-id="8427" fill="#000000">
+                </path>
+                <path d="M320 341h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8zM320 501h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z" p-id="8428" fill="#000000">
+                </path>
+            </svg>
+            &nbsp;<b>Submissions</b>
+        </div>
+        <!-- <div class="row gx-10" style="width: 84%;"> -->
+            <div class="col-md-12 p-3">
+                <div class="card p-3">
+                    <div class="card-body">
+                        <span style="display:inline-block">
+                            <h2 style="display:inline">
+                                <b>{{submitted}}</b> 
+                            </h2>
+                            <h4 style="display: inline;">of</h4>
+                            <h2 style="display: inline;">
+                                <b>{{total}}</b> 
+                            </h2>
+                            <h5 style="color: gray;">
+                                SUBMITTED
+                            </h5>
+                        </span>
+                        <span style="display:inline-block;margin-left:10%">
+                            <h2 style="display:inline">
+                                <b>{{total}}</b> 
+                            </h2>
+                            <h5 style="color: gray;">
+                                TO GRADE
+                            </h5>
+                        </span>
+
+
+                    </div>
+                </div>
+                </div>
+            <!-- </div> -->
+            <!-- {{configuration}} -->
+
+            <div class="col-md-12 p-3">
+                <div class="card p-3">
+                    <div class="card-body">
+                        <div style="margin-bottom: 20px;">
+                            <b>select file: </b>
+                            <select id="files" class="selectpicker" style="width: 100px;" name="files" onchange="getNewChoice()">
+                                
+                            </select>
+                        </div>
+                        <label class="edit" style="width: 30%;">
+                            
+                            <span id="formats">&nbsp;Accepted formats: {{file.0.format}}</span>
+                               <span id="format_select" style="display: none;">&nbsp;Accepted formats:
+                                    <select id="format" class="selectpicker" style="width: 100px;" name="format">
+                                        <option>pdf</option>
+                                        <option>doc</option>
+                                        <option>docx</option>
+                                        <option>zip</option>
+                                        <option>rar</option>
+                                        <option>py</option>
+                                        <option>java</option>
+                                    </select>
+                                </span>
+                                <span>
+                                    <button id="format_button" type="button" class="btn btn-primary" style="background-color:rgb(68, 68, 245); width:70px; display:none" onclick="submitFormatChoice()"><b>save</b></button>
+                                </span>
+                                <img src="{% static '/media/modules/pencil.png' %}" width="20" height="20" onclick="showFormatChoice()" style="cursor: pointer;">
+                            <!-- </span> -->
+                        </label>
+                        <label class="edit" style="width: 30%; margin: 0px 0px 0px 10px">
+                            
+                            &nbsp;Accepted File Size: 
+                            <span id="get_size">{{file.1.size}}</span>
+                            <span class="set_size" style="display:none">
+                                <select id="size_select" name="size">
+                                    <option {% if file.1.size == '1' %}selected{% endif %}>1</option>
+                                    <option {% if file.1.size == '2' %}selected{% endif %}>2</option>
+                                    <option {% if file.1.size == '5' %}selected{% endif %}>5</option>
+                                    <option {% if file.1.size == '10' %}selected{% endif %}>10</option>
+                                    <option {% if file.1.size == '15' %}selected{% endif %}>15</option>
+                                    <option {% if file.1.size == '20' %}selected{% endif %}>20</option>
+                                  </select>
+                            </span> mb 
+                            <span class="set_size" style="display:none">
+                                <button id="size_button" type="button" class="btn btn-primary" style="background-color:rgb(68, 68, 245); width:70px;" onclick="submitSizeChoice()"><b>save</b></button>
+                            </span>
+                            <img src="{% static '/media/modules/pencil.png' %}" width="20" height="20" onclick="editSize()" style="cursor: pointer;">
+                        </label>
+                        <div>
+                            <label class="edit" style="width: 40%; margin: 20px 0px 0px 0px">
+                            
+                                &nbsp;Accepted File Name: <span id="get_name">{{file.2.name}} </span>
+                                <span id="set_name" style="display:none">
+                                    <input id="actual_name" type="text" class="form-control" aria-describedby="passwordHelpInline" name="name" style="width: 150px;display:inline">
+                                    <button id="name_button" type="button" class="btn btn-primary" style="background-color:rgb(68, 68, 245); width:70px;" onclick="submitNameChoice()"><b>save</b></button>
+                                </span>
+                                <img src="{% static '/media/modules/pencil.png' %}" width="20" height="20" onclick="editName()" style="cursor: pointer;">
+                            </label>
+                        </div>
+                        
+
+                        <span style="display: flex;vertical-align:middle; float:middle; flex-direction:column; width:auto">
+                            <div style="margin-top: 20px;">
+                                <button type="button" class="btn btn-primary" style="background-color:rgb(11, 11, 73); width:150px" onclick="jumpToConfiguration('1', '{{assignment.pk}}')"><b>Customize &rarr;</b></button>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12 p-3">
+                <div class="card p-3">
+                    <div class="card-body">
+                        <svg t="1623033936287"
+                             class="icon"
+                             viewBox="0 0 1024 1024"
+                             version="1.1"
+                             xmlns="http://www.w3.org/2000/svg"
+                             p-id="8426"
+                             width="20"
+                             height="20">
+                            <path d="M832 64H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32z m-40 824H232V687h97.9c11.6 32.8 32 62.3 59.1 84.7 34.5 28.5 78.2 44.3 123 44.3s88.5-15.7 123-44.3c27.1-22.4 47.5-51.9 59.1-84.7H792v-63H643.6l-5.2 24.7C626.4 708.5 573.2 752 512 752s-114.4-43.5-126.5-103.3l-5.2-24.7H232V136h560v752z" p-id="8427" fill="#000000">
+                            </path>
+                            <path d="M320 341h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8zM320 501h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z" p-id="8428" fill="#000000">
+                            </path>
+                        </svg>
+                        &nbsp;<b>Submissions Box</b>
+                        {% if sub_data == 2 %}
+                            <div style="float: right">
+                                <button type="button"
+                                        class="btn btn-lg text-white"
+                                        style="margin-right: 20px;
+                                               background-color : #454574"
+                                        onClick="show()">Assign</button>
+                            </div>
+                        {% else %}
+                        {% endif %}
+                        <div style="overflow: auto;">
+                            <table class="table align-middle text-center" style="margin-top: 15px;">
+                                <thead>
+                                    <tr style="color: #BEBEBE; font-size: 15px">
+                                        <th scope="col" style="width:31px;">
+                                            <input class="form-check-input mt-0"
+                                                   type="checkbox"
+                                                   value=""
+                                                   aria-label="Checkbox for following text input">
+                                        </th>
+                                        <th scope="col" style="width:120px;">STUDENTID</th>
+                                        <th scope="col" style="width:120px;">STUDENTNAME</th>
+                                        <th scope="col" style="width:210px;">UBMISSIONTIME</th>
+                                        <th scope="col" style="width:110px;">ATTEMPTS</th>
+                                        <th scope="col" style="width:110px;">DAYS LATE</th>
+                                        <th scope="col" style="width:210px;">ASSIGNED MARKERS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in box %}
+                                        <tr style="height:80px;">
+                                            <th scope="row">
+                                                <input class="form-check-input mt-0"
+                                                       type="checkbox"
+                                                       value=""
+                                                       aria-label="Checkbox for following text input">
+                                            </th>
+                                            <td>{{ item.studentId }}</td>
+                                            <td>{{ item.student }}</td>
+                                            <td>{{ item.sub_time }}</td>
+                                            <td>{{ item.attempts }}</td>
+                                            <td>{{ item.days_late }}</td>
+                                            <td>{{ item.marker }}</td>
+                                        </tr>
+                                    {% endfor %}
+
+                                    {% if able == 'Disabled' %}
+                                        {% for item in unsubmitted %}
+                                        <tr style="height:80px;">
+                                            <th scope="row">
+                                                <input class="form-check-input mt-0"
+                                                       type="checkbox"
+                                                       value=""
+                                                       aria-label="Checkbox for following text input">
+                                            </th>
+                                            <td>{{ item.studentId }}</td>
+                                            <td>{{ item.student }}</td>
+                                            <td>{{ item.sub_time }}</td>
+                                            <td>{{ item.attempts }}</td>
+                                            {% if item.days_late == 0 %}
+                                            <td>-</td>
+                                            {% else %}
+                                            <td>{{ item.days_late }}</td>
+                                            {% endif %}
+                                            <td>{{ item.marker }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        function jumpToConfiguration(moduleId, assignment){
+            window.location.href='/teacher/module_configuration?moduleId=' + moduleId + '&assignment='+assignment
+        }
+
+        var files = document.getElementById("files")
+
+        var formats = document.getElementById("formats")
+        var format_select = document.getElementById("format_select")
+        var format_button = document.getElementById("format_button")
+
+        window.onload = function(){
+            number = '{{configuration.number}}'
+            file = 'file' + 1
+            for(i=1;i<=number;i++){
+                var file = 'file' + i
+                $('#files').append('<option>' + file + '</option>')
+                
+            }
+            $("#files").selectpicker("refresh");
+
+            $('#format').val('{{file.0.format}}')
+            $('#format').selectpicker('refresh')
+           
+        }
+        
+
+        function submitFormatChoice(){
+            formats.style = "display: inline"
+            format_select.style = "display:none"
+            format_button.style = "display:none"
+            
+            
+            format_value = $('#format').val()
+            $.ajax({
+                url: "/teacher/save_formats/",
+                type: 'post',
+                data: {
+                    "csrfmiddlewaretoken":"{{ csrf_token }}",
+                    format : format_value,
+                    key : $('#files').val(),
+                    assignment: '{{assignment.pk}}'
+                },
+                success: function(data) {
+                    console.log('成功:', data);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('失败:', textStatus, errorThrown);
+                }
+            });
+
+
+            formats.innerHTML = "&nbsp;Accepted formats: " + $('#format').val()
+            selectedOptions = $('#format').val()
+            
+        }
+
+        function showFormatChoice(){
+            formats.style = "display:none"
+            format_select.style = "display:inline"
+            format_button.style = "display:inline"
+      
+            // 设置选中的值
+            if($('#format').val() == null || $('#format').val() == undefined || $('#format').val() == ''){
+                $('#format').val(selectedOptions);
+            
+                // 刷新 selectpicker
+                $('#format').selectpicker('refresh');
+            }
+            
+
+            
+        }
+
+        $(document).ready(function() {
+            $('#format').selectpicker();
+        });
+
+        function getNewChoice(){
+            var current_file = $('#files').val()
+            $.ajax({
+                url: "/teacher/get_submission_files/",
+                type: 'post',
+                data: {
+                    "csrfmiddlewaretoken":"{{ csrf_token }}",
+                    file : current_file,
+                    assignment: '{{assignment.pk}}'
+                },
+                success: function(data) {
+                    $('#format').val(data['result'][0]['format'])
+                    $('#format').selectpicker('refresh')
+                    formats.innerHTML = "&nbsp;Accepted formats: " + data['result'][0]['format']
+
+                    formats.style = "display: inline"
+                    format_select.style = "display:none"
+                    format_button.style = "display:none"
+
+
+                    get_size = document.getElementById('get_size');
+                    get_size.style = 'display:inline'
+
+                    elements = document.getElementsByClassName('set_size')
+                    for(i = 0; i < elements.length; i++){
+                        elements[i].style = 'display: none'
+                    }
+
+                    get_size.innerHTML = data['result'][1]['size']
+                    $('#size_select').val(data['result'][1]['size'])
+                    $('#size_select').selectpicker('refresh')
+
+
+                    get_name = document.getElementById('get_name');
+                    get_name.style = 'display:inline'
+
+                    actual_name = document.getElementById('actual_name')
+
+                    get_name.innerHTML = data['result'][2]['name']
+                    actual_name.value = data['result'][2]['name']
+                    set_name = document.getElementById('set_name')
+                    set_name.style = 'display: none'
+
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('失败:', textStatus, errorThrown);
+                }
+            });
+
+
+        }
+
+        function submitSizeChoice(){
+            var current_file = $('#files').val()
+            get_size = document.getElementById('get_size');
+            get_size.style = 'display:inline'
+
+            $.ajax({
+                url: "/teacher/save_size/",
+                type: 'post',
+                data: {
+                    "csrfmiddlewaretoken":"{{ csrf_token }}",
+                    file : current_file,
+                    size : $('#size_select').val(),
+                    assignment: '{{assignment.pk}}'
+                },
+                success: function(data) {
+                    console.log('成功:', data);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('失败:', textStatus, errorThrown);
+                }
+            });
+
+            get_size.innerHTML = $('#size_select').val()
+            
+
+            elements = document.getElementsByClassName('set_size')
+            for(i = 0; i < elements.length; i++){
+                elements[i].style = 'display: none'
+            }
+        }
+
+        function editSize(){
+            get_size = document.getElementById('get_size');
+            get_size.style = 'display:none'
+
+            elements = document.getElementsByClassName('set_size')
+            for(i = 0; i < elements.length; i++){
+                elements[i].style = 'display: inline'
+            }
+        }
+
+
+        function editName(){
+            get_name = document.getElementById('get_name')
+            get_name.style = 'display:none'
+
+            set_name = document.getElementById('set_name')
+            set_name.style = 'display:inline'
+            actual_name = document.getElementById('actual_name')
+            actual_name.value = get_name.innerHTML
+        }
+
+        function submitNameChoice(){
+            var current_file = $('#files').val()
+            get_name = document.getElementById('get_name');
+            get_name.style = 'display:inline'
+
+            actual_name = document.getElementById('actual_name')
+
+
+            $.ajax({
+                url: "/teacher/save_name/",
+                type: 'post',
+                data: {
+                    "csrfmiddlewaretoken":"{{ csrf_token }}",
+                    file : current_file,
+                    name : actual_name.value,
+                    assignment: '{{assignment.pk}}'
+                },
+                success: function(data) {
+                    console.log('成功:', data);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('失败:', textStatus, errorThrown);
+                }
+            });
+
+            get_name.innerHTML = actual_name.value
+            
+
+            set_name = document.getElementById('set_name')
+            set_name.style = 'display: none'
+        }
+
+    </script>
+{% endblock %}

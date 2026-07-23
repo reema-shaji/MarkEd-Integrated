@@ -1,0 +1,141 @@
+<!-- _criteria_structure.html -->
+<div id="criteria-{{ criteria.id }}" class="criteria-container">
+    <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="handleCriteriaClick({{ criteria.id }});" data-bs-toggle="tooltip" data-bs-placement="left" title="Click to view/modify details of this item.">
+        <span class="criteria-name">{{ criteria.name }} ({{ criteria.marks }} marks)</span> <!-- Wrap criteria name and marks in a span -->
+        <div>
+            <span class="btn btn-outline-secondary btn-sm" onclick="event.stopPropagation(); addChildCriteria({{ criteria.id }});" data-bs-toggle="tooltip" data-bs-placement="top" title="Add a child item to this item.">+</span>
+            <span class="expand-arrow btn btn-outline-secondary btn-sm" onclick="event.stopPropagation(); toggleElementsVisibility({{ criteria.id }}, event);" data-bs-toggle="tooltip" data-bs-placement="top" title="Expand to show criteria.">&#9660;</span>
+        </div>
+    </button>
+    <!-- Container for Elements and Marking Scheme -->
+    <div class="criteria-details-container" id="details-{{ criteria.id }}" style="display: none; padding: 20px; border: 1px solid #dee2e6; background-color: #f8f9fa;">
+        <!-- Static or dynamically loaded Marking Scheme Dropdown -->
+        <div class="marking-scheme-container mb-3">
+            <label for="markingSchemeSelect" class="form-label">Marking Criterion</label>
+            <i class="fas fa-info-circle"
+            title="You have a choice between additive and selective marking. Additive means you would award marks on a set of criteria, where each criterion is given a mark up to the total for that criterion and the total marks are the sum of all the marks gained in individual criteria. Selective means you would choose between a number of criteria/levels, each awarding that criteria's fixed number of marks. If you do not add any criteria here, you will be able to award marks out of the total for this item."
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"></i>
+            <!-- In _criteria_structure.html or wherever your dropdown is generated -->
+            <select class="form-select" id="markingSchemeSelect-{{ criteria.id }}">
+                <option value="ADD" {% if criteria.marking_scheme == 'ADD' %}selected{% endif %}>Additive</option>
+                <option value="SEL" {% if criteria.marking_scheme == 'SEL' %}selected{% endif %}>Selective</option>
+            </select>
+        </div>
+    </div>
+    <!-- Container for Child Criteria -->
+    {% if criteria.children %}
+        <div class="ms-4" id="criteria-{{ criteria.id }}-children">
+            {% for child in criteria.children %}
+                {% include "teacher/_criteria_structure.html" with criteria=child %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.form-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const criteriaId = this.id.split('-').pop();
+                const markingScheme = this.value;
+                updateMarkingScheme(criteriaId, markingScheme);
+            });
+        });
+    });
+    
+    function updateMarkingScheme(criteriaId, markingScheme) {
+        const dataToSend = {
+            marking_scheme: markingScheme,
+        };
+        
+        fetch(`/teacher/update-marking-scheme/${criteriaId}/`, {
+            method: 'POST',
+            body: JSON.stringify(dataToSend),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(), // Ensure you're sending the CSRF token correctly
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success') {
+                console.log('Marking scheme updated successfully');
+            } else {
+                console.error('Failed to update marking scheme');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+    
+    function getCSRFToken() {
+        return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    }
+    
+    function toggleElementsVisibility(criteriaId, event) {
+        event.stopPropagation();
+        // Adjusted to match the new container's ID
+        const detailsContainerId = `details-${criteriaId}`;
+        const detailsContainer = document.getElementById(detailsContainerId);
+        const expandArrow = event.currentTarget;
+    
+        // Toggle visibility and arrow direction
+        if (detailsContainer.style.display === "none" || detailsContainer.style.display === "") {
+            detailsContainer.style.display = "block";
+            expandArrow.innerHTML = "&#9650;"; // Arrow up when expanded
+            if (!detailsContainer.dataset.loaded) {
+                loadElements(criteriaId, detailsContainer); // Adjust the function call if necessary
+            }
+        } else {
+            detailsContainer.style.display = "none";
+            expandArrow.innerHTML = "&#9660;"; // Arrow down when collapsed
+        }
+    }
+    
+    function loadElements(criteriaId, elementsContainer, expandArrow) {
+        fetch(`/teacher/get-criteria-data/${criteriaId}/`)
+            .then(response => response.json())
+            .then(data => {
+                // Handle elements
+                data.elements.forEach(element => {
+                    const button = document.createElement('button');
+                    button.id = `element-${element.id}`;
+                    button.type = 'button';
+                    button.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                
+                    // Create a span for the element's name and marks
+                    const elementNameSpan = document.createElement('span');
+                    elementNameSpan.className = 'element-name';
+                    elementNameSpan.textContent = `${element.name} (${parseFloat(element.marks).toFixed(1)} marks)`;
+                    
+                    // Append the description span to the button
+                    button.appendChild(elementNameSpan);
+                
+                    // Assuming you have other interactive elements (like icons or additional buttons) within this button,
+                    // they should be added here as well, similar to how you handled the criteria button.
+                    
+                    button.addEventListener('click', () => handleElementClick(element.id));
+                    elementsContainer.appendChild(button);
+                });
+    
+                // Append the plus button for adding new elements
+                appendPlusButton(criteriaId, elementsContainer);
+    
+                // Mark as loaded to avoid reloading
+                elementsContainer.dataset.loaded = true;
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    
+    function appendPlusButton(criteriaId, elementsContainer) {
+        const plusButton = document.createElement('button');
+        plusButton.type = 'button';
+        plusButton.id = 'elementAddBtn-' + criteriaId;
+        plusButton.className = 'list-group-item d-flex justify-content-center align-items-center btn btn-outline-secondary btn-sm w-100';
+        plusButton.textContent = '+';
+        plusButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            addElement(criteriaId); // Handle new element addition
+        });
+        elementsContainer.appendChild(plusButton);
+    }
+</script>

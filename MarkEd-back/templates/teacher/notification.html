@@ -1,0 +1,51 @@
+{% extends "teacher/base.html" %}
+{% block mainbody %}
+    {% load static %}
+    <div class="container px-4">
+        <div class="p-3 text-black" style="font-size: 30px">
+            &nbsp;
+            <svg t="1627854879757"
+                 class="icon"
+                 viewBox="0 0 1024 1024"
+                 version="1.1"
+                 xmlns="http://www.w3.org/2000/svg"
+                 p-id="11196"
+                 width="40"
+                 height="40">
+                <path d="M512 896c53.12 0 96-42.88 96-96h-192c0 53.12 42.88 96 96 96zM480 128h64v64h-64zM160 704h704v64H160z" fill="#262626" p-id="11197">
+                </path>
+                <path d="M512 192c141.44 0 256 114.56 256 256v288H256v-288a255.936 255.936 0 0 1 248-255.872z m123.84 96.32h-90.24L354.88 480h160l-127.36 127.04 90.56 0.32L669.12 416h-160z" fill="#262626" p-id="11198">
+                </path>
+            </svg>
+            &nbsp;<b>Notifications</b>
+        </div>
+        <div class="row gx-10" style="width: 84%;">
+            <div class="col-md-8">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">From</th>
+                            <th scope="col">Subject</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            {% for info in old %}
+                                <tbody>
+                                    <tr>
+                                        <td>{{ info.date }}</td>
+                                        <td>{{ info.sender }}</td>
+                                        <td>
+                                            <a href="{{ info.desc }}">{{ info.subject }}</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

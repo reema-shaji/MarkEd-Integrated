@@ -1,0 +1,75 @@
+{% extends "student/base.html" %}
+{% block mainbody %}
+    {% load static %}
+    <div class="p-5 mb-4 rounded-3">
+        <div class="row" style="padding-bottom: 25px">
+            <div class="col">
+                <button type="button"
+                        class="btn btn-secondary"
+                        style="margin-right: 20px;
+                               background-color : #454574"
+                        value="Previous Page"
+                        onClick="javascript:history.go(-1);">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="16"
+                         height="16"
+                         fill="currentColor"
+                         class="bi bi-arrow-return-left"
+                         viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M14.5 1.5a.5.5 0 0 1 .5.5v4.8a2.5 2.5 0 0 1-2.5 2.5H2.707l3.347 3.346a.5.5 0 0 1-.708.708l-4.2-4.2a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 8.3H12.5A1.5 1.5 0 0 0 14 6.8V2a.5.5 0 0 1 .5-.5" />
+                    </svg>
+                    &nbsp;Back
+                </button>
+            </div>
+        </div>
+        <div class="container-fluid py-5">
+            <div class="container px-4">
+                <div class="p-3 text-black" style="font-size: 30px">
+                    &nbsp;
+                    <svg t="1627854879757"
+                         class="icon"
+                         viewBox="0 0 1024 1024"
+                         version="1.1"
+                         xmlns="http://www.w3.org/2000/svg"
+                         p-id="11196"
+                         width="40"
+                         height="40">
+                        <path d="M512 896c53.12 0 96-42.88 96-96h-192c0 53.12 42.88 96 96 96zM480 128h64v64h-64zM160 704h704v64H160z" fill="#262626" p-id="11197">
+                        </path>
+                        <path d="M512 192c141.44 0 256 114.56 256 256v288H256v-288a255.936 255.936 0 0 1 248-255.872z m123.84 96.32h-90.24L354.88 480h160l-127.36 127.04 90.56 0.32L669.12 416h-160z" fill="#262626" p-id="11198">
+                        </path>
+                    </svg>
+                    &nbsp;<b>Notifications</b>
+                </div>
+                <div class="row gx-10">
+                    <div class="col-md-10">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">From</th>
+                                    <th scope="col">Subject</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    {% for notif in notifications %}
+                                        <tbody>
+                                            <tr>
+                                                <td>{{ notif.date.date }}, {{ notif.date.time | date:"TIME_FORMAT" }}</td>
+                                                <td>{{ notif.sender }}</td>
+                                                <td>
+                                                    <a href="/student/feedback/?submission={{ notif.assignment_id }}">{{ notif.subject }}</a>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    {% endfor %}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,313 @@
+{% extends "teacher/base.html" %}
+{% block mainbody %}
+    {% load static %}
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta2/dist/css/bootstrap-select.min.css">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta2/dist/js/bootstrap-select.min.js"></script>
+
+    <!-- (Optional) Latest compiled and minified JavaScript translation files -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta2/dist/js/i18n/defaults-*.min.js"></script>
+    
+
+    <div class="p-3 text-black" style="font-size: 30px; margin-top:40px">
+        <span style="margin-top: 40px;margin-left: 30px">
+            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" onclick="jumpToPrevious('{{previousUrl}}')" style="cursor:pointer">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4"/>
+            </svg>
+            <b>{{name}} Customization</b>
+        </span>
+        
+        <div class="p-1 mb-1 rounded-3">
+            <div class="container-fluid py-2">
+                <div class="card mt-4 p-4"
+                 style="box-shadow: 0px 0px 30px -5px lightgrey;
+                        width: 80%;transform: scale(0.7);transform-origin: top left;">
+                    <div class="card-body">                        
+                        <form class="form-inline" method="post" action="/teacher/submission_module_configuration/">                        
+                            {% csrf_token %}
+                            <div class="row g-3 align-items-center">
+                              <div class="col-auto">
+                                <label for="inputPassword6" class="col-form-label">Due Date:</label>
+                              </div>
+                              <div class="col-auto">
+                                <div class="container">
+                                  <div class="form-group">
+                                      <input type="text" class="form-control" id="datepicker" name="datepicker" value="{{configuration.date}}">
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="col-auto">
+                              </div>
+                            </div>
+                            <div class="row g-3 align-items-center">
+                                <div class="col-auto">
+                                  <label for="inputPassword6" class="col-form-label">File Format:</label>
+                                </div>
+                                <div class="col-auto">
+                                  <!-- <div class="btn-group-vertical">
+                                    <div class="btn-group">
+                                      <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">Current Supported</button>
+                                      <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item">Tablet</a></li>
+                                        <li><a class="dropdown-item">Smartphone</a></li>
+                                      </ul>
+                                    </div>
+                                  </div> -->
+                                  <select id="format" class="selectpicker" multiple style="width: 100px;" name="format[]">
+                                    <option>pdf</option>
+                                    <option>doc</option>
+                                    <option>docx</option>
+                                    <option>zip</option>
+                                    <option>rar</option>
+                                    <option>py</option>
+                                    <option>java</option>
+                                  </select>
+                                </div>
+                                <div class="col-auto">
+                                  <!-- <span id="prompt" class="form-text">
+                                    (use comma to split different formats)
+                                  </span> -->
+                                </div>
+                              </div>
+                            <div class="row g-3 align-items-center">
+                                <div class="col-auto">
+                                  <label for="inputPassword6" class="col-form-label">File Size:</label>
+                                </div>
+                                <div class="col-auto">
+                                  <!-- <input type="number" class="form-control" aria-describedby="passwordHelpInline" name="size" value="{{configuration.size}}"> -->
+                                  <select class="form-select" name="size">
+                                    <option {% if configuration.size == '1' %}selected{% endif %}>1</option>
+                                    <option {% if configuration.size == '2' %}selected{% endif %}>2</option>
+                                    <option {% if configuration.size == '5' %}selected{% endif %}>5</option>
+                                    <option {% if configuration.size == '10' %}selected{% endif %}>10</option>
+                                    <option {% if configuration.size == '15' %}selected{% endif %}>15</option>
+                                    <option {% if configuration.size == '20' %}selected{% endif %}>20</option>
+                                  </select>
+                                </div>
+                                <div class="col-auto">
+                                  <span id="passwordHelpInline" class="form-text">
+                                    Mb
+                                  </span>
+                                </div>
+                              </div>
+
+                              
+
+                              <div class="row g-3 align-items-center">
+                                <div class="col-auto">
+                                  <label for="inputPassword6" class="col-form-label">File Name:</label>
+                                </div>
+                                <div class="col-auto">
+                                  <input type="text" class="form-control" aria-describedby="passwordHelpInline" name="name" value="{{configuration.name}}">
+                                </div>
+                                <div class="col-auto">
+                                  <!-- <span id="passwordHelpInline" class="form-text">
+                                    (Regular Expression allowed)
+                                  </span> -->
+                                </div>
+                              </div>
+
+                              <div class="row g-3 align-items-center">
+                                <div class="col-auto">
+                                  <label for="inputPassword6" class="col-form-label">File Number<span style="color: red;">*</span>:</label> 
+                                </div>
+                                <div class="col-auto">
+                                  <!-- <input type="number" class="form-control" aria-describedby="passwordHelpInline" name="number" value="{{configuration.number}}"> -->
+                                  <select class="form-select" name="number">
+                                    <option {% if configuration.number == '1' %}selected{% endif %}>1</option>
+                                    <option {% if configuration.number == '2' %}selected{% endif %}>2</option>
+                                    <option {% if configuration.number == '3' %}selected{% endif %}>3</option>
+                                    <option {% if configuration.number == '4' %}selected{% endif %}>4</option>
+                                    <option {% if configuration.number == '5' %}selected{% endif %}>5</option>
+                                    <option {% if configuration.number == '6' %}selected{% endif %}>6</option>
+                                    <option {% if configuration.number == '7' %}selected{% endif %}>7</option>
+                                    <option {% if configuration.number == '8' %}selected{% endif %}>8</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div class="row g-3 align-items-center">
+                                <div class="col-auto">
+                                  <label for="inputPassword6" class="col-form-label">Multiple Submission:</label>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="flexCheckChecked" {% if configuration.multipleSubmission != 0 %}checked{% endif %} name="multipleAllowed" onchange="changeMultipleSubmission()" value="yes">
+                                        <label class="form-check-label" for="flexCheckChecked">
+                                          Allowed
+                                        </label>
+                                      </div>
+                                </div>
+                              </div>
+
+                              <div class="row g-3 align-items-center">
+                                <div class="col-auto">
+                                  <label for="inputPassword6" class="col-form-label">Maximum submissions:</label>
+                                </div>
+                                <div class="col-auto">
+                                  <!-- <input type="number" class="form-control" aria-describedby="passwordHelpInline" name="submissionTimes" value="{{configuration.maximumTime}}"> -->
+                                  <select class="form-select" name="submissionTimes">
+                                    <option {% if configuration.maximumTime == '1' %}selected{% endif %}>1</option>
+                                    <option {% if configuration.maximumTime == '2' %}selected{% endif %}>2</option>
+                                    <option {% if configuration.maximumTime == '3' %}selected{% endif %}>3</option>
+                                    <option {% if configuration.maximumTime == '4' %}selected{% endif %}>4</option>
+                                    <option {% if configuration.maximumTime == '5' %}selected{% endif %}>5</option>
+                                    <option {% if configuration.maximumTime == '6' %}selected{% endif %}>6</option>
+                                    <option {% if configuration.maximumTime == '7' %}selected{% endif %}>7</option>
+                                    <option {% if configuration.maximumTime == '8' %}selected{% endif %}>8</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div class="row g-3 align-items-center">
+                                <div class="col-auto">
+                                  <label for="inputPassword6" class="col-form-label">Late Submission:</label>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="flexCheckChecked2" {% if configuration.lateSubmission != 0 %}checked{% endif %} name="extensionAllowed" onchange="changeLateSubmission()">
+                                        <label class="form-check-label" for="flexCheckChecked2" value="yes">
+                                          Allowed
+                                        </label>
+                                      </div>
+                                </div>
+                              </div>
+
+                              <!-- <div class="row g-3 align-items-center">
+                                <div class="col-auto">
+                                  <label for="inputPassword6" class="col-form-label">Extension:</label>
+                                </div>
+                                <div class="col-auto">
+                                  <input type="number" class="form-control" aria-describedby="passwordHelpInline" name="extension" value="{{configuration.extension}}">
+                                  
+                                </div>
+                                <div class="col-auto">
+                                    <span id="passwordHelpInline" class="form-text">
+                                      Days
+                                    </span>
+                                  </div>
+                              </div> -->
+                              
+                              <input type="text" style="display: none;" value="{{moduleId}}" name="moduleId">
+                              <!-- <input type="text" style="display: none;" name="url"> -->
+                              <input type="text" style="display: none" name="previousUrl">
+
+                            <div style="margin-top: 10px;float:right">
+                                <button type="submit" class="btn btn-primary" style="background-color:#0854be; width:150px" ><b>Save</b></button>
+                            </div>
+                        </form>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- {{configuration}}
+        <br>
+        {{moduleId}} -->
+    </div>
+  
+
+    <script type="text/javascript">
+        var multipleAllowed = document.getElementsByName("multipleAllowed")[0]
+
+        var extensionAllowed = document.getElementsByName("extensionAllowed")[0]
+
+        var submissionTimes = document.getElementsByName("submissionTimes")[0]
+
+        var extensionDays = document.getElementsByName("extension")[0]
+
+        //var currentUrl = document.getElementsByName("url")[0] 
+
+        var format = document.getElementsByName("format")[0]
+       
+        var size = document.getElementsByName("size")[0];
+
+        var previousUrl = document.getElementsByName('previousUrl')[0]
+
+        function changeMultipleSubmission(){
+
+            if(!multipleAllowed.checked){
+                submissionTimes.disabled = true
+            }else{
+                submissionTimes.disabled = false
+            }
+        }
+
+        $(document).ready(function() {
+          // 初始化 selectpicker
+          $('.selectpicker').selectpicker();
+
+          
+      
+          // 获取选中的选项
+          var selectedOptions = '{{configuration.format}}'.split(',');
+      
+          // 设置选中的值
+          $('#format').val(selectedOptions);
+          
+          // 刷新 selectpicker
+          $('.selectpicker').selectpicker('refresh');
+      });
+        
+        var prompt = document.getElementById("prompt")
+
+        function checkFormat(){
+          const regex = /^([a-zA-Z]+,\s*)*[a-zA-Z]+$/;
+            
+            if (!regex.test(format.value)) {
+                prompt.style = "color: red"
+                prompt.innerHTML = "error"
+            }else{
+                prompt.style= ""
+                prompt.innerHTML = "(use comma to split different formats)"
+            }
+        }
+        
+        function jumpToPrevious(url){
+          if(url == ""){
+             window.history.go(-1)
+          }else{
+             window.location.href = url
+          }
+        }
+
+        function trigger(){
+           previousUrl.value = document.referrer
+        }
+        
+        window.onload = function(){
+            //changeLateSubmission()
+            changeMultipleSubmission()
+
+            url = window.location.href
+            //currentUrl.value = url
+
+            previousUrl.value = document.referrer
+
+            /*var selectedOptions = '{{configuration.format}}'.split(',');
+            $('#format').val(selectedOptions);
+            alert(selectedOptions)
+            
+            $('.selectpicker').selectpicker('refresh');*/
+        }
+    
+        // Example usage: set the selected option to "mercedes"
+        $(document).ready(function(){
+          $('#datepicker').datepicker({
+              format: 'mm/dd/yyyy',
+              todayHighlight: true,
+              autoclose: true
+          });
+      });
+        
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
+      
+{% endblock %}

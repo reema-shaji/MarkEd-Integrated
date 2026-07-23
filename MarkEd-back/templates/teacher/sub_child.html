@@ -1,0 +1,193 @@
+{% extends "teacher/base.html" %}
+{% block mainbody %}
+    {% load static %}
+    <div class="container px-4">
+        <div class="p-3 text-black" style="font-size: 30px">
+            &nbsp;
+            <svg t="1624812338549"
+                 class="icon"
+                 viewBox="0 0 1024 1024"
+                 version="1.1"
+                 xmlns="http://www.w3.org/2000/svg"
+                 p-id="2728"
+                 width="32"
+                 height="32">
+                <path d="M512 448c-35.296 0-64-28.704-64-64s28.704-64 64-64 64 28.704 64 64-28.704 64-64 64m0-192c-70.592 0-128 57.408-128 128s57.408 128 128 128 128-57.408 128-128-57.408-128-128-128" fill="#181818" p-id="2729">
+                </path>
+                <path d="M768 797.632v-69.92a151.904 151.904 0 0 0-151.712-151.68h-208.576A151.904 151.904 0 0 0 256 727.68v69.92C177.632 727.36 128 625.6 128 512 128 299.904 299.936 128 512 128s384 171.904 384 384c0 113.6-49.632 215.36-128 285.632m-448 46.56v-116.48a87.776 87.776 0 0 1 87.712-87.68h208.576A87.776 87.776 0 0 1 704 727.68v116.48a381.568 381.568 0 0 1-384 0m192-780.16C264.96 64 64 264.96 64 512c0 246.976 200.96 448 448 448s448-201.024 448-448c0-247.04-200.96-448-448-448" fill="#181818" p-id="2730">
+                </path>
+            </svg>
+            &nbsp;<b>Assign</b>
+        </div>
+        <div class="row gx-10" style="width: 84%;">
+            <div class="col-md-8">
+                <div class="p-3">
+                    <div class="p-3">
+                        <div class="card p-3">
+                            <div class="card-body">
+                                <svg t="1624812171756"
+                                     class="icon"
+                                     viewBox="0 0 1024 1024"
+                                     version="1.1"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     p-id="6572"
+                                     width="32"
+                                     height="32">
+                                    <path d="M175.893333 769.024l146.602667-171.050667c18.666667 11.669333 38.826667 21.184 60.117333 28.202667L224.490667 810.666667H554.666667v64H224.490667a64 64 0 0 1-48.597334-105.642667l146.602667-171.050667zM746.666667 640v85.333333h85.333333v64h-85.333333v85.333334h-64v-85.333334h-85.333334v-64h85.333334v-85.333333h64zM469.333333 149.333333c117.824 0 213.333333 95.509333 213.333334 213.333334s-95.509333 213.333333-213.333334 213.333333-213.333333-95.509333-213.333333-213.333333S351.509333 149.333333 469.333333 149.333333z m0 64a149.333333 149.333333 0 1 0 0 298.666667 149.333333 149.333333 0 0 0 0-298.666667z" p-id="6573">
+                                    </path>
+                                </svg>
+                                &nbsp;<b>Assign to...</b>
+                                <form action="/teacher/assignment/?page=assignTask&assignment={{ assignment.pk }}"
+                                      method="post"
+                                      enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <div class="p-3">
+                                        <table class="p-3">
+                                            {% for info in teams_info %}
+                                                <tbody>
+                                                    <tr style="margin-bottom: 30px" class="list">
+                                                        <td>
+                                                            <input class="form-check-input mt-0"
+                                                                   type="checkbox"
+                                                                   name="team"
+                                                                   id="team"
+                                                                   value="{{ info.user.id }}"
+                                                                   onclick="selectByTeam()">
+                                                        </td>
+                                                        <td>
+                                                            <img src="/static/media/{{ info.user.userProfile }}"
+                                                                 alt="hugenerd"
+                                                                 width="40"
+                                                                 height="40"
+                                                                 class="rounded-circle">
+                                                            {{ info.user.userName }}
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            {% endfor %}
+                                        </table>
+                                    </div>
+                                    <svg t="1625309734483"
+                                         class="icon"
+                                         viewBox="0 0 1024 1024"
+                                         version="1.1"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         p-id="2728"
+                                         width="32"
+                                         height="32">
+                                        <path d="M320 480h384v-64H320zM320 608h256v-64h-256zM320 736h256v-64h-256z" fill="#181818" p-id="2729"></path>
+                                        <path d="M832 160h-128V96H320v64H192c-19.2 0-32 12.8-32 32v704c0 19.2 12.8 32 32 32h640c19.2 0 32-12.8 32-32V192c0-19.2-12.8-32-32-32zM384 160h256v64h-256V160z m416 704H224V224h96v64h384V224h96v640z" fill="#181818" p-id="2730">
+                                        </path>
+                                    </svg>
+                                    &nbsp;<b>Assignment Type</b>
+                                    <div style="font-size:18px; margin-top: 5px; margin-left: 15px">
+                                        <input type="radio" name="test" onclick="show(0, 1);"  checked="checked">
+                                        Question
+                                        <input type="radio"
+                                               name="test"
+                                               onclick="show(1, 0);"
+                                               style="margin-left: 50px">
+                                        Student
+                                    </div>
+                                    <div id="0" class="p-3">
+                                        <table class="p-3">
+                                            {% for info in element_info %}
+                                                <tbody>
+                                                    <tr style="margin-bottom: 30px" class="list-item">
+                                                        <td>
+                                                            <input class="form-check-input mt-0"
+                                                                   type="checkbox"
+                                                                   name="element"
+                                                                   id="element"
+                                                                   value="{{ info.id }}"
+                                                                   onclick="selectByQuestion()">
+                                                        </td>
+                                                        <td>{{ info.elementName }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            {% endfor %}
+                                        </table>
+                                    </div>
+                                    <div id="1" style="display: none; float: right" class="p-3"></div>
+                                    <table class="table align-middle text-center" style="margin-top: 15px;">
+                                        <thead>
+                                            <tr style="color: #BEBEBE; font-size: 15px">
+                                                <th scope="col" style="width:31px;">
+                                                    <input class="form-check-input mt-0"
+                                                           type="checkbox"
+                                                           value=""
+                                                           aria-label="Checkbox for following text input">
+                                                </th>
+                                                <th scope="col" style="width:120px;">STUDENTID</th>
+                                                <th scope="col" style="width:210px;">UBMISSIONTIME</th>
+                                                {% for info in element_info %}
+                                                    <th scope="col"
+                                                        style="width:110px"
+                                                        name="elementName"
+                                                        id="elementName"
+                                                        value="{{ info.elementName }}">{{ info.elementName }}</th>
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in child_table %}
+                                                <tr style="height:80px;">
+                                                    <td scope="row">
+                                                        <input class="form-check-input mt-0"
+                                                               type="checkbox"
+                                                               name="student"
+                                                               id="student"
+                                                               value="{{ item.id }}">
+                                                    </td>
+                                                    <td>{{ item.studentId }}</td>
+                                                    <td>{{ item.sub_time }}</td>
+                                                    {% for info in element_info %}<td scope="col" style="width:110px;">-</td>{% endfor %}
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                    <button style="float: right;">apply</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script language="javascript">
+    function show(index1, index2){
+        document.getElementById(index1).style.display = "";
+        document.getElementById(index2).style.display = "none";
+    }
+    {##}
+    function selectByQestion(){
+        {#$('#element').find("input[type='checkbox']").prop("checked", false);//每次点击前，将所有checkbox置为 未选中#}
+        {#var cobj = $(this).find("input[type='checkbox']");//当前点击的checkbox#}
+        {#cobj.prop("checked", true);#}
+    }
+
+$(".list-item").click(function(){
+     $(".list-item").find("input[type='checkbox']").prop("checked", false);//每次点击前，将所有checkbox置为 未选中
+     var cobj = $(this).find("input[type='checkbox']");//当前点击的checkbox
+     cobj.prop("checked", true);//将当前点击的checkbox置为选中状态
+
+     var que1 = $('#element').val();
+     var que2 = $('#elementName').val();
+     if(que2 == que1){
+         window.alert(que2);
+         $('#elementName').css("background", "#b2dba1");
+     }
+})
+
+$(".list").click(function(){
+     $(".list").find("input[type='checkbox']").prop("checked", false);//每次点击前，将所有checkbox置为 未选中
+     var cobj = $(this).find("input[type='checkbox']");//当前点击的checkbox
+     cobj.prop("checked", true);//将当前点击的checkbox置为选中状态
+
+})
+
+
+
+    </script>
+{% endblock %}

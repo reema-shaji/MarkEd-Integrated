@@ -1,0 +1,1985 @@
+{% extends "teacher/base.html" %}
+{% block mainbody %}
+    {% load static %}
+    <style type="text/css">
+        /*login*/
+        #loginbg {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 200;
+            height: 100%;
+            width: 100%;
+            background: #000000;
+            filter: alpha(opacity=30);
+            -moz-opacity: 0.3;
+            opacity: 0.3;
+        }
+
+        #login {
+            position: absolute;
+            top: 35%;
+            left: 40%;
+            width: 400px;
+            z-index: 201;
+            background: #FFFFFF;
+        }
+
+        #login h4 {
+            margin: 5px 0px 5px 20px;
+        }
+
+        #login h4 input {
+            height: 25px;
+            width: 25px;
+            float: right;
+            border: none;
+            cursor: pointer;
+            margin: 2px 6px 0 0;
+        }
+
+        #addTeam {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 200;
+            height: 100%;
+            width: 100%;
+            background: #000000;
+            filter: alpha(opacity=30);
+            -moz-opacity: 0.3;
+            opacity: 0.3;
+        }
+
+        #add {
+            position: absolute;
+            top: 35%;
+            left: 40%;
+            width: 400px;
+            z-index: 201;
+            background: #FFFFFF;
+        }
+
+        #add h4 {
+            margin: 5px 0px 5px 20px;
+        }
+
+        #add h4 input {
+            height: 25px;
+            width: 25px;
+            float: right;
+            border: none;
+            cursor: pointer;
+            margin: 2px 6px 0 0;
+        }
+    </style>
+    <div class="container px-4">
+        <div class="p-3 text-black" style="font-size: 30px">
+            &nbsp;
+            <svg t="1624871347111"
+                 class="icon"
+                 viewBox="0 0 1024 1024"
+                 version="1.1"
+                 xmlns="http://www.w3.org/2000/svg"
+                 p-id="2930"
+                 width="32"
+                 height="32">
+                <path d="M544 572.736V640h-64v-128h32c52.928 0 96-43.072 96-96 0-52.96-43.072-96-96-96l-0.288 0.032a96.064 96.064 0 0 0-95.712 96h-64a160.128 160.128 0 0 1 159.712-160H512c88.224 0 160 71.744 160 160a160.224 160.224 0 0 1-128 156.704M511.712 800a48 48 0 1 1 0-96 48 48 0 0 1 0 96M512 64C264.576 64 64 264.544 64 512c0 247.424 200.576 448 448 448s448-200.576 448-448c0-247.456-200.576-448-448-448" fill="#181818" p-id="2931">
+                </path>
+            </svg>
+            &nbsp;<b>Assignment</b>
+        </div>
+        <div class="row gx-10" style="width: 84%;">
+            <div class="col-md-6">
+                <div class="p-3">
+                    <div class="p-3">
+                        <div class="card p-3">
+                            <div class="card-body">
+                                <svg t="1624871629020"
+                                     class="icon"
+                                     viewBox="0 0 1024 1024"
+                                     version="1.1"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     p-id="3131"
+                                     width="16"
+                                     height="16">
+                                    <path d="M512 64C265.6 64 64 265.6 64 512s201.6 448 448 448 448-201.6 448-448S758.4 64 512 64z m-19.2 630.4H233.6v-48h259.2v48z m0-80H233.6v-48h259.2v48z m0-80H233.6v-48h259.2v48z m0-80H233.6v-48h259.2v48z m0-80H233.6v-48h259.2v48z m140.8 320h-105.6v-48h105.6v48z m0-80h-105.6v-48h105.6v48z m0-80h-105.6v-48h105.6v48z m0-80h-105.6v-48h105.6v48z m0-80h-105.6v-48h105.6v48z m144 320H672v-48h105.6v48z m0-80H672v-48h105.6v48z m0-80H672v-48h105.6v48z m0-80H672v-48h105.6v48z m0-80H672v-48h105.6v48z" fill="#181818" p-id="3132">
+                                    </path>
+                                </svg>
+                                &nbsp;&nbsp;<b>General</b>
+                                <div class="p-3" style="font-size: 15px">
+                                    <div class="row mb-1">
+                                        <div class="col-6">Assignment Title:</div>
+                                        <div class="col-6">{{ assignment.assignmentTitle }}</div>
+                                    </div>
+                                    <div class="row mb-1">
+                                        <div class="col-6">Assignment Website:</div>
+                                        <div class="col-6">{{ assignment.assignmentWebsite }}</div>
+                                    </div>
+                                    <!-- Additional rows for buttons -->
+                                    <div class="row mb-1" style="align-items: center;">
+                                        <div class="col-6">Assignment Question Paper:</div>
+                                        <div class="col-6">
+                                            <button type="button"
+                                                    class="btn text-white"
+                                                    style="background-color: #454574;
+                                                           margin-left: 20px"
+                                                    class="btn btn-outline-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#uploadQuestionpaperModal">↑</button>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-1" style="align-items: center;">
+                                        <div class="col-6">Assignment Markscheme:</div>
+                                        <div class="col-6">
+                                            <button type="button"
+                                                    class="btn text-white"
+                                                    style="background-color: #454574;
+                                                           margin-left: 20px"
+                                                    class="btn btn-outline-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#uploadMarkschemeModal">↑</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal"
+                                 id="uploadMarkschemeModal"
+                                 tabindex="-1"
+                                 aria-labelledby="uploadMarkschemeModalLabel"
+                                 aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content"
+                                         style="background-color: #20323C;
+                                                box-shadow: 0px 0px 18px 11px lightgrey">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title text-white" id="uploadMarkschemeModalLabel">
+                                                Upload
+                                                Mark-scheme
+                                            </h5>
+                                            <button type="button"
+                                                    class="btn-close"
+                                                    data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <!-- Form for file upload -->
+                                            <form action="/teacher/assignment/?action=uploadMarkscheme&assignment={{ assignment.pk }}"
+                                                  method="post"
+                                                  enctype="multipart/form-data">
+                                                {% csrf_token %}
+                                                <div class="input-group mb-3">
+                                                    <input type="file"
+                                                           class="form-control"
+                                                           name="markscheme"
+                                                           accept="application/pdf" />
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-primary">Upload</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal"
+                                 id="uploadQuestionpaperModal"
+                                 tabindex="-1"
+                                 aria-labelledby="uploadQuestionpaperModalLabel"
+                                 aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content"
+                                         style="background-color: #20323C;
+                                                box-shadow: 0px 0px 18px 11px lightgrey">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title text-white" id="uploadQuestionpaperModalLabel">
+                                                Upload
+                                                Question-paper
+                                            </h5>
+                                            <button type="button"
+                                                    class="btn-close"
+                                                    data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <!-- Form for file upload -->
+                                            <form action="/teacher/assignment/?action=uploadQuestionpaper&assignment={{ assignment.pk }}"
+                                                  method="post"
+                                                  enctype="multipart/form-data">
+                                                {% csrf_token %}
+                                                <div class="input-group mb-3">
+                                                    <input type="file"
+                                                           class="form-control"
+                                                           name="questionpaper"
+                                                           accept="application/pdf" />
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-primary">Upload</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <div class="card p-3">
+                            <div class="card-body">
+                                <svg t="1623844844061"
+                                     class="icon"
+                                     viewBox="0 0 1024 1024"
+                                     version="1.1"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     p-id="6577"
+                                     width="20"
+                                     height="20">
+                                    <path d="M617.216 170.666667c114.24 0 206.869333 92.608 206.869333 206.869333 0 72.533333-37.333333 136.32-93.802666 173.269333l168.746666 196.885334A64 64 0 0 1 850.432 853.333333l-101.888 0.021334c11.221333-19.413333 14.293333-42.496 8.746667-64L850.432 789.333333 634.24 537.109333l60.992-39.872a142.869333 142.869333 0 0 0-75.584-262.549333 251.264 251.264 0 0 0-55.424-57.173333A206.976 206.976 0 0 1 617.216 170.666667z m-61.162667 412.757333l140.8 164.266667A64 64 0 0 1 648.213333 853.333333H181.824a64 64 0 0 1-48.597333-105.642666l140.8-164.266667c18.026667 12.373333 37.76 22.442667 58.773333 29.781333L181.824 789.333333h466.410667l-150.997334-176.128c21.034667-7.338667 40.768-17.386667 58.816-29.781333zM415.04 170.666667c114.24 0 206.869333 92.608 206.869333 206.869333 0 114.24-92.629333 206.869333-206.869333 206.869333-114.261333 0-206.869333-92.629333-206.869333-206.869333C208.170667 263.274667 300.778667 170.666667 415.04 170.666667z m0 64a142.869333 142.869333 0 1 0 0 285.738666 142.869333 142.869333 0 0 0 0-285.738666z" p-id="6578">
+                                    </path>
+                                </svg>
+                                &nbsp;<b>Team</b>
+                                {% if teams_data == 2 %}
+                                    <button type="button"
+                                            class="btn text-white"
+                                            style="float: right;
+                                                   margin-right: 20px;
+                                                   background-color : #454574"
+                                            onClick="open_add()">+</button>
+                                {% else %}
+                                    <div></div>
+                                {% endif %}
+                                <div class="p-3">
+                                    {% for info in teams_info %}
+                                        <div class="row mb-3">
+                                            <div style="width: 15%">
+                                                <img src="/static/media/{{ info.user.userProfile }}"
+                                                     alt="hugenerd"
+                                                     width="40"
+                                                     height="40"
+                                                     class="rounded-circle" />
+                                            </div>
+                                            <div style="width: 25%">{{ info.user.userName }}</div>
+                                            <div style="width: 25%"
+                                                 type="button"
+                                                 onmouseover="this.style.backgroundColor = ''"
+                                                 onmouseout="this.style.backgroundColor = ''"
+                                                 data-bs-toggle="collapse"
+                                                 data-bs-target="#collapse{{ info.user.pk }}"
+                                                 aria-expanded="false"
+                                                 aria-controls="collapse{{ info.user.pk }}"
+                                                 style="background-color : #dee2e6">
+                                                <svg t="1627233207639"
+                                                     class="icon"
+                                                     viewBox="0 0 1024 1024"
+                                                     version="1.1"
+                                                     xmlns="http://www.w3.org/2000/svg"
+                                                     p-id="5747"
+                                                     width="28"
+                                                     height="28">
+                                                    <path d="M512 685.248l-278.624-278.624 45.248-45.248L512 594.752l233.376-233.376 45.248 45.248z" fill="#181818" p-id="5748">
+                                                    </path>
+                                                </svg>
+                                            </div>
+                                            <div class="collapse" id="collapse{{ info.user.pk }}">
+                                                <form action="/teacher/setupForm/?function=permission&assignment={{ assignment.pk }}&team={{ info.user.pk }}"
+                                                      method="post"
+                                                      enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <div class="p-3" style="font-size: 15px">
+                                                        <label style="width: 30%; float: left">&nbsp;</label>
+                                                        <label style="width: 60%;">Read&nbsp;Write</label>
+                                                        <div>
+                                                            <label style="width: 28%; float: left">Submissions</label>
+                                                            {% if info.permission.submissionPermission == 0 %}
+                                                                <input type="checkbox"
+                                                                       id="ch1"
+                                                                       name="sub1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%" />
+                                                                <input type="checkbox"
+                                                                       name="sub2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select1()" />
+                                                            {% elif info.permission.submissionPermission == 1 %}
+                                                                <input type="checkbox"
+                                                                       id="ch1"
+                                                                       name="sub1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%"
+                                                                       checked />
+                                                                <input type="checkbox"
+                                                                       name="sub2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select1()" />
+                                                            {% else %}
+                                                                <input type="checkbox"
+                                                                       id="ch1"
+                                                                       name="sub1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%"
+                                                                       checked />
+                                                                <input type="checkbox"
+                                                                       name="sub2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select1()"
+                                                                       checked />
+                                                            {% endif %}
+                                                        </div>
+                                                        <div>
+                                                            <label style="width: 28%; float: left">Structure</label>
+                                                            {% if info.permission.structurePermission == 0 %}
+                                                                <input type="checkbox"
+                                                                       id="ch3"
+                                                                       name="sd1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%" />
+                                                                <input type="checkbox"
+                                                                       name="sd2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select3()" />
+                                                            {% elif info.permission.structurePermission == 1 %}
+                                                                <input type="checkbox"
+                                                                       id="ch3"
+                                                                       name="sd1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%"
+                                                                       checked />
+                                                                <input type="checkbox"
+                                                                       name="sd2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select3()" />
+                                                            {% else %}
+                                                                <input type="checkbox"
+                                                                       id="ch3"
+                                                                       name="sd1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%"
+                                                                       checked />
+                                                                <input type="checkbox"
+                                                                       name="sd2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select3()"
+                                                                       checked />
+                                                            {% endif %}
+                                                        </div>
+                                                        <div>
+                                                            <label style="width: 28%; float: left">Team</label>
+                                                            {% if info.permission.teamPermission == 0 %}
+                                                                <input type="checkbox"
+                                                                       id="ch5"
+                                                                       name="td1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%" />
+                                                                <input type="checkbox"
+                                                                       name="td2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select5()" />
+                                                            {% elif info.permission.teamPermission == 1 %}
+                                                                <input type="checkbox"
+                                                                       id="ch5"
+                                                                       name="td1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%"
+                                                                       checked />
+                                                                <input type="checkbox"
+                                                                       name="td2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select5()" />
+                                                            {% else %}
+                                                                <input type="checkbox"
+                                                                       id="ch5"
+                                                                       name="td1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%"
+                                                                       checked />
+                                                                <input type="checkbox"
+                                                                       name="td2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select5()"
+                                                                       checked />
+                                                            {% endif %}
+                                                        </div>
+                                                        <div>
+                                                            <label style="width: 28%; float: left">Marking</label>
+                                                            {% if info.permission.markingPermission == 0 %}
+                                                                <input type="checkbox"
+                                                                       id="ch7"
+                                                                       name="md1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%" />
+                                                                <input type="checkbox"
+                                                                       name="md2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select7()" />
+                                                            {% elif info.permission.markingPermission == 1 %}
+                                                                <input type="checkbox"
+                                                                       id="ch7"
+                                                                       name="md1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%"
+                                                                       checked />
+                                                                <input type="checkbox"
+                                                                       name="md2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select7()" />
+                                                            {% else %}
+                                                                <input type="checkbox"
+                                                                       id="ch7"
+                                                                       name="md1"
+                                                                       style="vertical-align:middle;
+                                                                              width: 15%"
+                                                                       checked />
+                                                                <input type="checkbox"
+                                                                       name="md2"
+                                                                       style="vertical-align:middle"
+                                                                       onclick="select7()"
+                                                                       checked />
+                                                            {% endif %}
+                                                        </div>
+                                                        {% if user_role == 'Academic' %}
+                                                            <button type="submit"
+                                                                    class="btn text-white"
+                                                                    style="float: right;
+                                                                           background-color : #454574">Apply</button>
+                                                        {% else %}
+                                                        {% endif %}
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <!-- Place within your main template where you want to list criteria -->
+                <div class="p-3">
+                    <div class="card p-3">
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h5 class="card-title" style="margin-bottom: 0;">Structure & Marking Criteria</h5>
+                                <i class="fas fa-info-circle"
+                                title="Only the lowest level of the criteria will be markable."
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"></i>
+                            </div>
+                            <div id="criteriaList" class="list-group mt-3">
+                                {% for criteria in criteria_info %}
+                                    {% include "teacher/_criteria_structure.html" with criteria=criteria %}
+                                {% endfor %}
+                                <button id="add-root-criteria-button" type="button" class="list-group-item d-flex justify-content-center align-items-center btn btn-outline-secondary btn-sm" onclick="addRootCriteria()" data-bs-toggle="tooltip" data-bs-placement="top" title="Add a top level item.">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>                
+                <!-- Modal Structure -->
+                <div class="modal fade" tabindex="-1" id="criteriaModal">
+                    <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="criteriaModalLabel">Modify Criteria</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                        <form id="criteriaForm">
+                            <div class="mb-3">
+                            <label for="criteriaName" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="criteriaName" name="name">
+                            </div>
+                            <div class="mb-3">
+                            <label for="criteriaMarks" class="form-label">Maximum Marks</label>
+                            <input type="number" class="form-control" id="criteriaMarks" name="marks" oninput="checkTotalMarks()">
+                            <div id="marksWarning" class="text-danger" style="display: none;">Exceeds Maximum</div>
+                            <script>
+                                function checkTotalMarks() {
+                                    const modal = document.getElementById('criteriaModal');
+                                    const parentId = modal.getAttribute('data-parent-id');
+                                    editingCriterionId = modal.getAttribute('data-editing-criterion-id') || null;
+                                    // Exit if parentId is null
+                                    if (parentId === "null") {
+                                        return;
+                                    }
+                                    if (!editingCriterionId) {
+                                        editingCriterionId = -1;
+                                    }
+                                    const marksInput = document.getElementById('criteriaMarks');
+                                    const marksWarning = document.getElementById('marksWarning');
+                                    const marks = parseFloat(marksInput.value || 0);
+                                
+                                    fetch(`/teacher/get-criteria-marks-summary/${parentId}/?editingCriterionId=${editingCriterionId}`) // Make sure `parentId` is correctly defined
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.status === 'success') {
+                                                const totalWithNew = data.childrenTotalMarks + marks - (data.editingCriterionMarks || 0);
+                                                if (totalWithNew > data.parentMarks) {
+                                                    // Display warning message
+                                                    marksWarning.style.display = 'block';
+                                                    marksWarning.textContent = `Exceeds parent's total marks (${data.parentMarks})`;
+                                                } else {
+                                                    // Hide warning message
+                                                    marksWarning.style.display = 'none';
+                                                }
+                                            } else {
+                                                console.error('Failed to fetch criteria marks summary:', data.message);
+                                                marksWarning.style.display = 'none'; // Consider hiding or showing an appropriate message
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('Error:', error);
+                                            marksWarning.style.display = 'none'; // In case of fetch error, consider how to handle UI feedback
+                                        });
+                                }
+                            </script>
+                            </div>
+                        </form>
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" id="criteriaDeleteBtn" class="btn btn-danger" data-bs-dismiss="modal">Delete</button>
+                        <button type="button" id="criteriaSaveCloseBtn"  class="btn btn-secondary" data-bs-dismiss="modal">Save & Close</button>
+                        <button type="button" id="criteriaAddBtn" class="btn btn-primary" style="display: none;">Add</button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <!-- Element Modal Structure -->
+                <div class="modal fade" id="elementModal" tabindex="-1" aria-labelledby="elementModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="elementModalLabel">Edit Item</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="elementForm">
+                                    <div class="mb-3">
+                                        <label for="elementName" class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="elementName" name="name">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="elementDescription" class="form-label">Description</label>
+                                        <textarea class="form-control" id="elementDescription" name="description" rows="3"></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="elementMarks" class="form-label">Item Marks</label>
+                                        <i class="fas fa-info-circle"
+                                        title="Number of marks for this item. If using additive marking, you can use a positive number to award marks or a negative number to deduct marks."
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"></i>
+                                        <input type="number" class="form-control" id="elementMarks" name="marks">
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" id="elementDeleteBtn" class="btn btn-danger" data-bs-dismiss="modal">Delete</button>
+                                <button type="button" id="elementSaveCloseBtn"  class="btn btn-secondary" data-bs-dismiss="modal">Save & Close</button>
+                                <button type="button" id="elementAddBtn" class="btn btn-primary" style="display: none;">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Confirmation Modal Structure -->
+                <div class="modal fade" tabindex="-1" id="confirmationModal">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="confirmationModalLabel">Confirmation Needed</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body" id="confirmationModalBody">
+                                <!-- Dynamic confirmation message will be injected here -->
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" id="cancelButton" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" id="continueButton" class="btn btn-primary">Continue</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Criteria click handler and Modal pop-up logic -->
+                <script>
+                    function handleCriteriaClick(criteriaId) {
+                        // Use AJAX to fetch the criteria and subcriteria data
+                        fetch('/teacher/get-criteria-data/' + criteriaId + '/')
+                            .then(response => response.json())
+                            .then(data => {
+                                // Assuming 'data' contains 'name', 'marks', and 'subcriteria' keys
+                                document.getElementById('criteriaName').value = data.name;
+                                document.getElementById('criteriaMarks').value = data.marks;
+
+                                // Hide add button and show delete and save buttonsgetElementById('criteriaDeleteBtn').style.display = '';
+                                document.getElementById('criteriaAddBtn').style.display = 'none';
+                                document.getElementById('criteriaDeleteBtn').style.display = '';
+                                document.getElementById('criteriaSaveCloseBtn').style.display = '';
+
+                                // Find the save button by ID and add an event listener for the click event
+                                const saveButton = document.getElementById('criteriaSaveCloseBtn');
+                                saveButton.onclick = function() {
+                                    const updatedName = document.getElementById('criteriaName').value;
+                                    const updatedMarks = document.getElementById('criteriaMarks').value;
+
+                                    // Prepare the data to be sent for updating
+                                    const dataToSend = {
+                                        id: criteriaId,
+                                        name: updatedName,
+                                        marks: updatedMarks,
+                                        // Include other data as necessary
+                                    };
+
+                                    // Send the updated data to the server
+                                    fetch('/teacher/update-criteria/', {
+                                        method: 'POST',
+                                        body: JSON.stringify(dataToSend),
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRFToken': getCSRFToken(),
+                                        },
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        console.log('Success:', data);
+                                        
+                                        const criteriaElement = document.getElementById('criteria-' + criteriaId);
+                                        criteriaElement.querySelector('.criteria-name').textContent = `${updatedName} (${parseFloat(updatedMarks).toFixed(1)} marks)`;
+                                        
+                                        hideModal();
+                                    })
+                                    .catch((error) => {
+                                        console.error('Error:', error);
+                                    });
+                                };
+
+                                const deleteButton = document.getElementById('criteriaDeleteBtn');
+                                deleteButton.onclick = function() {
+                                    // Prepare the data to be sent for deletion
+                                    const dataToSend = {
+                                        id: criteriaId,
+                                        // Include other data as necessary
+                                    };
+
+                                    // Send the data to the server for deletion
+                                    fetch('/teacher/delete-criteria/', {
+                                        method: 'POST',
+                                        body: JSON.stringify(dataToSend),
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRFToken': getCSRFToken(),
+                                        },
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        console.log('Success:', data);
+                                        
+                                        const criteriaElement = document.getElementById('criteria-' + criteriaId);
+                                        criteriaElement.remove();
+                                        
+                                        hideModal();
+                                    })
+                                    .catch((error) => {
+                                        console.error('Error:', error);
+                                    });
+                                };
+
+                                // Show the modal
+                                hideModal();
+
+                                const parentId = data.parentId;
+                                const modal = document.getElementById('criteriaModal')
+                                modal.addEventListener('show.bs.modal', function (event) {
+                                    // Reset the warning message before checking marks
+                                    const marksWarning = document.getElementById('marksWarning');
+                                    marksWarning.style.display = 'none';
+                                    checkTotalMarks(); // Then, proceed to check the total marks again
+                                });
+                                modal.setAttribute('data-parent-id', parentId);
+                                modal.setAttribute('data-editing-criterion-id', criteriaId);
+                                showModal('criteriaModal');
+                            }).catch(error => {
+                                console.error('Error fetching criteria data:', error);
+                            });
+                    }
+    
+                    function handleElementClick(elementId) {
+                        console.log('Element clicked:', elementId);
+                        // Fetch element details from the server
+                        fetch('/teacher/get-element-data/' + elementId + '/')
+                            .then(response => response.json())
+                            .then(data => {
+                                document.getElementById('elementName').value = data.name;
+                                document.getElementById('elementDescription').value = data.description;
+                                document.getElementById('elementMarks').value = data.marks;
+                                document.getElementById('elementAddBtn').style.display = 'none';
+                                document.getElementById('elementDeleteBtn').style.display = '';
+                                document.getElementById('elementSaveCloseBtn').style.display = '';
+
+                                const saveButton = document.getElementById('elementSaveCloseBtn');
+                                saveButton.onclick = function() {
+                                    const updatedName = document.getElementById('elementName').value;
+                                    const updatedDescription = document.getElementById('elementDescription').value;
+                                    const updatedMarks = document.getElementById('elementMarks').value;
+
+                                    // Prepare the data to be sent for updating
+                                    const dataToSend = {
+                                        id: elementId,
+                                        name: updatedName,
+                                        description: updatedDescription,
+                                        marks: updatedMarks,
+                                        // Include other data as necessary
+                                    };
+
+                                    // Send the updated data to the server
+                                    fetch('/teacher/update-element/', {
+                                        method: 'POST',
+                                        body: JSON.stringify(dataToSend),
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRFToken': getCSRFToken(),
+                                        },
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        console.log('Success:', data);
+                                        
+                                        const elementElement = document.getElementById('element-' + elementId);
+                                        elementElement.textContent = `${updatedName} (${parseFloat(updatedMarks).toFixed(1)} marks)`;
+                                        
+                                        hideModal();
+                                    })
+                                    .catch((error) => {
+                                        console.error('Error:', error);
+                                    });
+                                };
+
+                                deleteButton = document.getElementById('elementDeleteBtn');
+                                deleteButton.onclick = function() {
+                                    // Prepare the data to be sent for deletion
+                                    const dataToSend = {
+                                        id: elementId,
+                                        // Include other data as necessary
+                                    };
+
+                                    // Send the data to the server for deletion
+                                    fetch('/teacher/delete-element/', {
+                                        method: 'POST',
+                                        body: JSON.stringify(dataToSend),
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRFToken': getCSRFToken(),
+                                        },
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        console.log('Success:', data);
+                                        
+                                        const elementElement = document.getElementById('element-' + elementId);
+                                        elementElement.remove();
+                                        
+                                        hideModal();
+                                    })
+                                    .catch((error) => {
+                                        console.error('Error:', error);
+                                    });
+                                };
+                    
+                                // Show the modal for element editing
+                                hideModal();
+                            
+                                showModal('elementModal');
+                            })
+                            .catch(error => {
+                                console.error('Error fetching element data:', error);
+                            });
+                    }
+
+                    let modalStack = [];
+
+                    function showModal(modalId) {
+                        const modalElement = document.getElementById(modalId);
+                        const modalInstance = new bootstrap.Modal(modalElement);
+                        modalStack.push(modalInstance);
+                        modalInstance.show();
+                    }
+
+                    function hideModal() {
+                        const currentModal = modalStack[modalStack.length - 1];
+                        if (currentModal) {
+                            currentModal.hide(); // Hide the current modal
+                        }
+                    }
+
+                    // Function to clear the modal stack entirely or remove specific modals
+                    function clearModalStack() {
+                        // Close all modals and clear the stack
+                        while (modalStack.length > 0) {
+                            const currentModal = modalStack.pop();
+                            if (currentModal) {
+                                currentModal.hide();
+                            }
+                        }
+                    }
+
+                    // Check if there's a modal to reopen
+                    const previousModal = modalStack[modalStack.length - 1];
+                    if (previousModal) {
+                        // Delay reopening the previous modal to let the closing animation finish
+                        setTimeout(() => previousModal.show(), 0); // Adjust the delay if needed
+                    }
+
+                    function toggleElementsVisibility(criteriaId, event) {
+                        event.stopPropagation();
+                        // Adjusted to match the new container's ID
+                        const detailsContainerId = `details-${criteriaId}`;
+                        const detailsContainer = document.getElementById(detailsContainerId);
+                        const expandArrow = event.currentTarget;
+                    
+                        // Toggle visibility and arrow direction
+                        if (detailsContainer.style.display === "none" || detailsContainer.style.display === "") {
+                            detailsContainer.style.display = "block";
+                            expandArrow.innerHTML = "&#9650;"; // Arrow up when expanded
+                            if (!detailsContainer.dataset.loaded) {
+                                loadElements(criteriaId, detailsContainer); // Adjust the function call if necessary
+                            }
+                        } else {
+                            detailsContainer.style.display = "none";
+                            expandArrow.innerHTML = "&#9660;"; // Arrow down when collapsed
+                        }
+                    }
+
+                    function loadElements(criteriaId, elementsContainer, expandArrow) {
+                        fetch(`/teacher/get-criteria-data/${criteriaId}/`)
+                            .then(response => response.json())
+                            .then(data => {
+                                // Handle elements
+                                data.elements.forEach(element => {
+                                    const button = document.createElement('button');
+                                    button.id = `element-${element.id}`;
+                                    button.type = 'button';
+                                    button.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                                
+                                    // Create a span for the element's name and marks
+                                    const elementNameSpan = document.createElement('span');
+                                    elementNameSpan.className = 'element-name';
+                                    elementNameSpan.textContent = `${element.name} (${parseFloat(element.marks).toFixed(1)} marks)`;
+                                    
+                                    // Append the description span to the button
+                                    button.appendChild(elementNameSpan);
+                                
+                                    // Assuming you have other interactive elements (like icons or additional buttons) within this button,
+                                    // they should be added here as well, similar to how you handled the criteria button.
+                                    
+                                    button.addEventListener('click', () => handleElementClick(element.id));
+                                    elementsContainer.appendChild(button);
+                                });
+                    
+                                // Append the plus button for adding new elements
+                                appendPlusButton(criteriaId, elementsContainer);
+                    
+                                // Mark as loaded to avoid reloading
+                                elementsContainer.dataset.loaded = true;
+                            })
+                            .catch(error => console.error('Error:', error));
+                    }
+
+                    function appendPlusButton(criteriaId, elementsContainer) {
+                        const plusButton = document.createElement('button');
+                        plusButton.type = 'button';
+                        plusButton.id = 'elementAddBtn-' + criteriaId;
+                        plusButton.className = 'list-group-item d-flex justify-content-center align-items-center btn btn-outline-secondary btn-sm w-100';
+                        plusButton.textContent = '+';
+                        plusButton.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            addElement(criteriaId); // Handle new element addition
+                        });
+                        elementsContainer.appendChild(plusButton);
+                    }
+
+                    function onModalHidden(event) {
+                        // Check if the modal being hidden is the last one in the stack
+                        if (modalStack.length > 0 && modalStack[modalStack.length - 1]._element === event.target) {
+                            // Pop the modal that was just hidden
+                            modalStack.pop();
+                            
+                            // If there's another modal in the stack, show it
+                            if (modalStack.length > 0) {
+                                const previousModal = modalStack[modalStack.length - 1];
+                                setTimeout(() => previousModal.show(), 0); // Adjust delay as needed
+                            }
+                        }
+                    }
+
+                    // Add the event listener to all modals
+                    document.querySelectorAll('.modal').forEach(modal => {
+                        modal.addEventListener('hidden.bs.modal', onModalHidden);
+                    });
+
+                    function addRootCriteria() {
+                        document.getElementById('criteriaModalLabel').textContent = 'Add Root Item';
+
+                        // Clear input fields
+                        document.getElementById('criteriaName').value = '';
+                        document.getElementById('criteriaMarks').value = '';
+                        
+                        // Configure modal for "add" operation
+                        document.getElementById('criteriaDeleteBtn').style.display = 'none';
+                        document.getElementById('criteriaSaveCloseBtn').style.display = 'none';
+                        const addButton = document.getElementById('criteriaAddBtn');
+                        addButton.style.display = '';
+
+                        const addRootCriteriaFunction = function() {
+                            const name = document.getElementById('criteriaName').value;
+                            const marks = document.getElementById('criteriaMarks').value;
+                        
+                            // Prepare the data to be sent
+                            const dataToSend = {
+                                assignment: {{ assignment.pk }},
+                                name: name,
+                                marks: marks,
+                                parent: null // Since this is a root criteria, parent is null
+                            };
+                        
+                            // Assuming '/teacher/add-criteria/' is your endpoint for adding a new criteria
+                            fetch('/teacher/add-criteria/', {
+                                method: 'POST',
+                                body: JSON.stringify(dataToSend),
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCSRFToken(), // Function to get CSRF token from the form or meta tag
+                                },
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('Success:', data);
+
+                                // Create the criteria container div
+                                const criteriaContainer = document.createElement('div');
+                                criteriaContainer.id = `criteria-${data.criteria_id}`;
+                                criteriaContainer.className = 'criteria-container';
+
+                                // Find the container where the new criteria button should be added
+                                const criteriaList = document.getElementById('criteriaList');
+
+                                // Assuming your plus button for adding new root criteria has a unique identifier or class
+                                const addRootCriteriaButton = criteriaList.querySelector('#add-root-criteria-button'); // Update selector as needed
+
+                                // Create the new criteria button
+                                const newCriteriaButton = document.createElement('button');
+                                newCriteriaButton.type = 'button';
+                                newCriteriaButton.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                                newCriteriaButton.style.cursor = 'pointer';
+                                newCriteriaButton.onclick = function() {
+                                    handleCriteriaClick(data.criteria_id);
+                                };
+
+                                // Criteria name and marks span
+                                const criteriaLabelSpan = document.createElement('span');
+                                criteriaLabelSpan.className = 'criteria-name';
+                                criteriaLabelSpan.textContent = `${name} (${parseFloat(marks).toFixed(1)} marks)`;
+                                newCriteriaButton.appendChild(criteriaLabelSpan);
+
+                                // Container for the buttons
+                                const buttonsContainer = document.createElement('div');
+
+                                // Create the "+" button for adding child criteria or elements
+                                const addCriteriaButton = document.createElement('span');
+                                addCriteriaButton.className = 'btn btn-outline-secondary btn-sm me-1';
+                                addCriteriaButton.textContent = '+';
+                                addCriteriaButton.setAttribute('data-bs-toggle', 'tooltip');
+                                addCriteriaButton.setAttribute('data-bs-placement', 'top');
+                                addCriteriaButton.setAttribute('title', 'Add a top level item.');
+                                addCriteriaButton.addEventListener('click', function(event) {
+                                    event.stopPropagation();
+                                    addChildCriteria(data.criteria_id);
+                                });
+                                addCriteriaButton.style.cursor = 'pointer';
+                                buttonsContainer.appendChild(addCriteriaButton);
+
+                                // Create the expand criteria button
+                                const expandCriteriaButton = document.createElement('span');
+                                expandCriteriaButton.className = 'expand-arrow btn btn-outline-secondary btn-sm';
+                                expandCriteriaButton.innerHTML = '&#9660;';
+                                expandCriteriaButton.addEventListener('click', function(event) {
+                                    event.stopPropagation();
+                                    toggleElementsVisibility(data.criteria_id, event);
+                                });
+                                expandCriteriaButton.style.cursor = 'pointer';
+                                buttonsContainer.appendChild(expandCriteriaButton);
+
+                                // Add buttonsContainer to newCriteriaButton
+                                newCriteriaButton.appendChild(buttonsContainer);
+
+                                // Click event for the new criteria container (if needed)
+                                newCriteriaButton.addEventListener('click', function() {
+                                    handleCriteriaClick(data.criteria_id);
+                                });
+
+                                // Instead of appending, insert before the plus button if it's correctly identified
+                                if (addRootCriteriaButton) {
+                                    criteriaList.insertBefore(newCriteriaButton, addRootCriteriaButton);
+                                }
+
+                                // Create the details container for the new criteria
+                                const detailsContainer = document.createElement('div');
+                                detailsContainer.className = 'criteria-details-container';
+                                detailsContainer.id = `details-${data.criteria_id}`;
+                                detailsContainer.style.display = 'none'; // Initially hidden
+                                detailsContainer.style.padding = '20px';
+                                detailsContainer.style.border = '1px solid #dee2e6';
+                                detailsContainer.style.backgroundColor = '#f8f9fa';
+
+                                // Create the marking scheme dropdown container
+                                const markingSchemeContainer = document.createElement('div');
+                                markingSchemeContainer.className = 'marking-scheme-container mb-3';
+
+                                // Create and append the label for the marking scheme dropdown
+                                const markingSchemeLabel = document.createElement('label');
+                                markingSchemeLabel.setAttribute('for', `markingSchemeSelect-${data.criteria_id}`);
+                                markingSchemeLabel.className = 'form-label';
+                                markingSchemeLabel.textContent = 'Marking Scheme';
+                                markingSchemeContainer.appendChild(markingSchemeLabel);
+
+                                // Create and append the marking scheme dropdown
+                                const markingSchemeSelect = document.createElement('select');
+                                markingSchemeSelect.className = 'form-select';
+                                markingSchemeSelect.id = `markingSchemeSelect-${data.criteria_id}`;
+                                // Populate the select with options
+                                ['ADD', 'SEL'].forEach(value => {
+                                    const option = document.createElement('option');
+                                    option.value = value;
+                                    option.textContent = value === 'ADD' ? 'Additive' : 'Selective';
+                                    markingSchemeSelect.appendChild(option);
+                                });
+                                markingSchemeContainer.appendChild(markingSchemeSelect);
+
+                                // Append the marking scheme container to the details container
+                                detailsContainer.appendChild(markingSchemeContainer);
+
+                                // Append the new criteria button and the details container to the criteria container
+                                criteriaContainer.appendChild(newCriteriaButton);
+                                criteriaContainer.appendChild(detailsContainer);
+
+                                // Insert the criteria container into the DOM, right before the plus button if it's correctly identified
+                                if (addRootCriteriaButton) {
+                                    criteriaList.insertBefore(criteriaContainer, addRootCriteriaButton);
+                                } else {
+                                    // If the plus button isn't found for some reason, append the criteria container to the end of the criteria list
+                                    criteriaList.appendChild(criteriaContainer);
+                                }
+
+                                hideModal();
+                            })
+                            .catch((error) => {
+                                console.error('Error:', error);
+                            });
+                        };
+
+                        // Remove any existing event listener before adding a new one
+                        addButton.removeEventListener('click', window.currentAddCriteriaListener);
+                        window.currentAddCriteriaListener = addRootCriteriaFunction;
+                        addButton.addEventListener('click', window.currentAddCriteriaListener);
+
+                        hideModal();
+
+                        criteriaModal.setAttribute('data-parent-id', null);
+                        showModal('criteriaModal');
+                    }
+
+                    function addChildCriteria(parentId) {
+                        document.getElementById('criteriaModalLabel').textContent = 'Add Child Criteria';
+                        document.getElementById('criteriaName').value = '';
+                        document.getElementById('criteriaMarks').value = '';
+                        document.getElementById('criteriaDeleteBtn').style.display = 'none';
+                        document.getElementById('criteriaSaveCloseBtn').style.display = 'none';
+                        const addButton = document.getElementById('criteriaAddBtn');
+                        addButton.style.display = '';
+                
+                        const addCriteriaFunction = function() {
+                            const name = document.getElementById('criteriaName').value;
+                            const marks = document.getElementById('criteriaMarks').value;
+                        
+                            // Prepare the data to be sent
+                            const dataToSend = {
+                                assignment: {{ assignment.pk }},
+                                name: name,
+                                marks: marks,
+                                parent: parentId // Since this is a child criteria, parent is the parentId
+                            };
+                        
+                            // Assuming '/teacher/add-criteria/' is your endpoint for adding a new criteria
+                            fetch('/teacher/add-criteria/', {
+                                method: 'POST',
+                                body: JSON.stringify(dataToSend),
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCSRFToken(), // Function to get CSRF token from the form or meta tag
+                                },
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('Success:', data);
+                            
+                                // Container for the new criteria
+                                const newCriteriaContainer = document.createElement('div');
+                                newCriteriaContainer.id = `criteria-${data.criteria_id}`;
+                                newCriteriaContainer.className = 'criteria-container';
+                            
+                                // Button for the new criteria
+                                const newCriteriaButton = document.createElement('button');
+                                newCriteriaButton.type = 'button';
+                                newCriteriaButton.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                                newCriteriaButton.style.cursor = 'pointer';
+                                newCriteriaButton.onclick = function() {
+                                    handleCriteriaClick(data.criteria_id);
+                                };
+        
+                                // Label for criteria name and marks
+                                const criteriaLabelSpan = document.createElement('span');
+                                criteriaLabelSpan.className = 'criteria-name';
+                                criteriaLabelSpan.textContent = `${name} (${parseFloat(marks).toFixed(1)} marks)`;
+                                newCriteriaButton.appendChild(criteriaLabelSpan);
+                            
+                                // Container for the add and expand buttons
+                                const buttonsContainer = document.createElement('div');
+                            
+                                // Add button
+                                const addCriteriaButton = document.createElement('span');
+                                addCriteriaButton.className = 'btn btn-outline-secondary btn-sm me-1';
+                                addCriteriaButton.textContent = '+';
+                                addCriteriaButton.setAttribute('data-bs-toggle', 'tooltip');
+                                addCriteriaButton.setAttribute('data-bs-placement', 'top');
+                                addCriteriaButton.setAttribute('title', 'Add a child item to this item.');
+                                addCriteriaButton.onclick = function(event) {
+                                    event.stopPropagation();
+                                    addChildCriteria(data.criteria_id);
+                                };
+                                addCriteriaButton.style.cursor = 'pointer';
+                                buttonsContainer.appendChild(addCriteriaButton);
+                            
+                                // Expand button
+                                const expandCriteriaButton = document.createElement('span');
+                                expandCriteriaButton.className = 'expand-arrow btn btn-outline-secondary btn-sm';
+                                expandCriteriaButton.innerHTML = '&#9660;';
+                                expandCriteriaButton.setAttribute('data-bs-toggle', 'tooltip');
+                                expandCriteriaButton.setAttribute('data-bs-placement', 'top');
+                                expandCriteriaButton.setAttribute('title', 'Expand to show criteria.');
+                                expandCriteriaButton.onclick = function(event) {
+                                    event.stopPropagation();
+                                    toggleElementsVisibility(data.criteria_id, event);
+                                };
+                                expandCriteriaButton.style.cursor = 'pointer';
+                                buttonsContainer.appendChild(expandCriteriaButton);
+                            
+                                // Append buttons to the criteria button
+                                newCriteriaButton.appendChild(buttonsContainer);
+                            
+                                // Append the button to the criteria container
+                                newCriteriaContainer.appendChild(newCriteriaButton);
+                            
+                                // Details container for elements and marking scheme
+                                const detailsContainer = document.createElement('div');
+                                detailsContainer.className = 'criteria-details-container';
+                                detailsContainer.id = `details-${data.criteria_id}`;
+                                detailsContainer.style.display = 'none';
+                                detailsContainer.style.padding = '20px';
+                                detailsContainer.style.border = '1px solid #dee2e6';
+                                detailsContainer.style.backgroundColor = '#f8f9fa';
+                            
+                                // Marking scheme selection
+                                const markingSchemeContainer = document.createElement('div');
+                                markingSchemeContainer.className = 'marking-scheme-container mb-3';
+                            
+                                const markingSchemeLabel = document.createElement('label');
+                                markingSchemeLabel.setAttribute('for', `markingSchemeSelect-${data.criteria_id}`);
+                                markingSchemeLabel.className = 'form-label';
+                                markingSchemeLabel.textContent = 'Marking Scheme';
+                                markingSchemeContainer.appendChild(markingSchemeLabel);
+                            
+                                const markingSchemeSelect = document.createElement('select');
+                                markingSchemeSelect.className = 'form-select';
+                                markingSchemeSelect.id = `markingSchemeSelect-${data.criteria_id}`;
+                                ['ADD', 'SEL'].forEach(value => {
+                                    const option = document.createElement('option');
+                                    option.value = value;
+                                    option.textContent = value === 'ADD' ? 'Additive' : 'Selective';
+                                    markingSchemeSelect.appendChild(option);
+                                });
+                                markingSchemeContainer.appendChild(markingSchemeSelect);
+                            
+                                // Append the marking scheme container to the details container
+                                detailsContainer.appendChild(markingSchemeContainer);
+                            
+                                // Append the details container to the criteria container
+                                newCriteriaContainer.appendChild(detailsContainer);
+                            
+                                // Check if the parent's children container exists
+                                let parentChildrenContainer = document.getElementById(`criteria-${parentId}-children`);
+                                
+                                // If it doesn't exist, create it
+                                if (!parentChildrenContainer) {
+                                    const parentCriteriaContainer = document.getElementById(`criteria-${parentId}`);
+                                    if (parentCriteriaContainer) {
+                                        parentChildrenContainer = document.createElement('div');
+                                        parentChildrenContainer.id = `criteria-${parentId}-children`;
+                                        parentChildrenContainer.className = 'ms-4'; // Use the same class as your initial structure for children containers
+                                        parentCriteriaContainer.appendChild(parentChildrenContainer);
+                                    } else {
+                                        console.error("Parent criteria container not found.");
+                                        return; // Stop the function if the parent criteria container is not found
+                                    }
+                                }
+        
+                                parentChildrenContainer.appendChild(newCriteriaContainer);
+                            
+                                hideModal();
+                            })
+                            .catch((error) => {
+                                console.error('Error:', error);
+                            });
+                        };
+
+                        // Define a function to check the total marks before proceeding to add a new criteria
+                        const checkTotalMarks = () => {
+                            const name = document.getElementById('criteriaName').value;
+                            const marks = parseFloat(document.getElementById('criteriaMarks').value);
+                            fetch(`/teacher/get-criteria-marks-summary/${parentId}/`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.status === 'success') {
+                                        const totalWithNew = data.childrenTotalMarks + marks;
+                                        if (totalWithNew > data.parentMarks) {
+                                            showModalWithConfirmation(`The total marks of the children criteria (${data.childrenTotalMarks}) and the new criteria (${marks}) will exceed the parent criteria's total marks (${data.parentMarks}). Do you want to proceed?`, () => {
+                                                addCriteriaFunction();
+                                            }, 'criteriaModal');
+                                        } else {
+                                            // If total marks do not exceed, proceed to add directly
+                                            addCriteriaFunction();
+                                        }
+                                    }
+                                })
+                                .catch(error => console.error('Error:', error));
+                        };
+                
+                        // Remove any existing event listener before adding a new one
+                        addButton.removeEventListener('click', window.currentAddCriteriaListener);
+                        window.currentAddCriteriaListener = checkTotalMarks; // Use checkTotalMarks here
+                        addButton.addEventListener('click', window.currentAddCriteriaListener);
+                
+                        hideModal();
+                
+                        criteriaModal.setAttribute('data-parent-id', parentId);
+                        showModal('criteriaModal');
+                    }
+
+                    function showModalWithConfirmation(message, continueCallback, previousModalId) {
+                        const confirmationModalId = 'confirmationModal'; // Assuming this is the ID for your confirmation modal
+                    
+                        // First, set the confirmation message
+                        const modalBody = document.getElementById('confirmationModalBody');
+                        modalBody.textContent = message;
+                    
+                        // Define a function to actually show the confirmation modal
+                        function showConfirmation() {
+                            // Find the continue button
+                            let continueButton = document.getElementById('continueButton');
+                            
+                            // Clone the continue button to remove all event listeners
+                            const newContinueButton = continueButton.cloneNode(true);
+                            continueButton.parentNode.replaceChild(newContinueButton, continueButton);
+                            continueButton = newContinueButton; // Update the reference to the new button
+                    
+                            // Configure the new continue button for the current action
+                            continueButton.addEventListener('click', function() {
+                                continueCallback();
+                                clearModalStack();
+                            });
+                    
+                            showModal(confirmationModalId); // Show the confirmation modal, using your existing modal handling functions
+                        }
+                    
+                        // If a previous modal is specified and currently shown, close it first
+                        if (previousModalId && document.getElementById(previousModalId)) {
+                            hideModal(); // Hide the current modal
+                    
+                            // Wait for the hide animation to complete before showing the confirmation modal
+                            showConfirmation();
+                        } else {
+                            // No previous modal, so just show the confirmation modal directly
+                            showConfirmation();
+                        }
+                    }
+
+                    function addElement(criteriaId) {
+                        document.getElementById('elementModalLabel').textContent = 'Add Marking Criteria';
+                        document.getElementById('elementName').value = '';
+                        document.getElementById('elementDescription').value = '';
+                        document.getElementById('elementMarks').value = '';
+                        document.getElementById('elementDeleteBtn').style.display = 'none';
+                        document.getElementById('elementSaveCloseBtn').style.display = 'none';
+                        const addButton = document.getElementById('elementAddBtn');
+                        addButton.style.display = '';
+                        
+                        const addElementFunction = function() {
+                            const name = document.getElementById('elementName').value;
+                            const description = document.getElementById('elementDescription').value;
+                            const marks = document.getElementById('elementMarks').value;
+                        
+                            // Prepare the data to be sent
+                            const dataToSend = {
+                                criteria: criteriaId,
+                                name: name,
+                                description: description,
+                                marks: marks
+                            };
+                        
+                            // Assuming '/teacher/add-element/' is your endpoint for adding a new element
+                            fetch('/teacher/add-element/', {
+                                method: 'POST',
+                                body: JSON.stringify(dataToSend),
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCSRFToken(), // Function to get CSRF token from the form or meta tag
+                                },
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('Success:', data);
+
+                                // Find the container where the new criteria button should be added
+                                const elementsList = document.getElementById('details-' + criteriaId);
+
+                                console.log('elementsList:', elementsList);
+
+                                // Assuming your plus button for adding new root criteria has a unique identifier or class
+                                const addElementButton = elementsList.querySelector('#elementAddBtn-' + criteriaId); // Update selector as needed
+
+                                // Create the new criteria button
+                                const newElementButton = document.createElement('button');
+                                newElementButton.id = `element-${data.element_id}`;
+                                newElementButton.type = 'button';
+                                newElementButton.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+
+                                // Create a span for the element's name and marks
+                                const elementNameSpan = document.createElement('span');
+                                elementNameSpan.className = 'element-name';
+                                elementNameSpan.textContent = `${name} (${parseFloat(marks).toFixed(1)} marks)`;
+
+                                // Append the description span to the button
+                                newElementButton.appendChild(elementNameSpan);
+                                newElementButton.onclick = function() { handleElementClick(data.element_id); };
+
+                                // Instead of appending, insert before the plus button if it's correctly identified
+                                console.log('addElementButton:', addElementButton)
+                                if (addElementButton) {
+                                    elementsList.insertBefore(newElementButton, addElementButton);
+                                }
+
+                                hideModal();
+                            })
+                            .catch((error) => {
+                                console.error('Error:', error);
+                            });
+                        };
+
+                        // Remove any existing event listener before adding a new one
+                        addButton.removeEventListener('click', window.currentAddElementListener);
+                        window.currentAddElementListener = addElementFunction;
+                        addButton.addEventListener('click', window.currentAddElementListener);
+
+                        hideModal();
+
+                        showModal('elementModal');
+                    }
+
+                    function getCSRFToken() {
+                        return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+                    }
+                </script>
+                <div class="p-3">
+                    <div class="card p-3">
+                        <div class="card-body">
+                            <svg t="1624873005367"
+                                 class="icon"
+                                 viewBox="0 0 1024 1024"
+                                 version="1.1"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 p-id="2671"
+                                 width="32"
+                                 height="32">
+                                <path d="M512 85.333333c129.6 0 234.666667 105.066667 234.666667 234.666667 0 84.256-44.394667 158.133333-111.072 199.52a425.28 425.28 0 0 1 152.853333 83.466667 32 32 0 1 1-41.493333 48.736A361.045333 361.045333 0 0 0 512 565.333333c-188.672 0-345.429333 144.672-361.344 331.413334a32 32 0 0 1-63.765333-5.429334c15.114667-177.322667 138.048-322.346667 301.546666-371.786666C321.76 478.165333 277.333333 404.266667 277.333333 320c0-129.6 105.066667-234.666667 234.666667-234.666667z m415.946667 627.381334l1.066666 1.013333a29.824 29.824 0 0 1 0 43.413333l-162.261333 152.96a31.925333 31.925333 0 0 1-22.762667 8.704 31.925333 31.925333 0 0 1-22.773333-8.704l-93.184-87.84a29.824 29.824 0 0 1 0-43.413333l1.077333-1.013333a32 32 0 0 1 43.904 0l70.976 66.901333 140.053334-132.021333a32 32 0 0 1 43.904 0zM512 149.333333c-94.261333 0-170.666667 76.405333-170.666667 170.666667s76.405333 170.666667 170.666667 170.666667 170.666667-76.405333 170.666667-170.666667-76.405333-170.666667-170.666667-170.666667z" p-id="2672">
+                                </path>
+                            </svg>
+                            &nbsp;&nbsp;<b>General Permissions</b>
+                            <form action="/teacher/setupForm2/?function=permission&assignment={{ assignment.pk }}"
+                                  method="post"
+                                  enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="p-3" style="font-size: 15px">
+                                    <label style="width: 33%; float: left">Role</label>
+                                    <label style="width: 33%;">Marker</label>
+                                    <label style="width: 33%;">TA</label>
+                                    <label style="width: 30%; float: left">&nbsp;</label>
+                                    <label style="width: 30%;">Read&nbsp;Write</label>
+                                    <label style="width: 30%;">Read&nbsp;Write</label>
+                                    <label style="width: 28%; float: left">Submissions</label>
+                                    {% if marker_submission == 0 %}
+                                        <input type="checkbox"
+                                               id="2ch1"
+                                               name="2sub1"
+                                               style="vertical-align:middle;
+                                                      width: 15%" />
+                                        <input type="checkbox"
+                                               name="2sub2"
+                                               style="vertical-align:middle"
+                                               onclick="select1_2()" />
+                                    {% elif marker_submission == 1 %}
+                                        <input type="checkbox"
+                                               id="2ch1"
+                                               name="2sub1"
+                                               style="vertical-align:middle;
+                                                      width: 15%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2sub2"
+                                               style="vertical-align:middle"
+                                               onclick="select1_2()" />
+                                    {% else %}
+                                        <input type="checkbox"
+                                               id="2ch1"
+                                               name="2sub1"
+                                               style="vertical-align:middle;
+                                                      width: 15%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2sub2"
+                                               style="vertical-align:middle"
+                                               onclick="select1_2()"
+                                               checked />
+                                    {% endif %}
+                                    {% if ta_submission == 0 %}
+                                        <input type="checkbox"
+                                               id="2ch2"
+                                               name="2sub3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%" />
+                                        <input type="checkbox"
+                                               name="2sub4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select2_2()" />
+                                        <p></p>
+                                    {% elif ta_submission == 1 %}
+                                        <input type="checkbox"
+                                               id="2ch2"
+                                               name="2sub3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2sub4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select2_2()" />
+                                        <p></p>
+                                    {% else %}
+                                        <input type="checkbox"
+                                               id="2ch2"
+                                               name="2sub3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2sub4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select2_2()"
+                                               checked />
+                                        <p></p>
+                                    {% endif %}
+                                    <label style="width: 28%; float: left">Structure</label>
+                                    {% if marker_structure == 0 %}
+                                        <input type="checkbox"
+                                               id="2ch3"
+                                               name="2sd1"
+                                               style="vertical-align:middle;
+                                                      width: 15%" />
+                                        <input type="checkbox"
+                                               name="2sd2"
+                                               style="vertical-align:middle"
+                                               onclick="select3_2()" />
+                                    {% elif marker_structure == 1 %}
+                                        <input type="checkbox"
+                                               id="2ch3"
+                                               name="2sd1"
+                                               style="vertical-align:middle;
+                                                      width: 15%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2sd2"
+                                               style="vertical-align:middle"
+                                               onclick="select3_2()" />
+                                    {% else %}
+                                        <input type="checkbox"
+                                               id="2ch3"
+                                               name="2sd1"
+                                               style="vertical-align:middle;
+                                                      width: 15%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2sd2"
+                                               style="vertical-align:middle"
+                                               onclick="select3_2()"
+                                               checked />
+                                    {% endif %}
+                                    {% if ta_structure == 0 %}
+                                        <input type="checkbox"
+                                               id="2ch4"
+                                               name="2sd3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%" />
+                                        <input type="checkbox"
+                                               name="2sd4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select4_2()" />
+                                        <p></p>
+                                    {% elif ta_structure == 1 %}
+                                        <input type="checkbox"
+                                               id="2ch4"
+                                               name="2sd3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2sd4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select4_2()" />
+                                        <p></p>
+                                    {% else %}
+                                        <input type="checkbox"
+                                               id="2ch4"
+                                               name="2sd3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2sd4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select4_2()"
+                                               checked />
+                                        <p></p>
+                                    {% endif %}
+                                    <label style="width: 28%; float: left">Team</label>
+                                    {% if marker_team == 0 %}
+                                        <input type="checkbox"
+                                               id="2ch5"
+                                               name="2td1"
+                                               style="vertical-align:middle;
+                                                      width: 15%" />
+                                        <input type="checkbox"
+                                               name="2td2"
+                                               style="vertical-align:middle"
+                                               onclick="select5_2()" />
+                                    {% elif marker_team == 1 %}
+                                        <input type="checkbox"
+                                               id="2ch5"
+                                               name="2td1"
+                                               style="vertical-align:middle;
+                                                      width: 15%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2td2"
+                                               style="vertical-align:middle"
+                                               onclick="select5_2()" />
+                                    {% else %}
+                                        <input type="checkbox"
+                                               id="2ch5"
+                                               name="2td1"
+                                               style="vertical-align:middle;
+                                                      width: 15%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2td2"
+                                               style="vertical-align:middle"
+                                               onclick="select5_2()"
+                                               checked />
+                                    {% endif %}
+                                    {% if ta_team == 0 %}
+                                        <input type="checkbox"
+                                               id="2ch6"
+                                               name="2td3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%" />
+                                        <input type="checkbox"
+                                               name="2td4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select6_2()" />
+                                        <p></p>
+                                    {% elif ta_team == 1 %}
+                                        <input type="checkbox"
+                                               id="2ch6"
+                                               name="2td3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2td4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select6_2()" />
+                                        <p></p>
+                                    {% else %}
+                                        <input type="checkbox"
+                                               id="2ch6"
+                                               name="2td3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2td4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select6_2()"
+                                               checked />
+                                        <p></p>
+                                    {% endif %}
+                                    <label style="width: 28%; float: left">Marking</label>
+                                    {% if marker_marking == 0 %}
+                                        <input type="checkbox"
+                                               id="2ch7"
+                                               name="2md1"
+                                               style="vertical-align:middle;
+                                                      width: 15%" />
+                                        <input type="checkbox"
+                                               name="2md2"
+                                               style="vertical-align:middle"
+                                               onclick="select7_2()" />
+                                    {% elif marker_marking == 1 %}
+                                        <input type="checkbox"
+                                               id="2ch7"
+                                               name="2md1"
+                                               style="vertical-align:middle;
+                                                      width: 15%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2md2"
+                                               style="vertical-align:middle"
+                                               onclick="select7_2()" />
+                                    {% else %}
+                                        <input type="checkbox"
+                                               id="2ch7"
+                                               name="2md1"
+                                               style="vertical-align:middle;
+                                                      width: 15%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2md2"
+                                               style="vertical-align:middle"
+                                               onclick="select7_2()"
+                                               checked />
+                                    {% endif %}
+                                    {% if ta_marking == 0 %}
+                                        <input type="checkbox"
+                                               id="2ch8"
+                                               name="2md3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%" />
+                                        <input type="checkbox"
+                                               name="2md4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select8_2()" />
+                                        <p></p>
+                                    {% elif ta_marking == 1 %}
+                                        <input type="checkbox"
+                                               id="2ch8"
+                                               name="2md3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2md4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select8_2()" />
+                                        <p></p>
+                                    {% else %}
+                                        <input type="checkbox"
+                                               id="2ch8"
+                                               name="2md3"
+                                               style="vertical-align:middle;
+                                                      margin-left: 60px;
+                                                      width: 10%"
+                                               checked />
+                                        <input type="checkbox"
+                                               name="2md4"
+                                               style="vertical-align:middle;
+                                                      width: 10%"
+                                               onclick="select8_2()"
+                                               checked />
+                                        <p></p>
+                                    {% endif %}
+                                    {% if user_role == 'Academic' %}
+                                        <button type="submit"
+                                                class="btn text-white"
+                                                style="float: right;
+                                                       background-color : #454574">Apply</button>
+                                    {% else %}
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="loginbg"></div>
+    <div id="login" style="display:none;">
+        <h4>
+            <input id="close_login"
+                   type="button"
+                   title=""
+                   value="x"
+                   onClick="close_login()" />
+            New Marked Element
+        </h4>
+        <form id="LoginForm"
+              name="LoginForm"
+              action="/teacher/addElement/?assignment={{ assignment.pk }}"
+              method="post"
+              enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="card p-3">
+                <label style="float: left; width: 40%" class="form-label">Element Name</label>
+                <input class="form-control"
+                       style="float: right;
+                              margin-bottom: 5px"
+                       type="text"
+                       name="name" />
+                <label style="float: left; width: 40%" class="form-label">Marking Guide</label>
+                <input class="form-control"
+                       style="float: right;
+                              margin-bottom: 5px"
+                       type="text"
+                       name="guide" />
+                <label style="float: left; width: 40%" class="form-label">Maximum Input</label>
+                <input class="form-control"
+                       style="float: right;
+                              margin-bottom: 10px"
+                       type="text"
+                       name="max" />
+                <button type="submit"
+                        class="btn btn-lg text-white"
+                        style="float: right;
+                               background-color : #454574;
+                               width: 100px;
+                               margin-left: 266px;
+                               margin-top: 5px">Add</button>
+            </div>
+        </form>
+    </div>
+    <div id="addTeam"></div>
+    <div id="add" style="display:none;">
+        <h4>
+            <input id="close_add" type="button" title="" value="x" onClick="close_add()" />
+            New Marked Team
+        </h4>
+        <form id="addTeamForm"
+              name="addTeamForm"
+              action="/teacher/addTeam/?assignment={{ assignment.pk }}"
+              method="post"
+              enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="card p-3">
+                <table class="p-3">
+                    {% for info in allMarker %}
+                        <tbody>
+                            <tr style="margin-bottom: 30px" class="list">
+                                <td>
+                                    <input class="form-check-input mt-0"
+                                           type="checkbox"
+                                           name="team"
+                                           id="team"
+                                           value="{{ info.id }}" />
+                                </td>
+                                <td>
+                                    <img src="/static/media/{{ info.userProfile }}"
+                                         alt="hugenerd"
+                                         width="40"
+                                         height="40"
+                                         class="rounded-circle" />
+                                    {{ info.userName }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    {% endfor %}
+                </table>
+                <button type="submit"
+                        class="btn btn-lg text-white"
+                        style="float: right;
+                               background-color : #454574;
+                               width: 100px;
+                               margin-left: 266px;
+                               margin-top: 5px">Add</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script language="javascript">
+    function open_login() {
+        document.getElementById('loginbg').style.display = 'block';
+        document.getElementById('login').style.display = 'block';
+        showloginbg();
+    }
+
+    function close_login() {
+        document.getElementById('loginbg').style.display = 'none';
+        document.getElementById('login').style.display = 'none';
+    }
+
+    function showloginbg() {
+        var sWidth, sHeight;
+        sWidth = screen.width;
+        sWidth = document.body.offsetWidth;
+        sHeight = document.body.offsetHeight;
+        if (sHeight < screen.height) {
+            sHeight = screen.height;
+        }
+        document.getElementById("loginbg").style.width = sWidth + "px";
+        document.getElementById("loginbg").style.height = sHeight + "px";
+        document.getElementById("loginbg").style.display = "block";
+        document.getElementById("loginbg").style.display = "block";
+        document.getElementById("loginbg").style.right = document.getElementById("login").offsetLeft + "px";
+    }
+
+    function logo_in() {
+        alert()
+        close_login();
+    }
+
+    function select1() {
+        $('#ch1').attr('checked', true);
+    }
+
+    function select2() {
+        $('#ch2').attr('checked', true);
+    }
+
+    function select3() {
+        $('#ch3').attr('checked', true);
+    }
+
+    function select4() {
+        $('#ch4').attr('checked', true);
+    }
+
+    function select5() {
+        $('#ch5').attr('checked', true);
+    }
+
+    function select6() {
+        $('#ch6').attr('checked', true);
+    }
+
+    function select7() {
+        $('#ch7').attr('checked', true);
+    }
+
+    function select8() {
+        $('#ch8').attr('checked', true);
+    }
+
+    function select1_2() {
+        $('#2ch1').attr('checked', true);
+    }
+
+    function select2_2() {
+        $('#2ch2').attr('checked', true);
+    }
+
+    function select3_2() {
+        $('#2ch3').attr('checked', true);
+    }
+
+    function select4_2() {
+        $('#2ch4').attr('checked', true);
+    }
+
+    function select5_2() {
+        $('#2ch5').attr('checked', true);
+    }
+
+    function select6_2() {
+        $('#2ch6').attr('checked', true);
+    }
+
+    function select7_2() {
+        $('#2ch7').attr('checked', true);
+    }
+
+    function select8_2() {
+        $('#2ch8').attr('checked', true);
+    }
+
+    function open_add() {
+        document.getElementById('addTeam').style.display = 'block';
+        document.getElementById('add').style.display = 'block';
+        showadd();
+    }
+
+    function close_add() {
+        document.getElementById('addTeam').style.display = 'none';
+        document.getElementById('add').style.display = 'none';
+    }
+
+    function showadd() {
+        var sWidth, sHeight;
+        sWidth = screen.width;
+        sWidth = document.body.offsetWidth;
+        sHeight = document.body.offsetHeight;
+        if (sHeight < screen.height) {
+            sHeight = screen.height;
+        }
+        document.getElementById("addTeam").style.width = sWidth + "px";
+        document.getElementById("addTeam").style.height = sHeight + "px";
+        document.getElementById("addTeam").style.display = "block";
+        document.getElementById("addTeam").style.display = "block";
+        document.getElementById("addTeam").style.right = document.getElementById("add").offsetLeft + "px";
+    }
+
+    function logo_in() {
+        alert()
+        close_add();
+    }
+
+    function openAddElementForm() {
+        document.getElementById('loginbg').style.display = 'block';
+        document.getElementById('login').style.display = 'block';
+        showloginbg();
+    }
+    
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}

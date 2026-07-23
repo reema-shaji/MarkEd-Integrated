@@ -1,0 +1,301 @@
+{% extends "teacher/base.html" %}
+{% block mainbody %}
+    {% load static %}
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+
+    <style>        
+        #myBtn{
+            cursor:pointer;
+            text-decoration: underline;
+        }
+        /* The Modal (background) */
+        .modal {
+          display: none; /* Hidden by default */
+          position: fixed; /* Stay in place */
+          z-index: 1; /* Sit on top */
+          padding-top: 100px; /* Location of the box */
+          left: 0;
+          top: 0;
+          width: 100%; /* Full width */
+          height: 100%; /* Full height */
+          overflow: auto; /* Enable scroll if needed */
+          background-color: rgb(0,0,0); /* Fallback color */
+          background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+        
+        /* Modal Content */
+        .modal-content {
+          background-color: #fefefe;
+          margin: auto;
+          padding: 20px;
+          border: 1px solid #888;
+          width: 80%;
+        }
+        
+        /* The Close Button */
+        .close {
+          color: #aaaaaa;
+          float: right;
+          font-size: 28px;
+          font-weight: bold;
+        }
+        
+        .close:hover,
+        .close:focus {
+          color: #000;
+          text-decoration: none;
+          cursor: pointer;
+        }
+        </style>
+
+    <div class="p-3 text-black" style="font-size: 30px; margin-top:40px">
+        &nbsp;
+        <svg t="1623034136509"
+             class="icon"
+             viewBox="0 0 1024 1024"
+             version="1.1"
+             xmlns="http://www.w3.org/2000/svg"
+             p-id="8934"
+             width="40"
+             height="40">
+            <path d="M876.6 239.5c-0.5-0.9-1.2-1.8-2-2.5-5-5-13.1-5-18.1 0L684.2 409.3l-67.9-67.9L788.7 169c0.8-0.8 1.4-1.6 2-2.5 3.6-6.1 1.6-13.9-4.5-17.5-98.2-58-226.8-44.7-311.3 39.7-67 67-89.2 162-66.5 247.4l-293 293c-3 3-2.8 7.9 0.3 11l169.7 169.7c3.1 3.1 8.1 3.3 11 0.3l292.9-292.9c85.5 22.8 180.5 0.7 247.6-66.4 84.4-84.5 97.7-213.1 39.7-311.3zM786 499.8c-58.1 58.1-145.3 69.3-214.6 33.6l-8.8 8.8-0.1-0.1-274 274.1-79.2-79.2 230.1-230.1s0 0.1 0.1 0.1l52.8-52.8c-35.7-69.3-24.5-156.5 33.6-214.6 39.2-39.2 92.1-57.3 144-53.5L537 318.9c-12.5 12.5-12.5 32.8 0 45.3l124.5 124.5c12.5 12.5 32.8 12.5 45.3 0l132.8-132.8c3.7 51.8-14.4 104.8-53.6 143.9z" p-id="8935" fill="#000000">
+            </path>
+        </svg>
+        &nbsp;<b>Customization</b>
+        <p class="col-md-8 fs-4" style="color: gray; margin-left: 20px;margin-top:20px">Configure and add functionality by utilizing modules</p>
+
+        <div class="p-1 mb-1 rounded-3">
+        <div class="container-fluid py-2">
+            <div class="card mt-4 p-4"
+                 style="box-shadow: 0px 0px 30px -5px lightgrey;
+                        width: 84%">
+                <div class="card-body">
+                    <h5>
+                        <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                            <path fill-rule="evenodd" d="M4.857 3A1.857 1.857 0 0 0 3 4.857v4.286C3 10.169 3.831 11 4.857 11h4.286A1.857 1.857 0 0 0 11 9.143V4.857A1.857 1.857 0 0 0 9.143 3H4.857Zm10 0A1.857 1.857 0 0 0 13 4.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 21 9.143V4.857A1.857 1.857 0 0 0 19.143 3h-4.286Zm-10 10A1.857 1.857 0 0 0 3 14.857v4.286C3 20.169 3.831 21 4.857 21h4.286A1.857 1.857 0 0 0 11 19.143v-4.286A1.857 1.857 0 0 0 9.143 13H4.857Zm10 0A1.857 1.857 0 0 0 13 14.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 21 19.143v-4.286A1.857 1.857 0 0 0 19.143 13h-4.286Z" clip-rule="evenodd"/>
+                          </svg>
+                          
+                        &nbsp; <b>Default Modules</b>
+                        <div class="row row-cols-1 row-cols-md-2">
+                            <div class="col mb-4">
+                              
+                              
+                              {%for basic in default_modules %}
+                                <div class="card" style="margin-top: 20px;">
+                                <div class="card-body">
+                                  <!-- <h5 class="card-title">Card title</h5>
+                                  <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p> -->
+                                    <!-- <img src="{% static '/media/' %}{{ info.user.userProfile }}" -->
+                                    <span style="display: inline-block;vertical-align: middle;margin-left:20px">
+                                        <img src="{% static '/media/' %}{{ basic.module.icon_address }}"
+                                        alt="user profile pic"
+                                        width="60"
+                                        height="60"
+                                        class="rounded-circle">
+                                    </span>
+                                    <span style="display: inline-block;vertical-align: middle;margin-left:10px">
+                                        <b>{{basic.module.name}}</b>
+                                        <br>
+                                        <!-- <small class="small text-muted" style="line-height:1.8" id="myBtn" onclick="clue('nihao')">Introduction</small> -->
+                                        <br>
+                                        <small class="small text-muted">Author: {{basic.module.author}}</small>
+                                    </span>
+                                    <span style="display: inline-block;vertical-align: middle;margin-left:10px">
+                                      <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" onclick="clue('{{basic.module.introduction}}')" style="cursor:pointer">
+                                        
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.529 9.988a2.502 2.502 0 1 1 5 .191A2.441 2.441 0 0 1 12 12.582V14m-.01 3.008H12M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                      </svg>
+                                      <p id="temp-{{basic.user.id}}" style="display: none;">{{basic.module.introduction}}</p>
+                                    </span>
+                                    <span style="display: flex;vertical-align:middle; float:right; flex-direction:column; width:auto">
+                                        <div style="margin-left:50%">
+                                            <!-- <input type="checkbox" checked data-toggle="toggle" data-on="ON" data-off="OFF" data-onstyle="success" data-offstyle="danger" style="background-color: rgb(144, 222, 169);"> -->
+                                        </div>
+                                        <div style="margin-top: 10px;">
+                                            <button type="button" class="btn btn-primary" style="background-color:rgb(11, 11, 73); width:150px" onclick="jumpToConfiguration('{{basic.module.id}}', '{{assignment.pk}}')"><b>Customize &rarr;</b></button>
+                                        </div>
+                                    </span>
+                                </div>
+                                </div>
+                                
+                                {% endfor %}
+                                <br>
+                            </div>
+                            
+                        </div>
+                    </h5>
+
+                    <h5>
+                      <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                          <path fill-rule="evenodd" d="M4.857 3A1.857 1.857 0 0 0 3 4.857v4.286C3 10.169 3.831 11 4.857 11h4.286A1.857 1.857 0 0 0 11 9.143V4.857A1.857 1.857 0 0 0 9.143 3H4.857Zm10 0A1.857 1.857 0 0 0 13 4.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 21 9.143V4.857A1.857 1.857 0 0 0 19.143 3h-4.286Zm-10 10A1.857 1.857 0 0 0 3 14.857v4.286C3 20.169 3.831 21 4.857 21h4.286A1.857 1.857 0 0 0 11 19.143v-4.286A1.857 1.857 0 0 0 9.143 13H4.857Zm10 0A1.857 1.857 0 0 0 13 14.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 21 19.143v-4.286A1.857 1.857 0 0 0 19.143 13h-4.286Z" clip-rule="evenodd"/>
+                        </svg>
+                        
+                      &nbsp; <b>Additional Modules</b>
+
+                      <!-- <p style="margin-top: 20px;"><b>Active</b></p> -->
+                        <div class="row row-cols-1 row-cols-md-2">
+                          <div class="col mb-4">                            
+                            {%for basic in active_modules %}
+                              <div class="card" style="margin-top: 20px;">
+                              <div class="card-body">
+                                  <span style="display: inline-block;vertical-align: middle;margin-left:20px">
+                                      <img src="{% static '/media/' %}{{ basic.module.icon_address }}"
+                                      alt="user profile pic"
+                                      width="60"
+                                      height="60"
+                                      class="rounded-circle">
+                                  </span>
+                                  <span style="display: inline-block;vertical-align: middle;margin-left:10px">
+                                      <b>{{basic.module.name}}</b>
+                                      <br>
+                                      <!-- <small class="small text-muted" style="line-height:1.8" id="myBtn" onclick="clue('nihao')">Introduction</small> -->
+                                      <br>
+                                      <small class="small text-muted">Author: {{basic.module.author}}</small>
+                                  </span>
+                                  <span style="display: inline-block;vertical-align: middle;margin-left:10px">
+                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" onclick="clue('{{basic.module.introduction}}')" style="cursor:pointer">
+                                      
+                                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.529 9.988a2.502 2.502 0 1 1 5 .191A2.441 2.441 0 0 1 12 12.582V14m-.01 3.008H12M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                    </svg>
+                                    <p id="temp-{{basic.user.id}}" style="display: none;">{{basic.module.introduction}}</p>
+                                  </span>
+                                  <span style="display: flex;vertical-align:middle; float:right; flex-direction:column; width:auto">
+                                      <div style="margin-left:20%">
+                                          <input type="checkbox" checked data-toggle="toggle" data-on="ACTIVE" data-off="INACTIVE" data-onstyle="success" data-offstyle="danger" style="background-color: rgb(144, 222, 169);" onchange="changeStatus('{{basic.module.id}}',true)">
+                                      </div>
+                                      <div style="margin-top: 10px;">
+                                          <button type="button" class="btn btn-primary" style="background-color:rgb(11, 11, 73); width:150px" onclick="jumpToConfiguration('{{basic.module.id}}', '{{assignment.pk}}')"><b>Customize &rarr;</b></button>
+                                      </div>
+                                  </span>
+                              </div>
+                              </div>
+                              
+                              {% endfor %}
+                              <br>
+                          </div>
+                          
+                        </div>
+
+                         <!-- <b>Inactive</b> -->
+                        <div class="row row-cols-1 row-cols-md-2">
+                          <div class="col mb-4">                            
+                            {%for basic in inactive_modules %}
+                              <div class="card" style="margin-top: 20px;">
+                              <div class="card-body">
+                                  <span style="display: inline-block;vertical-align: middle;margin-left:20px">
+                                      <img src="{% static '/media/' %}{{ basic.icon_address }}"
+                                      alt="user profile pic"
+                                      width="60"
+                                      height="60"
+                                      class="rounded-circle">
+                                  </span>
+                                  <span style="display: inline-block;vertical-align: middle;margin-left:10px">
+                                      <b>{{basic.name}}</b>
+                                      <br>
+                                      <!-- <small class="small text-muted" style="line-height:1.8" id="myBtn" onclick="clue('nihao')">Introduction</small> -->
+                                      <br>
+                                      <small class="small text-muted">Author: {{basic.author}}</small>
+                                  </span>
+                                  <span style="display: inline-block;vertical-align: middle;margin-left:10px">
+                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" onclick="clue('{{basic.introduction}}')" style="cursor:pointer">
+                                      
+                                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.529 9.988a2.502 2.502 0 1 1 5 .191A2.441 2.441 0 0 1 12 12.582V14m-.01 3.008H12M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                    </svg>
+                                    <p id="temp-{{basic.id}}" style="display: none;">{{basic.introduction}}</p>
+                                  </span>
+                                  <span style="display: flex;vertical-align:middle; float:right; flex-direction:column; width:auto">
+                                      <div>
+                                          <input type="checkbox" data-toggle="toggle" data-on="ACTIVE" data-off="INACTIVE" data-onstyle="success" data-offstyle="danger" style="background-color: rgb(144, 222, 169);" unchecked onchange="changeStatus('{{basic.id}}',false)">
+                                      </div>
+                                      <!-- <div style="margin-top: 10px;">
+                                          <button type="button" class="btn btn-primary" style="background-color:rgb(11, 11, 73); width:150px" onclick="jumpToConfiguration('{{basic.id}}', '{{assignment.pk}}')"><b>Customize &rarr;</b></button>
+                                      </div> -->
+                                  </span>
+                              </div>
+                              </div>
+                              
+                              {% endfor %}
+                              <br>
+                          </div>
+                          
+                        </div>
+                    </h5>
+                </div>
+            </div>
+        </div>
+        </div>      
+        <!-- {{default_modules}}
+        {%for installed in default_modules %}
+          id:{{installed.user}}
+          <br>
+        {% endfor %}
+        {{installed_modules}}
+        <br>
+         {{uninstalled_modules}}
+         {{assignment.pk}} -->
+        
+    </div>
+
+    <div id="myModal" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <p id="intro">It is a module that allow you to adjust the submission file formats, the number of files allowed, the size of total files and other settings</p>
+        </div>
+      
+      </div>
+    
+      <script>
+        // Get the modal
+        var modal = document.getElementById("myModal");
+
+        // Get the button that opens the modal
+        //var btn = document.getElementById("myBtn");
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        var intro = document.getElementById("intro");
+
+
+        // When the user clicks the button, open the modal 
+        function clue(text) {
+          modal.style.display = "block";
+          intro.innerHTML = text
+        }
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+        modal.style.display = "none";
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        function changeStatus(moduleId, checked){
+          httpRequest = new XMLHttpRequest()
+          httpRequest.open('GET', '/teacher/module_switch?moduleId=' + moduleId + '&checked=' + checked + '&assignment=' + '{{assignment.pk}}', true)
+          httpRequest.send()
+          
+          setTimeout(function(){
+            location.reload(true)
+          }, 400)
+          
+        }
+
+        function jumpToConfiguration(moduleId, assignment){
+            window.location.href='/teacher/module_configuration?moduleId=' + moduleId + '&assignment='+assignment
+        }
+        
+
+    </script>
+    
+{% endblock %}

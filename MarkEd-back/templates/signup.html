@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>MarkEd</title>
+        {% load static %}
+        <link rel="stylesheet"
+              href="{% static '/plugins/bootstrap-5.0.1-dist/css/bootstrap.min.css' %}">
+        <link rel="shortcut icon" href="{% static '/images/favicon.png' %}" />
+        <script src="/static/js/jquery-3.5.1.min.js"></script>
+        <script src="/static/plugins/bootstrap-5.0.1-dist/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="/static/css/main.css">
+    </head>
+    <body>
+        <div class="container-fluid text-white vh-100">
+            <div class="row m-0 bg-white"  style="background: white">
+                <div class="row m-0 p-0 bg-white" style="height : 80px; background: white">
+                    <nav class="navbar navbar-expand-lg navbar-light bg-white"
+                         style="box-shadow: 0px 16px 18px -15px lightgrey">
+                        <div class="container-fluid">
+                            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                                <a class="navbar-nav me-auto mb-2 mb-lg-0 text-decoration-none" href="/">
+                                    <h1 style="color: black;">MarkEd</h1>
+                                </a>
+                                <div class="d-flex">
+                                    <button type="button"
+                                            class="btn btn-lg text-white"
+                                            style="margin-right: 20px;
+                                                   background-color : #454574">Help</button>
+                                    {% comment %} This is where the notifications start. {% endcomment %}
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+
+
+            <div class="row h-100 justify-content-center align-items-center">
+                <div style="max-width: 400px;
+                            background-color: #20323C;
+                            box-shadow: 0px 0px 18px 11px lightgrey"
+                     class="col w-100 py-5 px-4 rounded">
+                    <form action="/signup/" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <h3 class="text-center">SignUps Currently Closed</h3>
+                        <p class="text-center">Please contact {{ SUPPORT_EMAIL }} for more information</p>
+                        <!-- <h3 class="text-center">SignUp Here</h3>
+                        <p class="text-center">SignUp with your Student/Staff number and password</p>
+                        {% if message %}<div class="alert alert-warning">{{ message }}</div>{% endif %} -->
+                        <!-- <div class="form-group mb-3">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <svg t="1623397334336"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8096"
+                                             width="30"
+                                             height="30">
+                                            <path d="M928 160H96c-17.7 0-32 14.3-32 32v640c0 17.7 14.3 32 32 32h832c17.7 0 32-14.3 32-32V192c0-17.7-14.3-32-32-32z m-40 632H136V232h752v560z" p-id="8097">
+                                            </path>
+                                            <path d="M610.3 476h123.4c1.3 0 2.3-3.6 2.3-8v-48c0-4.4-1-8-2.3-8H610.3c-1.3 0-2.3 3.6-2.3 8v48c0 4.4 1 8 2.3 8zM615.1 620h185.7c3.9 0 7.1-3.6 7.1-8v-48c0-4.4-3.2-8-7.1-8H615.1c-3.9 0-7.1 3.6-7.1 8v48c0 4.4 3.2 8 7.1 8zM224 673h43.9c4.2 0 7.6-3.3 7.9-7.5 3.8-50.5 46-90.5 97.2-90.5s93.4 40 97.2 90.5c0.3 4.2 3.7 7.5 7.9 7.5H522c4.6 0 8.2-3.8 8-8.4-2.8-53.3-32-99.7-74.6-126.1 18.1-19.9 29.1-46.4 29.1-75.5 0-61.9-49.9-112-111.4-112s-111.4 50.1-111.4 112c0 29.1 11 55.5 29.1 75.5-42.7 26.5-71.8 72.8-74.6 126.1-0.4 4.6 3.2 8.4 7.8 8.4z m149-262c28.5 0 51.7 23.3 51.7 52s-23.2 52-51.7 52-51.7-23.3-51.7-52 23.2-52 51.7-52z" p-id="8098">
+                                            </path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <input type="text"
+                                       placeholder="Student/Staff Number"
+                                       class="form-control"
+                                       required
+                                       name="usernumber">
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <svg t="1626426109792"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8105"
+                                             width="30"
+                                             height="30">
+                                            <path d="M928 160H96c-17.7 0-32 14.3-32 32v640c0 17.7 14.3 32 32 32h832c17.7 0 32-14.3 32-32V192c0-17.7-14.3-32-32-32z m-40 110.8V792H136V270.8l-27.6-21.5 39.3-50.5 42.8 33.3h643.1l42.8-33.3 39.3 50.5-27.7 21.5z" p-id="8106">
+                                            </path>
+                                            <path d="M833.6 232L512 482 190.4 232l-42.8-33.3-39.3 50.5 27.6 21.5 341.6 265.6c20.2 15.7 48.5 15.7 68.7 0L888 270.8l27.6-21.5-39.3-50.5-42.7 33.2z" p-id="8107">
+                                            </path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <input type="email"
+                                       placeholder="Email"
+                                       class="form-control"
+                                       required
+                                       name="useremail">
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <svg t="1623223207972"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8096"
+                                             width="30"
+                                             height="30">
+                                            <path d="M858.5 763.6c-18.9-44.8-46.1-85-80.6-119.5-34.5-34.5-74.7-61.6-119.5-80.6-0.4-0.2-0.8-0.3-1.2-0.5C719.5 518 760 444.7 760 362c0-137-111-248-248-248S264 225 264 362c0 82.7 40.5 156 102.8 201.1-0.4 0.2-0.8 0.3-1.2 0.5-44.8 18.9-85 46-119.5 80.6-34.5 34.5-61.6 74.7-80.6 119.5C146.9 807.5 137 854 136 901.8c-0.1 4.5 3.5 8.2 8 8.2h60c4.4 0 7.9-3.5 8-7.8 2-77.2 33-149.5 87.8-204.3 56.7-56.7 132-87.9 212.2-87.9s155.5 31.2 212.2 87.9C779 752.7 810 825 812 902.2c0.1 4.4 3.6 7.8 8 7.8h60c4.5 0 8.1-3.7 8-8.2-1-47.8-10.9-94.3-29.5-138.2zM512 534c-45.9 0-89.1-17.9-121.6-50.4S340 407.9 340 362c0-45.9 17.9-89.1 50.4-121.6S466.1 190 512 190s89.1 17.9 121.6 50.4S684 316.1 684 362c0 45.9-17.9 89.1-50.4 121.6S557.9 534 512 534z" p-id="8097">
+                                            </path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <input type="text"
+                                       placeholder="User Name"
+                                       class="form-control"
+                                       required
+                                       name="username">
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <svg t="1623046709847"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8234"
+                                             width="30"
+                                             height="30">
+                                            <path d="M608 112c-167.9 0-304 136.1-304 304 0 70.3 23.9 135 63.9 186.5l-41.1 41.1-62.3-62.3c-3.1-3.1-8.2-3.1-11.4 0l-39.8 39.8c-3.1 3.1-3.1 8.2 0 11.4l62.3 62.3-44.9 44.9-62.3-62.3c-3.1-3.1-8.2-3.1-11.4 0l-39.8 39.8c-3.1 3.1-3.1 8.2 0 11.4l62.3 62.3-65.3 65.3c-3.1 3.1-3.1 8.2 0 11.3l42.3 42.3c3.1 3.1 8.2 3.1 11.3 0l253.6-253.6C473 696.1 537.7 720 608 720c167.9 0 304-136.1 304-304S775.9 112 608 112z m161.2 465.2C726.2 620.3 668.9 644 608 644c-60.9 0-118.2-23.7-161.2-66.8-43.1-43-66.8-100.3-66.8-161.2 0-60.9 23.7-118.2 66.8-161.2 43-43.1 100.3-66.8 161.2-66.8 60.9 0 118.2 23.7 161.2 66.8 43.1 43 66.8 100.3 66.8 161.2 0 60.9-23.7 118.2-66.8 161.2z" p-id="8235">
+                                            </path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <input type="password"
+                                       placeholder="Password"
+                                       class="form-control"
+                                       required
+                                       name="password">
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <svg t="1623046709847"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8234"
+                                             width="30"
+                                             height="30">
+                                            <path d="M608 112c-167.9 0-304 136.1-304 304 0 70.3 23.9 135 63.9 186.5l-41.1 41.1-62.3-62.3c-3.1-3.1-8.2-3.1-11.4 0l-39.8 39.8c-3.1 3.1-3.1 8.2 0 11.4l62.3 62.3-44.9 44.9-62.3-62.3c-3.1-3.1-8.2-3.1-11.4 0l-39.8 39.8c-3.1 3.1-3.1 8.2 0 11.4l62.3 62.3-65.3 65.3c-3.1 3.1-3.1 8.2 0 11.3l42.3 42.3c3.1 3.1 8.2 3.1 11.3 0l253.6-253.6C473 696.1 537.7 720 608 720c167.9 0 304-136.1 304-304S775.9 112 608 112z m161.2 465.2C726.2 620.3 668.9 644 608 644c-60.9 0-118.2-23.7-161.2-66.8-43.1-43-66.8-100.3-66.8-161.2 0-60.9 23.7-118.2 66.8-161.2 43-43.1 100.3-66.8 161.2-66.8 60.9 0 118.2 23.7 161.2 66.8 43.1 43 66.8 100.3 66.8 161.2 0 60.9-23.7 118.2-66.8 161.2z" p-id="8235">
+                                            </path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <input type="password"
+                                       placeholder="Password Check"
+                                       class="form-control"
+                                       required
+                                       name="passwordcheck">
+                            </div>
+                        </div>
+                        <div class="input-group mb-3">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <svg t="1623830103023"
+                                             class="icon"
+                                             viewBox="0 0 1024 1024"
+                                             version="1.1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             p-id="8100"
+                                             width="30"
+                                             height="30">
+                                            <path d="M553.1 509.1l-77.8 99.2-41.1-52.4c-3.2-4.1-9.4-4.1-12.6 0l-99.8 127.2c-4.1 5.2-0.4 12.9 6.3 12.9H696c6.7 0 10.4-7.7 6.3-12.9l-136.5-174c-3.3-4.1-9.5-4.1-12.7 0z" p-id="8101">
+                                            </path>
+                                            <path d="M400 442m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z" p-id="8102"></path>
+                                            <path d="M854.6 288.6L639.4 73.4c-6-6-14.1-9.4-22.6-9.4H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V311.3c0-8.5-3.4-16.7-9.4-22.7zM790.2 326H602V137.8L790.2 326z m1.8 562H232V136h302v216c0 23.2 18.8 42 42 42h216v494z" p-id="8103">
+                                            </path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <input type="file"
+                                       class="form-control"
+                                       id="inputGroupFile01"
+                                       name="profile"
+                                       accept="image/*">
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <div class="input-group mb-3">
+                                <label class="input-group-text" for="inputGroupSelect01">Roles</label>
+                                <select class="form-select" id="inputGroupSelect01" name="role">
+                                    <option value="A" selected>Academic</option>
+                                    <option value="M">Marker</option>
+                                    <option value="T">TA</option>
+                                    <option value="S">Student</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" name="reg_user" class="btn btn-primary w-100">Sign Up</button>
+                        </div>
+                    </form>
+                    <div class="text-center">
+                        Already had an account ? <a href="/login">Login Here</a>
+                    </div> -->
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
