@@ -15,8 +15,8 @@ class GroupSetSchema(Schema):
     allow_student_self_assignment: bool
     self_assignment_deadline: Optional[datetime] = None
     created_at: datetime
-    groups_count: int = 0
-    students_count: int = 0
+    groups_count: int
+    students_count: int
 
 
 class GroupSetCreateRequest(Schema):
@@ -53,7 +53,7 @@ class GroupSchema(Schema):
     group_set_id: Optional[int] = None
     name: str
     description: Optional[str] = None
-    members: List[GroupMemberSchema] = []
+    members: List[GroupMemberSchema]
 
 
 class GroupCreateRequest(Schema):
@@ -125,7 +125,7 @@ class WorkspaceFileSchema(Schema):
     file_type: str
     status: str
     upload_time: datetime
-    comments: List[WorkspaceCommentSchema] = []
+    comments: List[WorkspaceCommentSchema]
 
 
 class WorkspaceFileCreateRequest(Schema):

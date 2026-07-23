@@ -1,0 +1,299 @@
+'use client'
+
+/**
+ * Group Categories list — ported from Hao's groupset_list.html / groupset_form.html.
+ *
+ * Called "Group Category" throughout the UI: his summative evaluation found
+ * "GroupSet" confusing (Unified PRD §9, b-1). The model name is unchanged.
+ */
+
+import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { DefaultService, GroupSetSchema } from '@/src/api'
+import { useCourse } from '@/src/contexts/course-context'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Pencil, Plus, Users2 } from 'lucide-react'
+import { toast } from 'sonner'
+
+const BLANK = {
+  name: '',
+  description: '',
+  min_group_size: 2,
+  max_group_size: 5,
+  allow_student_self_assignment: false,
+}
+
+export default function GroupSetsPage() {
+  const router = useRouter()
+  const { currentCourseId, currentCourse } = useCourse()
+  const [sets, setSets] = useState<GroupSetSchema[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [open, setOpen] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [sizesLocked, setSizesLocked] = useState(false)
+  const [form, setForm] = useState(BLANK)
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    if (!currentCourseId) return
+    try {
+      setSets(await DefaultService.listGroupSets(currentCourseId))
+    } catch {
+      toast.error('Could not load group categories')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [currentCourseId])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const openCreate = () => {
+    setEditingId(null)
+    setSizesLocked(false)
+    setForm(BLANK)
+    setOpen(true)
+  }
+
+  const openEdit = (gs: GroupSetSchema) => {
+    setEditingId(gs.id)
+    // Hao locked the sizes once teams had members, so existing groups can't be
+    // invalidated retroactively.
+    setSizesLocked(gs.students_count > 0)
+    setForm({
+      name: gs.name,
+      description: gs.description ?? '',
+      min_group_size: gs.min_group_size,
+      max_group_size: gs.max_group_size,
+      allow_student_self_assignment: gs.allow_student_self_assignment,
+    })
+    setOpen(true)
+  }
+
+  const save = async () => {
+    if (!currentCourseId) return
+    if (!form.name.trim()) return toast.error('Give the group category a name')
+    if (form.max_group_size < form.min_group_size) {
+      return toast.error('Maximum size must be at least the minimum size')
+    }
+    setSaving(true)
+    try {
+      if (editingId) {
+        const payload = sizesLocked
+          ? {
+              name: form.name,
+              description: form.description,
+              allow_student_self_assignment: form.allow_student_self_assignment,
+            }
+          : form
+        await DefaultService.updateGroupSet(editingId, payload)
+        toast.success('Group category updated')
+      } else {
+        await DefaultService.createGroupSet(currentCourseId, form)
+        toast.success('Group category created')
+      }
+      setOpen(false)
+      await load()
+    } catch {
+      toast.error('Could not save the group category')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className='mx-auto w-full max-w-4xl p-6'>
+        <Skeleton className='h-9 w-64' />
+        <div className='mt-6 grid gap-4 md:grid-cols-2'>
+          <Skeleton className='h-40' />
+          <Skeleton className='h-40' />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className='mx-auto w-full max-w-4xl p-6'>
+      <div className='mb-6 flex items-start justify-between gap-4'>
+        <div>
+          <h1 className='text-2xl font-bold'>Group categories</h1>
+          <p className='mt-1 text-sm text-muted-foreground'>
+            {currentCourse
+              ? `Organise ${currentCourse.courseCode} students into teams.`
+              : 'Organise students into teams.'}
+          </p>
+        </div>
+        <Button onClick={openCreate}>
+          <Plus className='mr-1 h-4 w-4' />
+          New category
+        </Button>
+      </div>
+
+      {sets.length === 0 ? (
+        <Card>
+          <CardContent className='py-14 text-center'>
+            <Users2 className='mx-auto mb-3 h-10 w-10 text-muted-foreground' />
+            <p className='text-sm text-muted-foreground'>
+              No group categories yet. Create one to start forming teams.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className='grid gap-4 md:grid-cols-2'>
+          {sets.map((gs) => (
+            <Card key={gs.id}>
+              <CardHeader className='pb-2'>
+                <div className='flex items-start justify-between gap-2'>
+                  <CardTitle className='text-base'>{gs.name}</CardTitle>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    aria-label={`Edit ${gs.name}`}
+                    onClick={() => openEdit(gs)}
+                  >
+                    <Pencil className='h-4 w-4' />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className='text-sm text-muted-foreground'>
+                  {gs.description || 'No description'}
+                </p>
+                <div className='mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground'>
+                  <span>{gs.groups_count} groups</span>
+                  <span>{gs.students_count} students</span>
+                  <span>
+                    Size {gs.min_group_size}–{gs.max_group_size}
+                  </span>
+                  {gs.allow_student_self_assignment && <span>Self-enrolment on</span>}
+                </div>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='mt-4'
+                  onClick={() => router.push(`/groupsets/${gs.id}`)}
+                >
+                  Manage groups
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingId ? 'Edit group category' : 'New group category'}
+            </DialogTitle>
+            <DialogDescription>
+              A group category holds one set of teams, for example
+              &ldquo;Project Groups&rdquo;.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className='grid gap-4'>
+            <div className='grid gap-1.5'>
+              <Label htmlFor='gs-name'>
+                Name <span className='text-red-600'>*</span>
+              </Label>
+              <Input
+                id='gs-name'
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder='e.g. Project Groups'
+              />
+            </div>
+
+            <div className='grid gap-1.5'>
+              <Label htmlFor='gs-desc'>Description</Label>
+              <Input
+                id='gs-desc'
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+            </div>
+
+            <div className='grid grid-cols-2 gap-3'>
+              <div className='grid gap-1.5'>
+                <Label htmlFor='gs-min'>Minimum group size</Label>
+                <Input
+                  id='gs-min'
+                  type='number'
+                  min={1}
+                  disabled={sizesLocked}
+                  value={form.min_group_size}
+                  onChange={(e) =>
+                    setForm({ ...form, min_group_size: Number(e.target.value) })
+                  }
+                />
+              </div>
+              <div className='grid gap-1.5'>
+                <Label htmlFor='gs-max'>Maximum group size</Label>
+                <Input
+                  id='gs-max'
+                  type='number'
+                  min={1}
+                  disabled={sizesLocked}
+                  value={form.max_group_size}
+                  onChange={(e) =>
+                    setForm({ ...form, max_group_size: Number(e.target.value) })
+                  }
+                />
+              </div>
+            </div>
+            {sizesLocked && (
+              <p className='-mt-2 text-xs text-muted-foreground'>
+                Group sizes are locked because teams already have members.
+              </p>
+            )}
+
+            <div className='flex items-start justify-between gap-4 rounded-md border p-3'>
+              <div>
+                <Label htmlFor='gs-self'>Let students join groups themselves</Label>
+                {/* Help text added because his evaluation found this toggle hard
+                    to discover (Unified PRD §9, b-3). */}
+                <p className='mt-1 text-xs text-muted-foreground'>
+                  When on, students pick their own team instead of being assigned.
+                  You can still move anyone between teams.
+                </p>
+              </div>
+              <Switch
+                id='gs-self'
+                checked={form.allow_student_self_assignment}
+                onCheckedChange={(checked) =>
+                  setForm({ ...form, allow_student_self_assignment: checked })
+                }
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={save} disabled={saving || !form.name.trim()}>
+              {editingId ? 'Save' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}

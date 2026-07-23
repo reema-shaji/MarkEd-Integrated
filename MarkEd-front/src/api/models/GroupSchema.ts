@@ -9,6 +9,6 @@ export type GroupSchema = {
     group_set_id?: (number | null);
     name: string;
     description?: (string | null);
-    members?: Array<GroupMemberSchema>;
+    members: Array<GroupMemberSchema>;
 };
 

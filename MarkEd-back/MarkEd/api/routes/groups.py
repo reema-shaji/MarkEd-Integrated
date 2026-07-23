@@ -455,27 +455,6 @@ def list_ungrouped_students(request, group_set_id: int):
 # Groups and membership (mounted under /groups)
 # =============================================================================
 
-@groups_router.patch("/{group_id}", response=GroupSchema, operation_id="updateGroup")
-@require_auth(roles=STAFF_ROLES)
-def update_group(request, group_id: int, payload: GroupUpdateRequest):
-    group = get_object_or_404(Group, pk=group_id, is_active=True)
-    _require_team_permission(request, group.course_id)
-    for field, value in payload.dict(exclude_unset=True).items():
-        setattr(group, field, value)
-    group.save()
-    return _serialize_group(group)
-
-
-@groups_router.delete("/{group_id}", response=ActionResponse, operation_id="deleteGroup")
-@require_auth(roles=STAFF_ROLES)
-def delete_group(request, group_id: int):
-    group = get_object_or_404(Group, pk=group_id, is_active=True)
-    _require_team_permission(request, group.course_id)
-    group.is_active = False
-    group.save()
-    return {'success': True, 'message': 'Group deleted'}
-
-
 @groups_router.post("/{group_id}/members", response=GroupSchema, operation_id="addGroupMembers")
 @require_auth(roles=STAFF_ROLES)
 def add_group_members(request, group_id: int, payload: AddMembersRequest):
@@ -897,3 +876,29 @@ def get_my_group_result(request, group_submission_id: int):
         raise HttpError(403, "You are not a member of this group")
     student = get_object_or_404(User, pk=request.user_id)
     return _personal_final_score(gs, student)
+
+
+# NOTE ON ORDERING: Django resolves URL patterns in declaration order and
+# django-ninja registers `{group_id}` as a greedy segment, so it would match
+# literal paths like /groups/move-member and /groups/my-groups. The two
+# single-segment `/{group_id}` handlers are therefore declared last, after
+# every literal route in this router.
+@groups_router.patch("/{group_id}", response=GroupSchema, operation_id="updateGroup")
+@require_auth(roles=STAFF_ROLES)
+def update_group(request, group_id: int, payload: GroupUpdateRequest):
+    group = get_object_or_404(Group, pk=group_id, is_active=True)
+    _require_team_permission(request, group.course_id)
+    for field, value in payload.dict(exclude_unset=True).items():
+        setattr(group, field, value)
+    group.save()
+    return _serialize_group(group)
+
+
+@groups_router.delete("/{group_id}", response=ActionResponse, operation_id="deleteGroup")
+@require_auth(roles=STAFF_ROLES)
+def delete_group(request, group_id: int):
+    group = get_object_or_404(Group, pk=group_id, is_active=True)
+    _require_team_permission(request, group.course_id)
+    group.is_active = False
+    group.save()
+    return {'success': True, 'message': 'Group deleted'}

@@ -15,6 +15,6 @@ export type WorkspaceFileSchema = {
     file_type: string;
     status: string;
     upload_time: string;
-    comments?: Array<WorkspaceCommentSchema>;
+    comments: Array<WorkspaceCommentSchema>;
 };
 

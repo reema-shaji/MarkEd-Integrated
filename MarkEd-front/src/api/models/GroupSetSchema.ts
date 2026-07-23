@@ -12,7 +12,7 @@ export type GroupSetSchema = {
     allow_student_self_assignment: boolean;
     self_assignment_deadline?: (string | null);
     created_at: string;
-    groups_count?: number;
-    students_count?: number;
+    groups_count: number;
+    students_count: number;
 };
 
