@@ -7,6 +7,7 @@ from .routes import (
     groups,
     health,
     peer_reviews,
+    self_assessment,
     submissions,
     users
 )
@@ -27,3 +28,8 @@ api.add_router("/files", files.router)
 api.add_router("/courses", groups.course_router)
 api.add_router("/groupsets", groups.groupsets_router)
 api.add_router("/groups", groups.groups_router)
+
+# Self-assessment (ported from Mingyue). Assignment-scoped configuration and
+# the student form live under /assignments; item-scoped edits under /self-assessment.
+api.add_router("/assignments", self_assessment.router)
+api.add_router("/self-assessment", self_assessment.sa_router)
