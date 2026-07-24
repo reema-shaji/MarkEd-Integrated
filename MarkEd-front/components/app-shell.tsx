@@ -1,20 +1,21 @@
 'use client'
 
 /**
- * App shell. Auth pages (login, forced password change) render bare — no
- * sidebar and none of the auth-scoped providers, which would otherwise fire
- * authenticated API calls and 401 on a page whose whole purpose is to sign in.
- * Every other route gets the full sidebar shell.
+ * App shell (updated prototype layout): a full-width top header, and below it a
+ * row of the assignment-scoped sidebar (shown only inside an assignment) and
+ * the main content. Auth pages render bare — no header/sidebar or auth-scoped
+ * providers, which would otherwise fire authenticated calls on a page whose
+ * whole purpose is to sign in.
  */
 
 import { usePathname } from 'next/navigation'
-import { AppSidebar } from '@/components/sidebar/app-sidebar'
-import { SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
 import { UserProvider } from '@/src/contexts/user-context'
 import { CourseProvider } from '@/src/contexts/course-context'
 import { AssignmentProvider } from '@/src/contexts/assignment-context'
 import WarningBanner from '@/components/warning-banner'
+import { TopHeader } from '@/components/shell/top-header'
+import { AssignmentSidebar } from '@/components/shell/assignment-sidebar'
 
 const BARE_ROUTES = ['/login', '/change-password']
 
@@ -35,12 +36,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <UserProvider>
       <CourseProvider>
         <AssignmentProvider>
-          <SidebarProvider className='invisible md:visible'>
-            <AppSidebar />
-            <WarningBanner />
-            <div className='m-auto w-full'>{children}</div>
-            <Toaster />
-          </SidebarProvider>
+          <div className='flex h-screen flex-col overflow-hidden'>
+            <TopHeader />
+            <div className='flex flex-1 overflow-hidden'>
+              {/* Returns null when not inside an assignment, so main is full width. */}
+              <AssignmentSidebar />
+              <main className='flex-1 overflow-y-auto bg-neutral-100'>
+                <WarningBanner />
+                {children}
+              </main>
+            </div>
+          </div>
+          <Toaster />
         </AssignmentProvider>
       </CourseProvider>
     </UserProvider>
