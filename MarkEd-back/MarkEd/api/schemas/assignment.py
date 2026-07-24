@@ -42,6 +42,24 @@ class AssignmentSchema(Schema):
         setting = getattr(obj, 'selfassessmentsetting', None)
         return setting.deadline if setting and setting.enabled else None
 
+class AssignmentCreateRequest(Schema):
+    """Unified create form (Design PRD): an INDIVIDUAL or GROUP assignment with
+    peer review and self-assessment as independent configuration toggles."""
+    title: str
+    description: Optional[str] = None
+    deadline: datetime
+    assignmentWebsite: Optional[str] = None
+    assignment_type: str  # 'INDIVIDUAL' | 'GROUP'
+    group_set_id: Optional[int] = None
+    min_group_size: Optional[int] = None
+    max_group_size: Optional[int] = None
+    peer_review_enabled: bool = False
+    reviews_per_student: Optional[int] = None
+    review_deadline: Optional[datetime] = None
+    self_assessment_enabled: bool = False
+    self_assessment_deadline: Optional[datetime] = None
+
+
 class PeerAssignmentRequest(Schema):
     course_id: str
     title: str

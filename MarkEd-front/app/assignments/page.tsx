@@ -136,7 +136,7 @@ export default function AssignmentsPage() {
         {user?.isAcademic && (
           <Button
             className='shrink-0'
-            onClick={() => router.push('/create-peer-assignment')}
+            onClick={() => router.push('/create-assignment')}
           >
             <Plus className='mr-1 h-4 w-4' />
             Create Assignment

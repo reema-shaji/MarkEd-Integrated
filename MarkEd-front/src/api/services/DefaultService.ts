@@ -5,6 +5,7 @@
 import type { ActionResponse } from '../models/ActionResponse';
 import type { AddMembersRequest } from '../models/AddMembersRequest';
 import type { AllSubmissionSchema } from '../models/AllSubmissionSchema';
+import type { AssignmentCreateRequest } from '../models/AssignmentCreateRequest';
 import type { AssignmentSchema } from '../models/AssignmentSchema';
 import type { AssignmentStatistics } from '../models/AssignmentStatistics';
 import type { AutoAssignRequest } from '../models/AutoAssignRequest';
@@ -237,6 +238,31 @@ export class DefaultService {
             path: {
                 'assignment_id': assignmentId,
             },
+        });
+    }
+    /**
+     * Create Assignment
+     * Unified assignment creation (Design PRD §6.1).
+     *
+     * Creates an INDIVIDUAL or GROUP assignment; peer review and self-assessment
+     * are independent toggles, not separate types.
+     * @param courseId
+     * @param requestBody
+     * @returns PeerAssignmentCreationResponse OK
+     * @throws ApiError
+     */
+    public static createAssignment(
+        courseId: number,
+        requestBody: AssignmentCreateRequest,
+    ): CancelablePromise<PeerAssignmentCreationResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/assignments/create/{course_id}',
+            path: {
+                'course_id': courseId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**

@@ -1,15 +1,17 @@
 from ninja import Router
 from typing import List, Set
 from django.db import models
-from ..schemas.assignment import AssignmentSchema, PeerAssignmentRequest, PeerAssignmentCreationResponse, AssignmentStatistics
+from ..schemas.assignment import AssignmentSchema, AssignmentCreateRequest, PeerAssignmentRequest, PeerAssignmentCreationResponse, AssignmentStatistics
 from ..schemas.feedback import CreationResponse
 from ..decorators import require_auth, check_permissions
 from ..permissions import IsCourseStaffFromAssignment, CanCreateAssignment
 from ...models import (
     Assignment,
     GroupMember,
+    GroupSet,
     GroupSubmission,
     PeerReviewAllocation,
+    SelfAssessmentSetting,
     Submission,
     Course2Student,
 )
@@ -54,6 +56,67 @@ def list_assignments(request, course_id: int = None):
 # @check_permissions(IsEnrolledStudent)
 def get_assignment(request, assignment_id: int):
     return Assignment.objects.get(id=assignment_id)
+
+@router.post("/create/{course_id}", response=PeerAssignmentCreationResponse, operation_id="createAssignment")
+@require_auth(roles=['Academic', 'Marker', 'TA'])
+@check_permissions(CanCreateAssignment)
+def create_assignment(request, data: AssignmentCreateRequest, course_id: int):
+    """Unified assignment creation (Design PRD §6.1).
+
+    Creates an INDIVIDUAL or GROUP assignment; peer review and self-assessment
+    are independent toggles, not separate types.
+    """
+    try:
+        if data.assignment_type not in ('INDIVIDUAL', 'GROUP'):
+            return {"success": False, "message": "Type must be INDIVIDUAL or GROUP", "assignment_id": None}
+
+        is_group = data.assignment_type == 'GROUP'
+        group_set = None
+        if is_group:
+            if not data.group_set_id:
+                return {"success": False, "message": "A group category is required for group assignments", "assignment_id": None}
+            group_set = GroupSet.objects.filter(id=data.group_set_id, course_id=course_id, is_active=True).first()
+            if not group_set:
+                return {"success": False, "message": "Group category not found for this course", "assignment_id": None}
+
+        if data.peer_review_enabled:
+            if not data.reviews_per_student or data.reviews_per_student < 1:
+                return {"success": False, "message": "Reviews per student is required when peer review is enabled", "assignment_id": None}
+            if not data.review_deadline:
+                return {"success": False, "message": "A review deadline is required when peer review is enabled", "assignment_id": None}
+            if data.review_deadline <= data.deadline:
+                return {"success": False, "message": "The review deadline must be after the submission deadline", "assignment_id": None}
+
+        assignment = Assignment.objects.create(
+            course_id=course_id,
+            assignmentTitle=data.title,
+            assignmentDescription=data.description,
+            assignmentWebsite=data.assignmentWebsite or None,
+            deadline=data.deadline,
+            status=1,
+            assignment_type=data.assignment_type,
+            group_set=group_set,
+            min_group_size=data.min_group_size if is_group else None,
+            max_group_size=data.max_group_size if is_group else None,
+            peer_review_enabled=data.peer_review_enabled,
+            reviews_per_student=data.reviews_per_student if data.peer_review_enabled else None,
+            review_deadline=data.review_deadline if data.peer_review_enabled else None,
+            is_peer_review_matching_complete=False,
+            release_date=timezone.now(),
+        )
+
+        if data.self_assessment_enabled:
+            SelfAssessmentSetting.objects.update_or_create(
+                assignment=assignment,
+                defaults=dict(enabled=True,
+                              deadline=data.self_assessment_deadline or data.deadline),
+            )
+
+        return {"success": True, "message": f"Assignment '{data.title}' created", "assignment_id": assignment.id}
+
+    except Exception as e:
+        return {"success": False, "message": f"Error creating assignment: {str(e)}", "assignment_id": None}
+
 
 @router.post("/create-peer-assignment/{course_id}", response=PeerAssignmentCreationResponse, operation_id="createPeerAssignment")
 @require_auth(roles=['Academic', 'Marker', 'TA'])

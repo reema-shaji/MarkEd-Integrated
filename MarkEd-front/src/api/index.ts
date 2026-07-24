@@ -10,6 +10,7 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export type { ActionResponse } from './models/ActionResponse';
 export type { AddMembersRequest } from './models/AddMembersRequest';
 export type { AllSubmissionSchema } from './models/AllSubmissionSchema';
+export type { AssignmentCreateRequest } from './models/AssignmentCreateRequest';
 export type { AssignmentSchema } from './models/AssignmentSchema';
 export type { AssignmentStatistics } from './models/AssignmentStatistics';
 export type { AutoAssignRequest } from './models/AutoAssignRequest';
