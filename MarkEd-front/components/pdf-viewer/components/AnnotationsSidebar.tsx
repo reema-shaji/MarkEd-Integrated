@@ -415,6 +415,7 @@ function AnnotationCard({
   const { user } = useUser()
   const [isAddingMarkerFeedback, setIsAddingMarkerFeedback] = useState(false)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const throttledHighlight = useCallback(
     throttle((id: string | null) => {
       onHighlight(id)

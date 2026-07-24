@@ -200,6 +200,7 @@ export default function ResultsPDFViewer({
     return () => {
       document.removeEventListener('keydown', handleEscKey)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Placeholder functions for required props but which do nothing in results view

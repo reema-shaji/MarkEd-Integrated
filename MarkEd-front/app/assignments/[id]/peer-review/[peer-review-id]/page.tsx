@@ -32,6 +32,7 @@ const PeerReviewPage = () => {
       setPeerReviewSubmission(response)
     }
     fetchPeerReviewSubmission()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {

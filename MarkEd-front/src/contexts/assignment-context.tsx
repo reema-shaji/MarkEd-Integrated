@@ -108,6 +108,7 @@ export function AssignmentProvider({
       fetchPeerReviews()
       fetchMarkerAllocations(currentAssignmentId)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAssignmentId, user])
 
   const getSubmissionStatus = (

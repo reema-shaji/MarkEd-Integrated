@@ -263,6 +263,7 @@ export default function MarkerPDFViewer({
     return () => {
       socket.close()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assignmentId, submissionId])
 
   // Set annotations from initialAnnotations when they change
@@ -317,6 +318,7 @@ export default function MarkerPDFViewer({
     return () => {
       document.removeEventListener('keydown', handleEscKey)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // const onDraftSubmit = async () => {
