@@ -13,6 +13,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { CourseSchema, DefaultService } from '@/src/api'
 import { toast } from 'sonner'
+import { getToken } from '@/src/api/config'
 import { useUser } from './user-context'
 
 interface CourseContextType {
@@ -35,35 +36,35 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
   const [currentCourseId, setCurrentCourseIdState] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  // Fetch courses as soon as there's a token — getMyCourses only needs auth,
+  // not the resolved user object, so this runs in parallel with getCurrentUser
+  // instead of waiting behind it (one fewer round trip on first load).
   useEffect(() => {
-    if (!user) return
+    if (typeof window === 'undefined' || !getToken()) return
     let cancelled = false
-
-    const load = async () => {
-      try {
-        const response = await DefaultService.getMyCourses()
+    DefaultService.getMyCourses()
+      .then((response) => {
         if (cancelled) return
         setCourses(response)
-
-        // Restore the previous choice if it is still one of the user's courses,
-        // otherwise fall back to the first.
-        const stored = Number(
-          window.localStorage.getItem(storageKey(user.id)) ?? NaN
-        )
-        const valid = response.some((c) => c.id === stored)
-        setCurrentCourseIdState(valid ? stored : (response[0]?.id ?? null))
-      } catch {
+        setCurrentCourseIdState((prev) => prev ?? response[0]?.id ?? null)
+      })
+      .catch(() => {
         if (!cancelled) toast.error('Could not load your courses')
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled) setIsLoading(false)
-      }
-    }
-
-    load()
+      })
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [])
+
+  // Once the user is known, restore their remembered course selection.
+  useEffect(() => {
+    if (!user || courses.length === 0) return
+    const stored = Number(window.localStorage.getItem(storageKey(user.id)) ?? NaN)
+    if (courses.some((c) => c.id === stored)) setCurrentCourseIdState(stored)
+  }, [user, courses])
 
   const setCurrentCourseId = useCallback(
     (id: number) => {
