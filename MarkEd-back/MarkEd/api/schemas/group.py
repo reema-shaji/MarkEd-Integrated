@@ -207,3 +207,39 @@ class MyGroupResultSchema(Schema):
     submission_version: int
     finalised: bool
     breakdown: GroupResultSchema
+
+
+# --- Group criteria marking (prototype "Group Marking") ----------------------
+
+class GroupMarkingLevel(Schema):
+    id: int
+    name: str
+    description: str
+    marks: float
+
+
+class GroupMarkingCriterion(Schema):
+    criteria_id: int
+    name: str
+    marks: float
+    levels: List[GroupMarkingLevel]
+    selected_element_id: Optional[int] = None
+    score: Optional[float] = None
+
+
+class GroupMarkingSchema(Schema):
+    group_submission_id: int
+    group_name: str
+    criteria: List[GroupMarkingCriterion]
+    group_score: float
+    group_total: float
+    finalised: bool = False
+
+
+class GroupMarkEntry(Schema):
+    criteria_id: int
+    element_id: int
+
+
+class GroupMarkingSaveRequest(Schema):
+    marks: List[GroupMarkEntry]

@@ -25,6 +25,8 @@ from ..schemas.group import (
     GroupCreateRequest,
     GroupResultSchema,
     MyGroupResultSchema,
+    GroupMarkingSchema,
+    GroupMarkingSaveRequest,
     GroupSchema,
     GroupSetCreateRequest,
     GroupSetSchema,
@@ -47,6 +49,8 @@ from ...models import (
     Course,
     Course2Marker,
     Course2Student,
+    Criteria,
+    Element,
     Group,
     GroupMember,
     GroupSet,
@@ -914,6 +918,86 @@ def get_my_group_result_by_assignment(request, assignment_id: int):
         'finalised': finalised,
         'breakdown': _personal_final_score(gs, student),
     }
+
+
+@groups_router.get(
+    "/group-submissions/{group_submission_id}/marking",
+    response=GroupMarkingSchema,
+    operation_id="getGroupMarking",
+)
+@require_auth(roles=['Academic', 'Marker'])
+def get_group_marking(request, group_submission_id: int):
+    """Rubric criteria + current marks for a group submission (Group Marking).
+
+    The marker scores each criterion by picking a level (Element); the level's
+    marks become that criterion's score.
+    """
+    gs = get_object_or_404(GroupSubmission, pk=group_submission_id)
+    _require_team_permission(request, gs.assignment.course_id)
+
+    existing = {
+        row.criteria_id: row
+        for row in GroupSubmissionCriteria.objects.filter(group_submission=gs).prefetch_related('selected_elements')
+    }
+    criteria_out = []
+    group_score = 0.0
+    group_total = 0.0
+    for crit in Criteria.objects.filter(assignment=gs.assignment, parent=None):
+        group_total += crit.marks
+        row = existing.get(crit.id)
+        selected = row.selected_elements.first() if row else None
+        if row and row.score is not None:
+            group_score += row.score
+        criteria_out.append({
+            'criteria_id': crit.id,
+            'name': crit.name,
+            'marks': crit.marks,
+            'levels': [
+                {'id': e.id, 'name': e.name, 'description': e.description, 'marks': e.marks}
+                for e in Element.objects.filter(criteria=crit).order_by('marks')
+            ],
+            'selected_element_id': selected.id if selected else None,
+            'score': row.score if row else None,
+        })
+
+    finalised = GroupSubmissionPersonalAdjustment.objects.filter(
+        group_submission=gs, status='final'
+    ).exists()
+    return {
+        'group_submission_id': gs.id,
+        'group_name': gs.group.name,
+        'criteria': criteria_out,
+        'group_score': group_score,
+        'group_total': group_total,
+        'finalised': finalised,
+    }
+
+
+@groups_router.post(
+    "/group-submissions/{group_submission_id}/marking",
+    response=GroupMarkingSchema,
+    operation_id="saveGroupMarking",
+)
+@require_auth(roles=['Academic', 'Marker'])
+def save_group_marking(request, group_submission_id: int, payload: GroupMarkingSaveRequest):
+    """Save the marker's per-criterion level selections for a group submission."""
+    gs = get_object_or_404(GroupSubmission, pk=group_submission_id)
+    _require_team_permission(request, gs.assignment.course_id)
+
+    valid_criteria = set(
+        Criteria.objects.filter(assignment=gs.assignment, parent=None).values_list('id', flat=True)
+    )
+    with transaction.atomic():
+        for entry in payload.marks:
+            if entry.criteria_id not in valid_criteria:
+                raise HttpError(400, "Criterion does not belong to this assignment")
+            element = get_object_or_404(Element, pk=entry.element_id, criteria_id=entry.criteria_id)
+            row, _ = GroupSubmissionCriteria.objects.update_or_create(
+                group_submission=gs, criteria_id=entry.criteria_id,
+                defaults={'marker_id': request.user_id, 'score': element.marks, 'status': 2},
+            )
+            row.selected_elements.set([element])
+    return get_group_marking(request, group_submission_id)
 
 
 # NOTE ON ORDERING: Django resolves URL patterns in declaration order and

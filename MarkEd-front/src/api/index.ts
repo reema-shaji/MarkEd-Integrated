@@ -25,6 +25,11 @@ export type { DismissLLMFeedbackRequest } from './models/DismissLLMFeedbackReque
 export type { FileAccessResponse } from './models/FileAccessResponse';
 export type { FileUploadResponse } from './models/FileUploadResponse';
 export type { GroupCreateRequest } from './models/GroupCreateRequest';
+export type { GroupMarkEntry } from './models/GroupMarkEntry';
+export type { GroupMarkingCriterion } from './models/GroupMarkingCriterion';
+export type { GroupMarkingLevel } from './models/GroupMarkingLevel';
+export type { GroupMarkingSaveRequest } from './models/GroupMarkingSaveRequest';
+export type { GroupMarkingSchema } from './models/GroupMarkingSchema';
 export type { GroupMemberSchema } from './models/GroupMemberSchema';
 export type { GroupResultSchema } from './models/GroupResultSchema';
 export type { GroupSchema } from './models/GroupSchema';

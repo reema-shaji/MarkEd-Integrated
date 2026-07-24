@@ -20,6 +20,8 @@ import type { DismissLLMFeedbackRequest } from '../models/DismissLLMFeedbackRequ
 import type { FileAccessResponse } from '../models/FileAccessResponse';
 import type { FileUploadResponse } from '../models/FileUploadResponse';
 import type { GroupCreateRequest } from '../models/GroupCreateRequest';
+import type { GroupMarkingSaveRequest } from '../models/GroupMarkingSaveRequest';
+import type { GroupMarkingSchema } from '../models/GroupMarkingSchema';
 import type { GroupResultSchema } from '../models/GroupResultSchema';
 import type { GroupSchema } from '../models/GroupSchema';
 import type { GroupSetCreateRequest } from '../models/GroupSetCreateRequest';
@@ -1301,6 +1303,49 @@ export class DefaultService {
             path: {
                 'assignment_id': assignmentId,
             },
+        });
+    }
+    /**
+     * Get Group Marking
+     * Rubric criteria + current marks for a group submission (Group Marking).
+     *
+     * The marker scores each criterion by picking a level (Element); the level's
+     * marks become that criterion's score.
+     * @param groupSubmissionId
+     * @returns GroupMarkingSchema OK
+     * @throws ApiError
+     */
+    public static getGroupMarking(
+        groupSubmissionId: number,
+    ): CancelablePromise<GroupMarkingSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/groups/group-submissions/{group_submission_id}/marking',
+            path: {
+                'group_submission_id': groupSubmissionId,
+            },
+        });
+    }
+    /**
+     * Save Group Marking
+     * Save the marker's per-criterion level selections for a group submission.
+     * @param groupSubmissionId
+     * @param requestBody
+     * @returns GroupMarkingSchema OK
+     * @throws ApiError
+     */
+    public static saveGroupMarking(
+        groupSubmissionId: number,
+        requestBody: GroupMarkingSaveRequest,
+    ): CancelablePromise<GroupMarkingSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/groups/group-submissions/{group_submission_id}/marking',
+            path: {
+                'group_submission_id': groupSubmissionId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**

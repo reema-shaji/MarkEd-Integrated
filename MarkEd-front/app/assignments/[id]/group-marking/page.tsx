@@ -18,11 +18,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import {
   DefaultService,
+  GroupMarkingSchema,
   GroupSubmissionSchema,
   PersonalAdjustmentSchema,
 } from '@/src/api'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -201,9 +202,9 @@ export default function GroupMarkingPage() {
         / Adjustment
       </div>
 
-      <h1 className='text-2xl font-bold'>Personal Contribution Adjustment</h1>
+      <h1 className='text-2xl font-bold'>Group Marking</h1>
       <p className='mt-1.5 text-sm text-neutral-500'>
-        Adjust individual scores based on each student&apos;s contribution.{' '}
+        Score the group against the rubric, then adjust individual contributions.{' '}
         <b>Final = Base + Adjustment (points)</b> — the breakdown is shown to
         students.
       </p>
@@ -224,6 +225,17 @@ export default function GroupMarkingPage() {
           </b>
         </span>
       </div>
+
+      {/* Criteria marking (rubric scoring) */}
+      <CriteriaMarkingSection
+        groupSubmissionId={selected.id}
+        onScored={() => openSubmission(selected)}
+      />
+
+      <h2 className='mt-8 text-lg font-semibold'>Personal Contribution Adjustment</h2>
+      <p className='mb-1 mt-0.5 text-sm text-neutral-500'>
+        Adjust each member&apos;s score relative to the group base above.
+      </p>
 
       <Card className='mt-4 overflow-hidden'>
         {loadingRows ? (
@@ -312,5 +324,147 @@ export default function GroupMarkingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * Criteria marking (prototype "Group Marking"): score the group against each
+ * rubric criterion by picking a level; the level's marks become the score.
+ * Saving updates the group base score used by the adjustment table above.
+ */
+function CriteriaMarkingSection({
+  groupSubmissionId,
+  onScored,
+}: {
+  groupSubmissionId: number
+  onScored: () => void
+}) {
+  const [data, setData] = useState<GroupMarkingSchema | null>(null)
+  const [picks, setPicks] = useState<Record<number, number>>({})
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    DefaultService.getGroupMarking(groupSubmissionId)
+      .then((d) => {
+        if (cancelled) return
+        setData(d)
+        const initial: Record<number, number> = {}
+        d.criteria.forEach((c) => {
+          if (c.selected_element_id) initial[c.criteria_id] = c.selected_element_id
+        })
+        setPicks(initial)
+      })
+      .catch(() => toast.error('Could not load the rubric'))
+    return () => {
+      cancelled = true
+    }
+  }, [groupSubmissionId])
+
+  const liveScore = useMemo(() => {
+    if (!data) return 0
+    return data.criteria.reduce((sum, c) => {
+      const el = c.levels.find((l) => l.id === picks[c.criteria_id])
+      return sum + (el?.marks ?? 0)
+    }, 0)
+  }, [data, picks])
+
+  const save = async () => {
+    if (!data) return
+    const marks = Object.entries(picks).map(([criteria_id, element_id]) => ({
+      criteria_id: Number(criteria_id),
+      element_id,
+    }))
+    if (marks.length === 0) return toast.error('Pick a level for at least one criterion')
+    setSaving(true)
+    try {
+      const updated = await DefaultService.saveGroupMarking(groupSubmissionId, { marks })
+      setData(updated)
+      toast.success('Marks saved')
+      onScored()
+    } catch {
+      toast.error('Could not save the marks')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!data) {
+    return (
+      <Card className='mt-4'>
+        <CardContent className='py-6'>
+          <Skeleton className='h-40' />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (data.criteria.length === 0) {
+    return (
+      <Card className='mt-4'>
+        <CardContent className='py-8 text-center text-sm text-neutral-400'>
+          This assignment has no rubric criteria to mark against.
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className='mt-4'>
+      <CardHeader className='flex-row items-center justify-between pb-2'>
+        <CardTitle className='text-base font-semibold'>Criteria Marking</CardTitle>
+        <span className='text-sm text-neutral-500'>
+          Group base score{' '}
+          <b className='text-neutral-900'>
+            {liveScore} / {data.group_total}
+          </b>
+        </span>
+      </CardHeader>
+      <CardContent className='space-y-5'>
+        {data.criteria.map((c) => (
+          <div key={c.criteria_id}>
+            <div className='mb-2 flex items-center justify-between'>
+              <span className='text-sm font-medium'>{c.name}</span>
+              <span className='text-xs text-neutral-400'>{c.marks} marks</span>
+            </div>
+            <div className='grid gap-2 sm:grid-cols-2'>
+              {c.levels.map((level) => {
+                const on = picks[c.criteria_id] === level.id
+                return (
+                  <button
+                    key={level.id}
+                    type='button'
+                    onClick={() =>
+                      setPicks((p) => ({ ...p, [c.criteria_id]: level.id }))
+                    }
+                    className={`rounded-md border p-3 text-left text-sm transition-colors ${
+                      on
+                        ? 'border-neutral-800 bg-neutral-50'
+                        : 'border-neutral-200 hover:border-neutral-300'
+                    }`}
+                  >
+                    <div className='flex items-center justify-between gap-2'>
+                      <span className='font-medium'>{level.name}</span>
+                      <span className='shrink-0 text-xs text-neutral-500'>
+                        {level.marks} pts
+                      </span>
+                    </div>
+                    {level.description && (
+                      <p className='mt-1 text-xs text-neutral-500'>{level.description}</p>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+        <div className='flex items-center justify-end gap-3 border-t border-neutral-100 pt-4'>
+          <Button onClick={save} disabled={saving}>
+            <Check className='mr-1.5 h-4 w-4' />
+            Save Marks
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
