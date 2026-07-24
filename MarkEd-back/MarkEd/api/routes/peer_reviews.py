@@ -5,7 +5,7 @@ from ..schemas.peer_review import PeerReviewSchema, PeerReviewCommentSchema, Pee
 from ..schemas.feedback import CreationResponse
 from ..decorators import require_auth, check_permissions
 from ..permissions import CanAccessPeerReviews, CanPerformPeerReview, CanCreatePeerReviewComment, check_comment_rate_limit, validate_peer_review_content, CanModifyPeerReviewComment
-from ...models import PeerReviewAllocation, Assignment, PeerReviewComment, User, Course2Marker, DismissedLLMFeedback, Submission
+from ...models import PeerReviewAllocation, Assignment, PeerReviewComment, User, Course2Marker, DismissedLLMFeedback, Submission, GroupSubmission
 from ...tasks import process_feedback_with_llm
 from django.db.models import Q
 from datetime import timedelta
@@ -34,23 +34,66 @@ logger = logging.getLogger(__name__)
 MIN_LLM_DELAY_SECONDS = 20  # Minimum delay of 20 seconds
 MAX_LLM_DELAY_SECONDS = 90  # Maximum delay of 1.5 minutes
 
+
+# --- Group vs individual peer review resolution ------------------------------
+# Cross-feature extension (Unified PRD §8): a peer review allocation targets an
+# individual Submission OR a group's GroupSubmission. Every route below keys on
+# a single `{submission_id}` path segment; for a GROUP assignment that value is
+# actually a GroupSubmission id. Since an assignment is entirely individual OR
+# entirely group, there is no id collision, and these helpers translate the
+# path value into the right FK without touching the individual code path.
+
+def _is_group_assignment(assignment_id: int) -> bool:
+    return Assignment.objects.filter(
+        id=assignment_id, assignment_type='GROUP'
+    ).exists()
+
+
+def _target_kwargs(assignment_id: int, target_id: int) -> dict:
+    """FK filter/allocation kwargs for the reviewed object."""
+    if _is_group_assignment(assignment_id):
+        return {'group_submission_id': target_id}
+    return {'submission_id': target_id}
+
+
+def _comment_target_kwargs(assignment_id: int, target_id: int) -> dict:
+    """Same, but for filtering PeerReviewComment via its review_allocation."""
+    return {
+        f'review_allocation__{key}': value
+        for key, value in _target_kwargs(assignment_id, target_id).items()
+    }
+
 @router.get("/{assignment_id}/reviews", response=List[PeerReviewSchema], operation_id="getPeerReviews")
 @require_auth()
 def get_peer_reviews(request, assignment_id: int):
     reviews = PeerReviewAllocation.objects.filter(
         assignment_id=assignment_id,
         reviewer_id=request.user_id
-    ).select_related('submission__student')
-    
-    return [
-        {
-            "id": review.id,
-            "submission_id": getattr(review, 'submission_id', None),
-            "status": review.status,
-            "student_name": getattr(getattr(review.submission, 'student', None), 'userName', None)
-        }
-        for review in reviews
-    ]
+    ).select_related('submission__student', 'group_submission__group')
+
+    result = []
+    for review in reviews:
+        if review.group_submission_id:
+            # Group peer review: the reviewed object is a group submission, and
+            # the reviewer only ever sees an anonymised group label (§8.4). The
+            # group submission id is carried in the submission_id field so the
+            # existing frontend routing keeps working unchanged.
+            result.append({
+                "id": review.id,
+                "submission_id": review.group_submission_id,
+                "status": review.status,
+                "student_name": f"Group: {review.group_submission.group.name}",
+            })
+        else:
+            result.append({
+                "id": review.id,
+                "submission_id": review.submission_id,
+                "status": review.status,
+                "student_name": getattr(
+                    getattr(review.submission, 'student', None), 'userName', None
+                ),
+            })
+    return result
 
 @router.post("/{assignment_id}/submit-review", response=CreationResponse)
 @require_auth()
@@ -59,7 +102,7 @@ def submit_peer_review(request, assignment_id: int, submission_id: int):
     try:
         review = PeerReviewAllocation.objects.get(
             assignment_id=assignment_id,
-            submission_id=submission_id,
+            **_target_kwargs(assignment_id, submission_id),
             reviewer_id=request.user_id
         )
         
@@ -123,7 +166,7 @@ def create_peer_review_comment(request, assignment_id: int, submission_id: int, 
         # Get or create review allocation
         review, created = PeerReviewAllocation.objects.get_or_create(
             assignment_id=assignment_id,
-            submission_id=submission_id,
+            **_target_kwargs(assignment_id, submission_id),
             reviewer_id=request.user_id,
             defaults={
                 'status': 'IN_PROGRESS' if request.user_role in ['Marker', 'TA', 'Academic'] else 'PENDING'
@@ -205,13 +248,13 @@ def get_peer_review_comments(request, assignment_id: int, submission_id: int):
     if is_marker or submission_owner:
         comments = PeerReviewComment.objects.filter(
             review_allocation__assignment_id=assignment_id,
-            review_allocation__submission_id=submission_id
+            **_comment_target_kwargs(assignment_id, submission_id),
         ).select_related('review_allocation', 'review_allocation__reviewer')
     else:
         # Otherwise, return only the peer reviews assigned to the current user
         comments = PeerReviewComment.objects.filter(
             review_allocation__assignment_id=assignment_id,
-            review_allocation__submission_id=submission_id,
+            **_comment_target_kwargs(assignment_id, submission_id),
             review_allocation__reviewer_id=request.user_id
         ).select_related('review_allocation', 'review_allocation__reviewer')
     
@@ -272,7 +315,7 @@ def delete_peer_review_comment(request, assignment_id: int, submission_id: int, 
         comment = PeerReviewComment.objects.get(
             id=comment_id,
             review_allocation__assignment_id=assignment_id,
-            review_allocation__submission_id=submission_id,
+            **_comment_target_kwargs(assignment_id, submission_id),
             review_allocation__reviewer_id=request.user_id
         )
         
@@ -307,7 +350,7 @@ def get_peer_review_complete(request, assignment_id: int, submission_id: int):
     try:
         review = PeerReviewAllocation.objects.get(
             assignment_id=assignment_id,
-            submission_id=submission_id,
+            **_target_kwargs(assignment_id, submission_id),
             reviewer_id=request.user_id
         )
         return {
@@ -345,7 +388,7 @@ def complete_peer_review(request, assignment_id: int, submission_id: int):
             'assignment'
         ).get(
             assignment_id=assignment_id,
-            submission_id=submission_id,
+            **_target_kwargs(assignment_id, submission_id),
             reviewer_id=request.user_id
         )
 
@@ -431,7 +474,7 @@ def dismiss_llm_feedback(request, assignment_id: int, submission_id: int, commen
         ).get(
             id=comment_id,
             review_allocation__assignment_id=assignment_id,
-            review_allocation__submission_id=submission_id,
+            **_comment_target_kwargs(assignment_id, submission_id),
             review_allocation__reviewer_id=request.user_id,
             llm_comment_dismissed=False,  # Can't dismiss already dismissed feedback
             llm_comment__isnull=False,    # Must have LLM feedback to dismiss
@@ -498,7 +541,7 @@ def update_peer_review_comment(request, assignment_id: int, submission_id: int, 
         comment = PeerReviewComment.objects.get(
             id=comment_id,
             review_allocation__assignment_id=assignment_id,
-            review_allocation__submission_id=submission_id,
+            **_comment_target_kwargs(assignment_id, submission_id),
             review_allocation__reviewer_id=request.user_id
         )
         
@@ -548,7 +591,7 @@ def update_marker_comment(request, assignment_id: int, submission_id: int, comme
         comment = PeerReviewComment.objects.get(
             id=comment_id,
             review_allocation__assignment_id=assignment_id,
-            review_allocation__submission_id=submission_id,
+            **_comment_target_kwargs(assignment_id, submission_id),
         )
         
         # Get the course from the assignment
@@ -629,7 +672,9 @@ def get_marker_allocations(request, assignment_id: int):
         print("Fetching all peer review allocations")
         all_peer_reviews = PeerReviewAllocation.objects.filter(
             assignment=assignment
-        ).select_related('submission', 'submission__student').order_by('submission_id')
+        ).select_related(
+            'submission', 'submission__student', 'group_submission', 'group_submission__group'
+        ).order_by('submission_id', 'group_submission_id')
         print(f"Found {len(all_peer_reviews)} total peer review allocations")
 
         # Get total number of markers for this course
@@ -646,12 +691,15 @@ def get_marker_allocations(request, assignment_id: int):
 
         # Calculate which allocations this marker should handle
         if total_markers_count > 0:
-            # Group allocations by submission_id to ensure complete sets
+            # Group allocations by the reviewed object to ensure complete sets.
+            # The key is the submission id, or the group submission id for a
+            # group peer review assignment (§8).
             submissions = {}
             for review in all_peer_reviews:
-                if review.submission_id not in submissions:
-                    submissions[review.submission_id] = []
-                submissions[review.submission_id].append(review)
+                key = review.submission_id or review.group_submission_id
+                if key not in submissions:
+                    submissions[key] = []
+                submissions[key].append(review)
 
             # Convert to list of submission groups
             submission_groups = list(submissions.values())
@@ -670,16 +718,26 @@ def get_marker_allocations(request, assignment_id: int):
 
             # Convert to response schema, using the first review from each group as the representative
             print("Converting allocated reviews to response schema")
-            return [
-                PeerReviewSchemaWithStudent(
-                    id=group[0].id,  # Use first review's ID as representative
-                    submission_id=group[0].submission.id,
-                    status=group[0].status,
-                    student_name=group[0].submission.student.userName,
-                    student_number=group[0].submission.student.userNumber,
+            def _representative(review):
+                # Group peer review: the marker sees the group, never the
+                # individual students who submitted or reviewed (§8.4).
+                if review.group_submission_id:
+                    return PeerReviewSchemaWithStudent(
+                        id=review.id,
+                        submission_id=review.group_submission_id,
+                        status=review.status,
+                        student_name=f"Group: {review.group_submission.group.name}",
+                        student_number="",
+                    )
+                return PeerReviewSchemaWithStudent(
+                    id=review.id,
+                    submission_id=review.submission.id,
+                    status=review.status,
+                    student_name=review.submission.student.userName,
+                    student_number=review.submission.student.userNumber,
                 )
-                for group in allocated_groups
-            ]
+
+            return [_representative(group[0]) for group in allocated_groups]
         
         print("No markers found, returning empty list")
         return []

@@ -3,7 +3,7 @@ from typing import List
 from ..schemas import SubmissionSchema, SubmissionRequest, SubmissionResponse, PeersLastSubmissionResponse, AllSubmissionSchema
 from ..decorators import require_auth, check_permissions
 from ..permissions import AssignmentSubmissionDeadlineHasNotPassed, CanPerformPeerReview, IsEnrolledStudent, IsCourseStaffFromAssignment
-from ...models import Submission, Assignment, PeerReviewAllocation, Course2Marker, User
+from ...models import Submission, Assignment, PeerReviewAllocation, Course2Marker, User, GroupSubmission, GroupMember
 from datetime import timedelta
 from ...services.storage import StorageService
 from ninja.errors import HttpError
@@ -69,68 +69,70 @@ def get_last_submission(request, assignment_id: int):
 @router.get("/assignment/{assignment_id}/peer-review/{submission_id}", response=PeersLastSubmissionResponse, operation_id="getPeersLastSubmission")
 @require_auth()
 def get_peers_last_submission(request, assignment_id: int, submission_id: int):
-    # Check if user is assigned to peer review this submission
-    is_peer_reviewer = PeerReviewAllocation.objects.filter(
-        assignment_id=assignment_id,
-        submission_id=submission_id,
-        reviewer_id=request.user_id
-    ).exists()
-    
-    # Check if user is a marker for this course
-    is_marker = False
     try:
         assignment = Assignment.objects.get(id=assignment_id)
-        is_marker = (
-            Course2Marker.objects.filter(
-                course=assignment.course,
-                marker_id=request.user_id,
-                markingPermission__gt=0  # Has marking permission
-            ).exists() or
-            User.objects.filter(
-                id=request.user_id,
-                role__in=['M', 'T', 'A']  # Is a Marker, TA, or Academic
-            ).exists()
-        )
     except Assignment.DoesNotExist:
-        return {
-            "success": False,
-            "message": "Assignment not found"
-        }
-    
-    # Check if user is the submission owner
-    is_submission_owner = Submission.objects.filter(
-        id=submission_id,
-        student_id=request.user_id
-    ).exists()
-    
-    # If user is not a peer reviewer, marker, or submission owner, deny access
-    if not (is_peer_reviewer or is_marker or is_submission_owner):
-        return {
-            "success": False,
-            "message": "Not authorized to view this submission"
-        }
-    
-    submission = Submission.objects.filter(
-        id=submission_id,
+        return {"success": False, "message": "Assignment not found"}
+
+    # Group peer review (§8): the reviewed object is a GroupSubmission, and the
+    # `submission_id` path value is its id. Since an assignment is entirely
+    # individual or entirely group, this branch is unambiguous.
+    is_group = assignment.is_group_assignment()
+    target_kwargs = (
+        {'group_submission_id': submission_id} if is_group
+        else {'submission_id': submission_id}
+    )
+
+    is_peer_reviewer = PeerReviewAllocation.objects.filter(
         assignment_id=assignment_id,
-    ).order_by('-submissionDateTime').first()
-    
-    if submission:
-        storage = StorageService()
-        pre_signed_file_url = storage.get_presigned_url(
-            submission.submissionFile, 
-            expires=timedelta(hours=1).total_seconds()
-            )
-        return {
-            "success": True,
-            "pre_signed_file_url": pre_signed_file_url,
-            "message": "Submission retrieved successfully"
-        }
+        reviewer_id=request.user_id,
+        **target_kwargs,
+    ).exists()
+
+    is_marker = (
+        Course2Marker.objects.filter(
+            course=assignment.course,
+            marker_id=request.user_id,
+            markingPermission__gt=0
+        ).exists() or
+        User.objects.filter(
+            id=request.user_id, role__in=['M', 'T', 'A']
+        ).exists()
+    )
+
+    if is_group:
+        group_submission = GroupSubmission.objects.filter(
+            id=submission_id, assignment_id=assignment_id
+        ).select_related('group').first()
+        # A member of the submitting group may view their own group's work.
+        is_owner = bool(group_submission) and GroupMember.objects.filter(
+            group=group_submission.group, student_id=request.user_id, is_active=True
+        ).exists()
+        target = group_submission
     else:
-        return {
-            "success": False,
-            "message": "No submission found"
-        }
+        is_owner = Submission.objects.filter(
+            id=submission_id, student_id=request.user_id
+        ).exists()
+        target = Submission.objects.filter(
+            id=submission_id, assignment_id=assignment_id
+        ).order_by('-submissionDateTime').first()
+
+    if not (is_peer_reviewer or is_marker or is_owner):
+        return {"success": False, "message": "Not authorized to view this submission"}
+
+    if not target or not target.submissionFile:
+        return {"success": False, "message": "No submission found"}
+
+    storage = StorageService()
+    pre_signed_file_url = storage.get_presigned_url(
+        target.submissionFile,
+        expires=timedelta(hours=1).total_seconds()
+    )
+    return {
+        "success": True,
+        "pre_signed_file_url": pre_signed_file_url,
+        "message": "Submission retrieved successfully"
+    }
 
 @router.get("/{assignment_id}/all", response=List[AllSubmissionSchema], operation_id="getAllSubmissions")
 @require_auth(roles=['Marker', 'Academic', 'TA'])

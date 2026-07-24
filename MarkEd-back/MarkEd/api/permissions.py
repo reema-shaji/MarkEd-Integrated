@@ -8,6 +8,20 @@ import json
 import bleach
 from dataclasses import dataclass
 
+
+def _pr_target_kwargs(assignment_id, target_id):
+    """Peer review allocations target a Submission or a GroupSubmission (§8).
+
+    An assignment is entirely individual or entirely group, so the single
+    `submission_id` path value maps unambiguously to one FK. Mirrors the helper
+    in routes/peer_reviews.py so the permission checks resolve the same object.
+    """
+    is_group = Assignment.objects.filter(
+        id=assignment_id, assignment_type='GROUP'
+    ).exists()
+    key = 'group_submission_id' if is_group else 'submission_id'
+    return {key: target_id}
+
 @dataclass
 class PositionData:
     pageNumber: int
@@ -165,8 +179,8 @@ class CanPerformPeerReview(BasePermission):
             # Check if user is assigned to review this submission
             is_reviewer = PeerReviewAllocation.objects.filter(
                 assignment_id=assignment_id,
-                submission_id=submission_id,
-                reviewer_id=request.user_id
+                reviewer_id=request.user_id,
+                **_pr_target_kwargs(assignment_id, submission_id)
             ).exists()
             
             if not is_reviewer:
@@ -205,8 +219,8 @@ class CanCreatePeerReviewComment(BasePermission):
 
                 return PeerReviewAllocation.objects.filter(
                     assignment_id=assignment_id,
-                    submission_id=submission_id,
                     reviewer_id=request.user_id,
+                    **_pr_target_kwargs(assignment_id, submission_id)
                 ).exists()
 
             return False
@@ -228,7 +242,8 @@ class CanModifyPeerReviewComment(BasePermission):
             ).get(
                 id=comment_id,
                 review_allocation__assignment_id=assignment_id,
-                review_allocation__submission_id=submission_id,
+                **{f'review_allocation__{k}': v
+                   for k, v in _pr_target_kwargs(assignment_id, submission_id).items()},
             )
 
             # Staff can modify their own comments
