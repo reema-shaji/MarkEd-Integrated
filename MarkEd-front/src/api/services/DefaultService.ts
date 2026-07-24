@@ -28,6 +28,7 @@ import type { GroupSubmitRequest } from '../models/GroupSubmitRequest';
 import type { GroupUpdateRequest } from '../models/GroupUpdateRequest';
 import type { MarkerCommentUpdate } from '../models/MarkerCommentUpdate';
 import type { MoveMemberRequest } from '../models/MoveMemberRequest';
+import type { MyGroupResultSchema } from '../models/MyGroupResultSchema';
 import type { PeerAssignmentCreationResponse } from '../models/PeerAssignmentCreationResponse';
 import type { PeerAssignmentRequest } from '../models/PeerAssignmentRequest';
 import type { PeerMatch } from '../models/PeerMatch';
@@ -1185,6 +1186,27 @@ export class DefaultService {
             url: '/api/groups/group-submissions/{group_submission_id}/my-result',
             path: {
                 'group_submission_id': groupSubmissionId,
+            },
+        });
+    }
+    /**
+     * Get My Group Result By Assignment
+     * Resolve the student's group and its latest submission for an assignment.
+     *
+     * Students never see raw group-submission ids, so this looks up their group,
+     * finds its most recent submission, and returns the base+adjustment breakdown.
+     * @param assignmentId
+     * @returns MyGroupResultSchema OK
+     * @throws ApiError
+     */
+    public static getMyGroupResultByAssignment(
+        assignmentId: number,
+    ): CancelablePromise<MyGroupResultSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/groups/my-group-result/{assignment_id}',
+            path: {
+                'assignment_id': assignmentId,
             },
         });
     }

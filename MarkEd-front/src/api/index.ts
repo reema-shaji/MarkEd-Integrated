@@ -34,6 +34,7 @@ export type { GroupSubmitRequest } from './models/GroupSubmitRequest';
 export type { GroupUpdateRequest } from './models/GroupUpdateRequest';
 export type { MarkerCommentUpdate } from './models/MarkerCommentUpdate';
 export type { MoveMemberRequest } from './models/MoveMemberRequest';
+export type { MyGroupResultSchema } from './models/MyGroupResultSchema';
 export type { PeerAssignmentCreationResponse } from './models/PeerAssignmentCreationResponse';
 export type { PeerAssignmentRequest } from './models/PeerAssignmentRequest';
 export type { PeerMatch } from './models/PeerMatch';

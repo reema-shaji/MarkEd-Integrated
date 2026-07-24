@@ -196,12 +196,43 @@ export function AssignmentMenu() {
                 {item('dashboard', 'Dashboard', <Gauge className='h-4 w-4' />, 'dashboard')}
                 {item('submissions', 'Submissions', <FileText className='h-4 w-4' />, 'submissions')}
                 {item('marking', 'Marking', <ClipboardCheck className='h-4 w-4' />, 'marking')}
-                {isGroup &&
+                {isGroup && (
+                  <>
+                    {item(
+                      'group-marking',
+                      'Group Marking',
+                      <ClipboardCheck className='h-4 w-4' />,
+                      'group-marking'
+                    )}
+                    {/* Group management lives on the group category, which is
+                        course-level (Hao surfaced it from the course card), so
+                        this links out of the assignment context. */}
+                    {currentAssignment?.group_set_id && (
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton
+                          className='cursor-pointer'
+                          asChild
+                          onClick={() =>
+                            go(`/groupsets/${currentAssignment.group_set_id}`)
+                          }
+                        >
+                          <span>
+                            <Users2 className='h-4 w-4' />
+                            Group Management
+                          </span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    )}
+                  </>
+                )}
+                {/* Self-assessment configuration (Mingyue), shown only when the
+                    feature is enabled for this assignment. */}
+                {hasSelfAssessment &&
                   item(
-                    'groups',
-                    'Group Management',
-                    <Users2 className='h-4 w-4' />,
-                    'groups'
+                    'sa-config',
+                    'Self-Assessment',
+                    <ClipboardCheck className='h-4 w-4' />,
+                    'self-assessment/configure'
                   )}
                 {item('structure', 'Assignment Structure', <ListChecks className='h-4 w-4' />, 'structure')}
                 {item('customization', 'Customization', <Settings2 className='h-4 w-4' />, 'customization')}
@@ -329,7 +360,16 @@ export function AssignmentMenu() {
                   </TooltipProvider>
                 )}
 
-                {item('results', 'Results', <FileText className='h-4 w-4' />, 'results')}
+                {/* Group assignments show Hao's transparent base+adjustment
+                    breakdown; individual assignments keep Tomas's results view. */}
+                {isGroup
+                  ? item(
+                      'group-result',
+                      'Results',
+                      <FileText className='h-4 w-4' />,
+                      'group-result'
+                    )
+                  : item('results', 'Results', <FileText className='h-4 w-4' />, 'results')}
               </>
             )}
 

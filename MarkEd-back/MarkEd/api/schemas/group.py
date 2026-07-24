@@ -195,3 +195,15 @@ class GroupResultSchema(Schema):
     adjustment_reason: Optional[str] = None
     final_score: float
     final_percentage: float
+
+
+class MyGroupResultSchema(Schema):
+    """A student's group result for an assignment, resolved by assignment id.
+
+    `finalised` reflects whether the marker has finalised the adjustment; until
+    then the breakdown is provisional and should be presented as such.
+    """
+    group_name: str
+    submission_version: int
+    finalised: bool
+    breakdown: GroupResultSchema

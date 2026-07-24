@@ -24,6 +24,7 @@ from ..schemas.group import (
     AutoAssignRequest,
     GroupCreateRequest,
     GroupResultSchema,
+    MyGroupResultSchema,
     GroupSchema,
     GroupSetCreateRequest,
     GroupSetSchema,
@@ -876,6 +877,43 @@ def get_my_group_result(request, group_submission_id: int):
         raise HttpError(403, "You are not a member of this group")
     student = get_object_or_404(User, pk=request.user_id)
     return _personal_final_score(gs, student)
+
+
+@groups_router.get(
+    "/my-group-result/{assignment_id}",
+    response=MyGroupResultSchema,
+    operation_id="getMyGroupResultByAssignment",
+)
+@require_auth(roles=['Student'])
+def get_my_group_result_by_assignment(request, assignment_id: int):
+    """Resolve the student's group and its latest submission for an assignment.
+
+    Students never see raw group-submission ids, so this looks up their group,
+    finds its most recent submission, and returns the base+adjustment breakdown.
+    """
+    assignment = get_object_or_404(Assignment, pk=assignment_id)
+    group = _student_group_for(assignment, request.user_id)
+    if group is None:
+        raise HttpError(404, "You are not in a group for this assignment")
+
+    gs = (
+        GroupSubmission.objects.filter(group=group, assignment=assignment, is_active=True)
+        .order_by('-submission_version')
+        .first()
+    )
+    if gs is None:
+        raise HttpError(404, "Your group has not submitted yet")
+
+    student = get_object_or_404(User, pk=request.user_id)
+    finalised = GroupSubmissionPersonalAdjustment.objects.filter(
+        group_submission=gs, status='final'
+    ).exists()
+    return {
+        'group_name': group.name,
+        'submission_version': gs.submission_version,
+        'finalised': finalised,
+        'breakdown': _personal_final_score(gs, student),
+    }
 
 
 # NOTE ON ORDERING: Django resolves URL patterns in declaration order and
