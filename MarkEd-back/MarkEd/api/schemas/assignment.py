@@ -42,6 +42,16 @@ class AssignmentSchema(Schema):
         setting = getattr(obj, 'selfassessmentsetting', None)
         return setting.deadline if setting and setting.enabled else None
 
+class MyAssignmentStatusSchema(Schema):
+    """A student's own status for an assignment (prototype Assignment Detail)."""
+    assignment_id: int
+    group_id: Optional[int] = None
+    group_name: Optional[str] = None
+    submitted: bool = False
+    submitted_at: Optional[datetime] = None
+    is_late: bool = False
+
+
 class AssignmentCreateRequest(Schema):
     """Unified create form (Design PRD): an INDIVIDUAL or GROUP assignment with
     peer review and self-assessment as independent configuration toggles."""

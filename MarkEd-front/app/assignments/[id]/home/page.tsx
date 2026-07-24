@@ -1,118 +1,190 @@
 'use client'
 
+/**
+ * Student assignment detail (prototype "Assignment Detail"): the assignment
+ * brief, DEADLINE / YOUR GROUP / STATUS meta boxes, and the actions available
+ * for this assignment, driven by its configuration and the student's own status.
+ */
+
 import React from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
-import { AssignmentSchema, DefaultService } from '@/src/api'
-import { CountdownCard } from '@/components/countdown-card'
+import {
+  AssignmentSchema,
+  DefaultService,
+  MyAssignmentStatusSchema,
+} from '@/src/api'
+import {
+  CalendarClock,
+  CheckCircle2,
+  ClipboardCheck,
+  FileText,
+  FolderKanban,
+  Upload,
+  Users2,
+} from 'lucide-react'
 
-function calculateTimeLeft(targetDate: Date) {
-  const now = new Date()
-  const difference = targetDate.getTime() - now.getTime()
-
-  if (difference <= 0) return null
-
-  const days = Math.floor(difference / (1000 * 60 * 60 * 24))
-  const hours = Math.floor(
-    (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-  )
-  const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
-  const seconds = Math.floor((difference % (1000 * 60)) / 1000)
-
-  return { days, hours, minutes, seconds }
+function formatDate(value?: string | null) {
+  if (!value) return '—'
+  return new Date(value).toLocaleString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 export default function AssignmentHomePage() {
-  const [assignment, setAssignment] = React.useState<AssignmentSchema | null>(
-    null
-  )
   const params = useParams()
+  const router = useRouter()
+  const id = Number(params.id)
+  const [assignment, setAssignment] = React.useState<AssignmentSchema | null>(null)
+  const [status, setStatus] = React.useState<MyAssignmentStatusSchema | null>(null)
 
   React.useEffect(() => {
-    const fetchData = async () => {
+    if (!params.id) return
+    const load = async () => {
       try {
-        const assignmentData = await DefaultService.getAssignment(
-          Number(params.id)
-        )
-        setAssignment(assignmentData)
-      } catch (error) {
-        console.error('Error fetching data:', error)
+        const [a, s] = await Promise.all([
+          DefaultService.getAssignment(id),
+          DefaultService.getMyAssignmentStatus(id).catch(() => null),
+        ])
+        setAssignment(a)
+        setStatus(s)
+      } catch {
         toast.error('Failed to load assignment')
       }
     }
-
-    if (params.id) {
-      fetchData()
-    }
-  }, [params.id])
+    load()
+  }, [params.id, id])
 
   if (!assignment) {
     return (
       <div className='mx-auto w-full max-w-2xl space-y-4 p-6'>
-        <Card>
-          <CardHeader>
-            <Skeleton className='h-7 w-64' />
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <Skeleton className='h-4 w-full' />
-            <Skeleton className='h-4 w-3/4' />
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <Skeleton className='h-28 w-full rounded-lg' />
-              <Skeleton className='h-28 w-full rounded-lg' />
-            </div>
-          </CardContent>
-        </Card>
+        <Skeleton className='h-8 w-64' />
+        <div className='grid grid-cols-3 gap-3'>
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className='h-20 rounded-lg' />
+          ))}
+        </div>
+        <Skeleton className='h-40 rounded-lg' />
       </div>
     )
   }
 
+  const isGroup = assignment.assignment_type === 'GROUP'
+  const go = (seg: string) => router.push(`/assignments/${id}/${seg}`)
+
+  const statusLabel = !status?.submitted
+    ? 'Not submitted'
+    : status.is_late
+      ? 'Submitted late'
+      : 'Submitted'
+
+  const actions: { label: string; icon: React.ReactNode; seg: string }[] = [
+    { label: 'Submit Work', icon: <Upload className='h-4 w-4' />, seg: 'submit' },
+    ...(isGroup
+      ? [{ label: 'Group Workspace', icon: <FolderKanban className='h-4 w-4' />, seg: 'workspace' }]
+      : []),
+    ...(assignment.self_assessment_enabled
+      ? [{ label: 'Self-Assessment', icon: <ClipboardCheck className='h-4 w-4' />, seg: 'self-assessment' }]
+      : []),
+    // Peer review reviews are per-allocation; the sidebar lists them, so there
+    // is no single route to link to here.
+    {
+      label: 'Results',
+      icon: <FileText className='h-4 w-4' />,
+      seg: isGroup ? 'group-result' : 'results',
+    },
+  ]
+
   return (
     <div className='mx-auto w-full max-w-2xl space-y-4 p-6'>
-      <Card>
-        <CardHeader>
-          <div className='flex flex-wrap items-center gap-2'>
-            <CardTitle className='text-2xl font-bold'>
-              {assignment.assignmentTitle}
-            </CardTitle>
-            {assignment.peer_review_enabled && (
-              <Badge variant='secondary'>Peer Review</Badge>
+      <div className='flex flex-wrap items-center gap-2'>
+        <h1 className='text-2xl font-bold'>{assignment.assignmentTitle}</h1>
+        <Badge variant='secondary'>{isGroup ? 'Group' : 'Individual'}</Badge>
+        {assignment.peer_review_enabled && <Badge variant='outline'>Peer Review</Badge>}
+        {assignment.self_assessment_enabled && <Badge variant='outline'>Self-Assessment</Badge>}
+      </div>
+
+      {/* Meta boxes */}
+      <div className={`grid gap-3 ${isGroup ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+        <Card>
+          <CardContent className='p-4'>
+            <div className='flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500'>
+              <CalendarClock className='h-3.5 w-3.5' /> Deadline
+            </div>
+            <div className='mt-1 text-sm font-medium'>{formatDate(assignment.deadline)}</div>
+          </CardContent>
+        </Card>
+
+        {isGroup && (
+          <Card>
+            <CardContent className='p-4'>
+              <div className='flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500'>
+                <Users2 className='h-3.5 w-3.5' /> Your Group
+              </div>
+              <div className='mt-1 text-sm font-medium'>
+                {status?.group_name ?? 'Not assigned'}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardContent className='p-4'>
+            <div className='flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500'>
+              <CheckCircle2 className='h-3.5 w-3.5' /> Status
+            </div>
+            <div className='mt-1 text-sm font-medium'>{statusLabel}</div>
+            {status?.submitted_at && (
+              <div className='text-xs text-neutral-400'>{formatDate(status.submitted_at)}</div>
             )}
-          </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Brief */}
+      <Card>
+        <CardHeader className='pb-2'>
+          <CardTitle className='text-base font-semibold'>Assignment brief</CardTitle>
         </CardHeader>
-        <CardContent className='space-y-6'>
+        <CardContent>
           <p className='text-sm leading-relaxed text-neutral-600'>
-            {assignment.assignmentDescription}
+            {assignment.assignmentDescription || 'No description provided.'}
           </p>
-
-          <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-            <CountdownCard
-              title='Submission Deadline'
-              deadline={new Date(assignment.deadline)}
-              startDate={assignment.release_date ? new Date(assignment.release_date) : undefined}
-            />
-
-            {assignment.peer_review_enabled &&
-              assignment.review_deadline && (
-                <CountdownCard
-                  title='Peer Reviewing Period'
-                  deadline={new Date(assignment.review_deadline)}
-                  startDate={new Date(assignment.deadline)}
-                  isActive={
-                    !calculateTimeLeft(new Date(assignment.deadline)) &&
-                    assignment.is_peer_review_matching_complete
-                  }
-                />
-              )}
-          </div>
-
-          {assignment.assignment_instructions && (
-            <p className='text-center text-sm text-neutral-400'>
-              Check the sidebar for instruction files
+          {!!assignment.assignment_instructions?.length && (
+            <p className='mt-3 text-xs text-neutral-400'>
+              Instruction files are in the sidebar.
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Actions */}
+      <Card>
+        <CardHeader className='pb-2'>
+          <CardTitle className='text-base font-semibold'>Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
+            {actions.map((a) => (
+              <Button
+                key={a.seg}
+                variant='outline'
+                className='justify-start'
+                onClick={() => go(a.seg)}
+              >
+                {a.icon}
+                <span className='ml-1.5'>{a.label}</span>
+              </Button>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

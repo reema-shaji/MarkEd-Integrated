@@ -32,6 +32,7 @@ import type { LoginIn } from '../models/LoginIn';
 import type { MarkerCommentUpdate } from '../models/MarkerCommentUpdate';
 import type { MessageOut } from '../models/MessageOut';
 import type { MoveMemberRequest } from '../models/MoveMemberRequest';
+import type { MyAssignmentStatusSchema } from '../models/MyAssignmentStatusSchema';
 import type { MyGroupResultSchema } from '../models/MyGroupResultSchema';
 import type { PeerAssignmentCreationResponse } from '../models/PeerAssignmentCreationResponse';
 import type { PeerAssignmentRequest } from '../models/PeerAssignmentRequest';
@@ -235,6 +236,25 @@ export class DefaultService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/assignments/{assignment_id}',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Get My Assignment Status
+     * The current student's own status for an assignment (Assignment Detail):
+     * their group, whether they've submitted, and whether that was late.
+     * @param assignmentId
+     * @returns MyAssignmentStatusSchema OK
+     * @throws ApiError
+     */
+    public static getMyAssignmentStatus(
+        assignmentId: number,
+    ): CancelablePromise<MyAssignmentStatusSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/assignments/{assignment_id}/my-status',
             path: {
                 'assignment_id': assignmentId,
             },

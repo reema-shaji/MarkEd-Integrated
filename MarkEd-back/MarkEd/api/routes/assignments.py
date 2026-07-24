@@ -1,7 +1,7 @@
 from ninja import Router
 from typing import List, Set
 from django.db import models
-from ..schemas.assignment import AssignmentSchema, AssignmentCreateRequest, PeerAssignmentRequest, PeerAssignmentCreationResponse, AssignmentStatistics
+from ..schemas.assignment import AssignmentSchema, AssignmentCreateRequest, MyAssignmentStatusSchema, PeerAssignmentRequest, PeerAssignmentCreationResponse, AssignmentStatistics
 from ..schemas.feedback import CreationResponse
 from ..decorators import require_auth, check_permissions
 from ..permissions import IsCourseStaffFromAssignment, CanCreateAssignment
@@ -61,6 +61,40 @@ def list_assignments(request, course_id: int = None):
 # @check_permissions(IsEnrolledStudent)
 def get_assignment(request, assignment_id: int):
     return Assignment.objects.get(id=assignment_id)
+
+
+@router.get("/{assignment_id}/my-status", response=MyAssignmentStatusSchema, operation_id="getMyAssignmentStatus")
+@require_auth(roles=['Student'])
+def get_my_assignment_status(request, assignment_id: int):
+    """The current student's own status for an assignment (Assignment Detail):
+    their group, whether they've submitted, and whether that was late."""
+    assignment = Assignment.objects.get(id=assignment_id)
+    group = None
+    if assignment.group_set_id:
+        membership = (GroupMember.objects.filter(
+            student_id=request.user_id,
+            group__group_set_id=assignment.group_set_id,
+            group__is_active=True, is_active=True,
+        ).select_related('group').first())
+        group = membership.group if membership else None
+
+    if assignment.is_group_assignment():
+        submission = (GroupSubmission.objects.filter(
+            group=group, assignment=assignment, is_active=True
+        ).order_by('-submission_version').first() if group else None)
+    else:
+        submission = (Submission.objects.filter(
+            student_id=request.user_id, assignment=assignment
+        ).order_by('-submissionDateTime').first())
+
+    return {
+        "assignment_id": assignment_id,
+        "group_id": group.id if group else None,
+        "group_name": group.name if group else None,
+        "submitted": bool(submission),
+        "submitted_at": submission.submissionDateTime if submission else None,
+        "is_late": bool(submission and submission.submissionDateTime > assignment.deadline),
+    }
 
 @router.post("/create/{course_id}", response=PeerAssignmentCreationResponse, operation_id="createAssignment")
 @require_auth(roles=['Academic', 'Marker', 'TA'])

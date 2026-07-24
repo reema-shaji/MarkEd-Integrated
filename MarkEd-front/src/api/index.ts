@@ -38,6 +38,7 @@ export type { LoginIn } from './models/LoginIn';
 export type { MarkerCommentUpdate } from './models/MarkerCommentUpdate';
 export type { MessageOut } from './models/MessageOut';
 export type { MoveMemberRequest } from './models/MoveMemberRequest';
+export type { MyAssignmentStatusSchema } from './models/MyAssignmentStatusSchema';
 export type { MyGroupResultSchema } from './models/MyGroupResultSchema';
 export type { PeerAssignmentCreationResponse } from './models/PeerAssignmentCreationResponse';
 export type { PeerAssignmentRequest } from './models/PeerAssignmentRequest';
