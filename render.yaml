@@ -1,22 +1,21 @@
-# Render blueprint for the unified MarkEd system.
+# Render blueprint for the unified MarkEd system — BACKEND ONLY.
 #
-# STATUS: starting blueprint — deploy once and reconcile the env specifics
-# flagged below (marked  ⚠). The database switch it relies on (DATABASE_URL →
-# Postgres) is implemented and verified locally; the service wiring here still
-# needs one real deploy to shake out ports/hosts/CORS.
+# The frontend is hosted on Vercel (its natural home for Next.js); this file
+# declares only the API, Postgres and Redis on Render. The two talk cross-origin
+# over CORS, and auth is a bearer token (not a cookie), so no shared domain or
+# cookie config is needed — see MarkEd-back/MarkEd/api/token_auth.py.
 #
-# Architecture on Render (Design/Unified PRD Option B):
-#   - Postgres (managed)         — Render offers Postgres, not MySQL, which is
-#                                  why the app reads DATABASE_URL (settings.py).
-#   - Redis / Key Value          — Celery broker + cache.
-#   - Backend web service        — Django + django-ninja API (Docker).
-#   - Frontend web service        — Next.js (Docker), OR host it on Vercel.
+# STATUS: starting blueprint — expect to reconcile a few specifics on the first
+# deploy (marked ⚠). The MySQL→Postgres switch it relies on (DATABASE_URL) is
+# implemented and verified locally.
 #
-# There is no nginx service here: locally nginx reverse-proxies /api → backend
-# and everything else → frontend, but on Render each service gets its own URL,
-# so the frontend talks to the backend directly via NEXT_PUBLIC_API_URL and
-# CORS. File storage (submissions/instructions) needs an external S3/R2 bucket —
-# Render has no object store.
+#   Vercel (Next.js SPA)  ──HTTPS + Bearer token──▶  Render: marked-api
+#     *.vercel.app                                     ├─ Postgres (marked-db)
+#                                                      └─ Redis   (marked-redis)
+#
+# File storage (submission/instruction PDFs) uses AWS S3 — Render has no object
+# store. Set the four AWS_* vars below; without them the app runs but PDFs will
+# not load.
 
 databases:
   - name: marked-db
@@ -25,7 +24,7 @@ databases:
     plan: free
 
 services:
-  # --- Redis (Celery broker + cache) ---------------------------------------
+  # --- Redis (bearer-token store + Celery broker) --------------------------
   - type: redis
     name: marked-redis
     plan: free
@@ -40,8 +39,9 @@ services:
     dockerContext: ./MarkEd-back
     plan: free
     healthCheckPath: /api/health/health
-    # ⚠ The Docker image's default CMD runs the dev server. On Render, bind the
-    # PORT Render provides and serve with uvicorn/gunicorn. Override here:
+    # ⚠ The image's default CMD runs the dev server; on Render bind the provided
+    # PORT and serve with uvicorn. Seeding is left out of the start command so
+    # redeploys don't touch data — run seed_demo.py once from the Render shell.
     dockerCommand: >
       sh -c "python manage.py migrate --noinput &&
              uvicorn MarkEd.asgi:application --host 0.0.0.0 --port $PORT"
@@ -55,53 +55,53 @@ services:
           name: marked-redis
           type: redis
           property: connectionString
-      - key: DJANGO_SECRET_KEY
-        generateValue: true
-      - key: DJANGO_ENV
-        value: production        # DEBUG=False (settings.py line ~45)
-      - key: ALLOWED_HOSTS
-        value: ".onrender.com"
-      - key: CELERY_BROKER_URL   # free tier has no worker; see note below
+      - key: CELERY_BROKER_URL   # free tier has no worker; see note at foot
         fromService:
           name: marked-redis
           type: redis
           property: connectionString
-      # ⚠ File storage — point at an external S3-compatible bucket (AWS S3 /
-      # Cloudflare R2). Without these, submission/instruction PDFs will not load.
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ENV
+        value: production        # DEBUG=False; enables secure cookies + proxy SSL
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+
+      # --- CORS: allow the Vercel frontend to call this API ------------------
+      # Auth is a bearer token, so credentials/cookies are NOT sent cross-origin;
+      # CORS only needs to allow the frontend's Origin. CORS_ALLOW_VERCEL=true
+      # allows every *.vercel.app URL (preview + production). To pin a single
+      # custom domain instead, set CORS_ALLOWED_ORIGINS to it.
+      - key: CORS_ALLOW_VERCEL
+        value: "true"
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false              # ⚠ optional: a custom (non-vercel.app) frontend domain
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false              # ⚠ optional: only for the legacy Django admin/template pages
+
+      # --- File storage: AWS S3 (required for PDFs) --------------------------
       - key: AWS_ACCESS_KEY_ID
-        sync: false
+        sync: false              # ⚠ set to your IAM key
       - key: AWS_SECRET_ACCESS_KEY
-        sync: false
+        sync: false              # ⚠ set to your IAM secret
       - key: AWS_REGION
-        sync: false
+        sync: false              # ⚠ e.g. eu-west-2
       - key: STORAGE_BUCKET_NAME
-        sync: false
-      # ⚠ OpenAI/ELM key for AI peer-review suggestions (optional; the review
-      # flow works without it, just with no AI coaching).
+        sync: false              # ⚠ your S3 bucket name
+
+      # --- AI peer-review suggestions (optional) -----------------------------
+      # The peer review flow works without this; only the AI coaching needs it.
       - key: OPENAI_API_KEY
         sync: false
-      # ⚠ After the frontend deploys, set this to its URL so CORS/CSRF allow it.
-      - key: FRONTEND_ORIGIN
-        sync: false
-
-  # --- Frontend: Next.js ----------------------------------------------------
-  # Alternatively host this on Vercel (its natural home) and delete this block.
-  - type: web
-    name: marked-frontend
-    runtime: docker
-    dockerfilePath: ./docker/Dockerfile.nextjs
-    dockerContext: ./MarkEd-front
-    plan: free
-    envVars:
-      # ⚠ Set to the backend service URL once it is live, e.g.
-      #   https://marked-api.onrender.com
-      - key: NEXT_PUBLIC_API_URL
-        sync: false
-      - key: NODE_ENV
-        value: production
 
 # NOTE — Celery on the free tier: Render's free plan has no background worker,
-# so AI suggestion tasks cannot run asynchronously. Either (a) upgrade and add a
-# `type: worker` service running `celery -A MarkEd worker -l info`, or (b) run
-# tasks inline. Peer review works either way; only the delayed AI coaching needs
-# the worker.
+# so AI suggestion tasks cannot run asynchronously (they queue but never run).
+# Peer review itself works fine; to enable AI coaching, upgrade and add a
+# `type: worker` service running `celery -A MarkEd worker -l info`.
+#
+# --- Deploying the frontend on Vercel ---------------------------------------
+# 1. Vercel → New Project → import this repo, Root Directory: MarkEd-front
+# 2. Env var: NEXT_PUBLIC_API_URL = https://marked-api.onrender.com
+#    (the API service URL, available after the first Render deploy)
+# 3. Deploy. Vercel assigns e.g. https://marked-<hash>.vercel.app, which
+#    CORS_ALLOW_VERCEL already permits.
