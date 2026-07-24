@@ -2,7 +2,10 @@
 import { useParams } from 'next/navigation'
 import { DefaultService, PeersLastSubmissionResponse } from '@/src/api'
 import { useState, useEffect } from 'react'
-import MarkerPDFViewer from '@/components/pdf-viewer/MarkerPDFViewer'
+import dynamic from 'next/dynamic'
+// PDF viewer is client-only (pdfjs evaluates at module scope and
+// throws during SSR); ssr:false keeps it off the server.
+const MarkerPDFViewer = dynamic(() => import('@/components/pdf-viewer/MarkerPDFViewer'), { ssr: false })
 import Link from 'next/link'
 import { Telescope } from 'lucide-react'
 

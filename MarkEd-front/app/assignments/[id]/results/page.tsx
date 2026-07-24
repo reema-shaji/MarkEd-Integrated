@@ -2,7 +2,14 @@
 import { useParams } from 'next/navigation'
 import { DefaultService, PeersLastSubmissionResponse } from '@/src/api'
 import { useState, useEffect } from 'react'
-import ResultsPDFViewer from '@/components/pdf-viewer/ResultsPDFViewer'
+import dynamic from 'next/dynamic'
+// Load the PDF viewer client-side only: it evaluates pdfjs at module scope,
+// which throws during server-side rendering ("Object.defineProperty on
+// non-object"). ssr:false keeps it off the server.
+const ResultsPDFViewer = dynamic(
+  () => import('@/components/pdf-viewer/ResultsPDFViewer'),
+  { ssr: false }
+)
 import Link from 'next/link'
 import { Telescope, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
