@@ -14,6 +14,7 @@ configured, the records exist and the whole flow is navigable, but the PDFs
 themselves will not render.
 """
 import datetime
+import os
 
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
@@ -26,7 +27,10 @@ from MarkEd.models import (
     StudentSubmission, Submission, User, UserModule,
 )
 
-PW = make_password("Test1234!")
+# The demo password comes from SEED_DEMO_PASSWORD so a public deployment does
+# not seed the well-known local default. Falls back to Test1234! for local dev.
+DEMO_PASSWORD = os.getenv("SEED_DEMO_PASSWORD", "Test1234!")
+PW = make_password(DEMO_PASSWORD)
 now = timezone.now()
 
 MODULE_CFG = (
@@ -325,9 +329,9 @@ Seed complete.
   Submissions  : {Submission.objects.count()}
   Checklist    : {ChecklistItem.objects.count()} items
 
-Log in with any of:
-  acad001 / Test1234!   (Academic)
-  mark001 / Test1234!   (Marker)
-  stud001 / Test1234!   (Student, in Team 1)
-  stud017 / Test1234!   (Student, ungrouped)
+Log in with any of these user numbers (password = SEED_DEMO_PASSWORD):
+  acad001   (Academic)
+  mark001   (Marker)
+  stud001   (Student, in Team 1)
+  stud017   (Student, ungrouped)
 """)

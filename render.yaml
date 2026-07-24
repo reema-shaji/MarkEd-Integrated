@@ -40,10 +40,11 @@ services:
     plan: free
     healthCheckPath: /api/health/health
     # ⚠ The image's default CMD runs the dev server; on Render bind the provided
-    # PORT and serve with uvicorn. Seeding is left out of the start command so
-    # redeploys don't touch data — run seed_demo.py once from the Render shell.
+    # PORT and serve with uvicorn. `seed_demo` self-gates on SEED_ON_START (a
+    # no-op unless it is "true") and is idempotent, so it is safe on every boot.
     dockerCommand: >
       sh -c "python manage.py migrate --noinput &&
+             python manage.py seed_demo &&
              uvicorn MarkEd.asgi:application --host 0.0.0.0 --port $PORT"
     envVars:
       - key: DATABASE_URL
@@ -66,6 +67,17 @@ services:
         value: production        # DEBUG=False; enables secure cookies + proxy SSL
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
+
+      # --- Demo seed --------------------------------------------------------
+      # A fresh Postgres has no users, so nobody could log in without this.
+      # SEED_ON_START=true seeds idempotent demo accounts on boot; set it to
+      # "false" once real data exists. SEED_DEMO_PASSWORD sets those accounts'
+      # password — leave it unset for the local default (Test1234!), but set a
+      # private value for any public deployment.
+      - key: SEED_ON_START
+        value: "true"
+      - key: SEED_DEMO_PASSWORD
+        sync: false              # ⚠ set a private password for a public deploy
 
       # --- CORS: allow the Vercel frontend to call this API ------------------
       # Auth is a bearer token, so credentials/cookies are NOT sent cross-origin;
