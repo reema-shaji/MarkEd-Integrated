@@ -209,11 +209,11 @@ export default function GroupManagementPage() {
 
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-6xl p-6'>
+      <div className='w-full p-6'>
         <Skeleton className='h-9 w-72' />
-        <div className='mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]'>
-          <Skeleton className='h-96' />
-          <Skeleton className='h-96' />
+        <div className='mt-6 flex flex-col gap-4 lg:flex-row'>
+          <Skeleton className='h-96 lg:flex-[2]' />
+          <Skeleton className='h-96 lg:flex-1 lg:min-w-[250px]' />
         </div>
       </div>
     )
@@ -222,50 +222,45 @@ export default function GroupManagementPage() {
   const maxSize = groupSet?.max_group_size ?? 0
 
   return (
-    <div className='mx-auto w-full max-w-6xl p-6'>
-      <div className='mb-1.5 text-[13px] text-neutral-400'>
-        <button
-          type='button'
-          onClick={() => router.push('/groupsets')}
-          className='text-neutral-400 hover:text-neutral-600'
-        >
-          Group categories
-        </button>{' '}
-        / {groupSet?.name}
-      </div>
-
-      <div className='mb-3 flex flex-wrap items-start justify-between gap-3'>
+    <div className='w-full p-6'>
+      <div className='mb-4 flex flex-wrap items-start justify-between gap-3'>
         <div>
-          <h1 className='text-2xl font-bold'>Group management</h1>
-          <p className='mt-1 text-sm text-neutral-500'>
-            {groups.length} groups · {ungrouped.length} unassigned · size{' '}
-            {groupSet?.min_group_size}–{groupSet?.max_group_size}
-          </p>
+          <div className='text-[13px] text-neutral-400'>
+            <button
+              type='button'
+              onClick={() => router.push('/groupsets')}
+              className='text-neutral-400 hover:text-neutral-600'
+            >
+              Group Categories
+            </button>{' '}
+            / {groupSet?.name}
+          </div>
+          <h1 className='text-2xl font-bold'>Group Management</h1>
         </div>
         <div className='flex flex-wrap gap-2'>
           <Button variant='outline' onClick={() => setRandomOpen(true)} disabled={busy}>
             <Shuffle className='mr-1 h-4 w-4' />
-            Random assign
+            Random Assign
           </Button>
           <Button variant='outline' onClick={runAutoAssign} disabled={busy}>
             <UserPlus className='mr-1 h-4 w-4' />
-            Auto-assign ungrouped
+            Auto-assign Ungrouped
           </Button>
           <Button onClick={() => setCreateOpen(true)} disabled={busy}>
             <Plus className='mr-1 h-4 w-4' />
-            Create group
+            Create Group
           </Button>
         </div>
       </div>
 
-      <p className='mb-4 text-xs text-neutral-400'>
+      <p className='mb-3.5 text-xs text-neutral-400'>
         Drag students between groups, or into the Unassigned panel. Changes save
         automatically.
       </p>
 
-      <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]'>
+      <div className='flex flex-col gap-4 lg:flex-row'>
         {/* Group cards — drop targets. */}
-        <div className='grid content-start gap-4 sm:grid-cols-2'>
+        <div className='grid content-start gap-3.5 sm:grid-cols-2 lg:flex-[2]'>
           {groups.length === 0 && (
             <div className='rounded-lg border border-neutral-200 bg-white py-12 text-center text-sm text-neutral-500 shadow-sm sm:col-span-2'>
               No groups yet. Create one, or use random assign to build them all
@@ -398,12 +393,12 @@ export default function GroupManagementPage() {
           }}
           onDragLeave={() => setDragOver(null)}
           onDrop={(e) => onDrop(e, UNGROUPED)}
-          className={`flex max-h-[36rem] flex-col overflow-hidden rounded-lg border-2 border-dashed bg-white ${
+          className={`flex max-h-[36rem] flex-col overflow-hidden rounded-lg border-2 border-dashed bg-white lg:flex-1 lg:min-w-[250px] ${
             dragOver === UNGROUPED ? 'border-neutral-800' : 'border-neutral-300'
           }`}
         >
           <div className='flex items-center justify-between gap-2 border-b border-neutral-100 bg-neutral-50 px-3.5 py-2.5'>
-            <span className='text-sm font-semibold'>Unassigned students</span>
+            <span className='text-sm font-semibold'>Unassigned Students</span>
             <span className='shrink-0 rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-600'>
               {ungrouped.length}
             </span>

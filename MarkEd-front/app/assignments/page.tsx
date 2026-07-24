@@ -20,6 +20,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   CalendarClock,
   ClipboardCheck,
   Plus,
@@ -68,6 +75,13 @@ export default function AssignmentsPage() {
   const [groupSets, setGroupSets] = useState<GroupSetSchema[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  const [typeFilter, setTypeFilter] = useState<
+    'all' | 'individual' | 'group' | 'peer' | 'group_peer'
+  >('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>(
+    'all'
+  )
+
   useEffect(() => {
     if (!currentCourseId) return
     let cancelled = false
@@ -105,9 +119,33 @@ export default function AssignmentsPage() {
     [assignments]
   )
 
+  const visible = useMemo(() => {
+    const isClosed = (a: AssignmentSchema) => {
+      const times = [a.deadline, a.review_deadline, a.self_assessment_deadline]
+        .filter(Boolean)
+        .map((d) => new Date(d as string).getTime())
+      return Date.now() > Math.max(...times)
+    }
+    return sorted.filter((a) => {
+      const isGroup = a.assignment_type === 'GROUP'
+      const hasPeer = !!a.peer_review_enabled
+      const typeOk =
+        typeFilter === 'all' ||
+        (typeFilter === 'individual' && !isGroup && !hasPeer) ||
+        (typeFilter === 'group' && isGroup) ||
+        (typeFilter === 'peer' && hasPeer) ||
+        (typeFilter === 'group_peer' && isGroup && hasPeer)
+      const statusOk =
+        statusFilter === 'all' ||
+        (statusFilter === 'active' && !isClosed(a)) ||
+        (statusFilter === 'closed' && isClosed(a))
+      return typeOk && statusOk
+    })
+  }, [sorted, typeFilter, statusFilter])
+
   if (coursesLoading || isLoading) {
     return (
-      <div className='mx-auto w-full max-w-4xl p-6'>
+      <div className='mx-auto w-full max-w-3xl p-6'>
         <Skeleton className='h-9 w-72' />
         <div className='mt-6 grid gap-4'>
           {[0, 1, 2].map((i) => (
@@ -119,7 +157,7 @@ export default function AssignmentsPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-4xl p-6'>
+    <div className='mx-auto w-full max-w-3xl p-6'>
       <div className='mb-5 flex items-start justify-between gap-4'>
         <div>
           <h1 className='text-2xl font-bold'>
@@ -185,15 +223,56 @@ export default function AssignmentsPage() {
         </Card>
       )}
 
+      {/* Filters — mirror the prototype's type/status selects, applied
+          client-side to the assignments already loaded above. */}
+      {sorted.length > 0 && (
+        <div className='mb-4 flex flex-wrap gap-2'>
+          <Select
+            value={typeFilter}
+            onValueChange={(v) => setTypeFilter(v as typeof typeFilter)}
+          >
+            <SelectTrigger className='h-9 w-auto min-w-[9rem] text-[13px]'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>All types</SelectItem>
+              <SelectItem value='individual'>Individual</SelectItem>
+              <SelectItem value='group'>Group</SelectItem>
+              <SelectItem value='peer'>Peer Review</SelectItem>
+              <SelectItem value='group_peer'>Group + Peer Review</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
+          >
+            <SelectTrigger className='h-9 w-auto min-w-[9rem] text-[13px]'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>All statuses</SelectItem>
+              <SelectItem value='active'>Active</SelectItem>
+              <SelectItem value='closed'>Closed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {sorted.length === 0 ? (
         <Card>
           <CardContent className='py-14 text-center text-sm text-neutral-500'>
             No assignments in this course yet.
           </CardContent>
         </Card>
+      ) : visible.length === 0 ? (
+        <Card>
+          <CardContent className='py-14 text-center text-sm text-neutral-500'>
+            No assignments match these filters.
+          </CardContent>
+        </Card>
       ) : (
         <div className='flex flex-col gap-3'>
-          {sorted.map((a) => {
+          {visible.map((a) => {
             const phase = peerReviewPhase(a)
             const due = deadlineLabel(a.deadline)
             const landing = user?.isStaff ? 'dashboard' : 'home'

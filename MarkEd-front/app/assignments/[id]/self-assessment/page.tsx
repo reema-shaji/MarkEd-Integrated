@@ -20,10 +20,8 @@ import { DefaultService, SelfAssessmentFormSchema } from '@/src/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
-import { CalendarClock, Check } from 'lucide-react'
 import { toast } from 'sonner'
 
 /** A plain numbered section card, faithful to the prototype's "1 · Checklist" heads. */
@@ -131,50 +129,53 @@ export default function SelfAssessmentPage() {
     )
   }
 
-  const checkedCount = Object.values(checklist).filter(Boolean).length
-
   // Section numbers stay contiguous even when some sections are disabled.
   let sectionIndex = 0
 
   return (
     <div className='mx-auto w-full max-w-3xl p-6'>
       {/* Breadcrumb + title, per the prototype header. */}
-      <div className='mb-1 text-[13px] text-neutral-400'>Self-Assessment</div>
+      <div className='mb-1.5 text-[13px] text-neutral-400'>
+        Home / Self-Assessment
+      </div>
       <h1 className='text-2xl font-bold'>Self-Assessment</h1>
+      {/* b-4: deadline labelled in full and shown on the header line. */}
+      {form.deadline && (
+        <div className='mt-1 text-sm text-neutral-500'>
+          Self-Assessment Deadline:{' '}
+          {new Date(form.deadline).toLocaleString(undefined, {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+          {form.is_late && (
+            <span className='text-amber-600'>
+              {' '}
+              · past deadline, submissions recorded as late
+            </span>
+          )}
+        </div>
+      )}
       {/* b-8: students confused self-assessment with marker feedback. */}
-      <p className='mt-1.5 text-[13px] leading-relaxed text-neutral-500'>
-        Your <b>self-assessment</b> is your own evaluation of your work. It is
-        not your mark — your marker sees it alongside your submission and may
-        respond with <b>feedback</b> on what you wrote.
+      <p className='mt-2 text-xs leading-relaxed text-neutral-400'>
+        Your <b>self-assessment</b> is your own evaluation of your work. After
+        you submit it, your instructor may leave <b>feedback</b> — their
+        comments on your self-assessment, shown at the top of this page.
       </p>
 
-      <div className='mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground'>
-        {form.deadline && (
-          <span className='flex items-center gap-1'>
-            <CalendarClock className='h-3.5 w-3.5' />
-            {/* b-4: labelled in full. */}
-            Self-Assessment Deadline:{' '}
-            {new Date(form.deadline).toLocaleString(undefined, {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
-        )}
-        {form.is_late && <Badge variant='secondary'>Deadline passed</Badge>}
-        {form.submitted_at && (
-          <Badge variant='outline'>
-            <Check className='mr-1 h-3 w-3' />
-            Last submitted{' '}
-            {new Date(form.submitted_at).toLocaleDateString(undefined, {
-              day: 'numeric',
-              month: 'short',
-            })}
-          </Badge>
-        )}
-      </div>
+      {/* b-14 / feedback: the instructor's response, when they have left one. */}
+      {form.feedback_text && (
+        <div className='mt-5 rounded-lg border border-blue-200 bg-blue-50 px-[18px] py-3.5'>
+          <div className='mb-1 text-[13px] font-semibold text-blue-800'>
+            Instructor Feedback on Your Self-Assessment
+          </div>
+          <div className='text-[13px] leading-relaxed text-blue-900'>
+            {form.feedback_text}
+          </div>
+        </div>
+      )}
 
       <div className='mt-5 grid gap-4'>
         {/* 1. Checklist */}
@@ -187,7 +188,7 @@ export default function SelfAssessmentPage() {
               <>
                 <b>What &amp; why:</b> confirm you have addressed the key
                 requirements. <b>How:</b> tick each item you believe you have
-                completed. <span className='text-neutral-400'>({checkedCount} of {form.checklist_items.length} ticked)</span>
+                completed.
               </>
             }
           >
@@ -233,8 +234,7 @@ export default function SelfAssessmentPage() {
             subtitle={
               <>
                 <b>What &amp; why:</b> grade yourself against the same rubric
-                your marker uses — comparing your view with theirs is where most
-                of the learning happens. <b>How:</b> select the level that best
+                your marker uses. <b>How:</b> select the level that best
                 describes your work.
               </>
             }
@@ -242,13 +242,8 @@ export default function SelfAssessmentPage() {
             <div className='flex flex-col gap-4'>
               {form.rubric_items.map((criterion) => (
                 <div key={criterion.criteria_id}>
-                  <div className='mb-2'>
-                    <div className='text-sm font-semibold'>{criterion.name}</div>
-                    {criterion.full_path !== criterion.name && (
-                      <div className='text-xs text-neutral-500'>
-                        {criterion.full_path}
-                      </div>
-                    )}
+                  <div className='mb-2 text-sm font-semibold'>
+                    {criterion.name}
                   </div>
                   <div className='flex flex-col gap-[7px]'>
                     {criterion.levels.map((level) => {
@@ -281,7 +276,7 @@ export default function SelfAssessmentPage() {
                             <span className='block text-[13px] font-semibold'>
                               {level.name}{' '}
                               <span className='font-normal text-neutral-500'>
-                                ({level.marks} marks)
+                                ({level.marks} pts)
                               </span>
                             </span>
                             {level.description && (
@@ -309,8 +304,8 @@ export default function SelfAssessmentPage() {
             subtitle={
               <>
                 <b>What &amp; why:</b> reflect on your learning using the Gibbs
-                Reflective Cycle — there are no right answers. <b>How:</b> write
-                a short response for each stage.
+                Reflective Cycle. <b>How:</b> write a short response for each
+                stage.
               </>
             }
           >
@@ -326,7 +321,7 @@ export default function SelfAssessmentPage() {
                   </Label>
                   <Textarea
                     id={`reflect-${prompt.stage}`}
-                    rows={3}
+                    rows={2}
                     value={reflection[prompt.stage] ?? ''}
                     onChange={(e) =>
                       setReflection({ ...reflection, [prompt.stage]: e.target.value })
@@ -339,14 +334,20 @@ export default function SelfAssessmentPage() {
         )}
       </div>
 
-      <div className='sticky bottom-0 mt-4 flex items-center justify-end gap-3 border-t bg-neutral-100/95 py-3 backdrop-blur'>
-        {form.is_late && (
-          <span className='text-xs text-muted-foreground'>
-            The deadline has passed — this will be recorded as late.
+      <div className='mt-5 flex items-center justify-end gap-2 pb-8'>
+        {form.submitted_at && (
+          <span className='mr-auto text-xs text-neutral-500'>
+            Last submitted{' '}
+            {new Date(form.submitted_at).toLocaleString(undefined, {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </span>
         )}
         <Button onClick={submit} disabled={saving}>
-          {form.submitted_at ? 'Submit again' : 'Submit Self-Assessment'}
+          Submit Self-Assessment
         </Button>
       </div>
     </div>

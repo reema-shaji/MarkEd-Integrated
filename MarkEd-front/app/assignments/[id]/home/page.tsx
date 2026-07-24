@@ -83,7 +83,7 @@ export default function AssignmentHomePage() {
           </div>
         </CardHeader>
         <CardContent className='space-y-6'>
-          <p className='text-sm text-neutral-500'>
+          <p className='text-sm leading-relaxed text-neutral-600'>
             {assignment.assignmentDescription}
           </p>
 

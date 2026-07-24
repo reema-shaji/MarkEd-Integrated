@@ -6,6 +6,8 @@ import ResultsPDFViewer from '@/components/pdf-viewer/ResultsPDFViewer'
 import Link from 'next/link'
 import { Telescope, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
 
 const ResultsPage = () => {
   const params = useParams()
@@ -44,6 +46,7 @@ const ResultsPage = () => {
         }
       } catch (error) {
         console.error('Error fetching submission:', error)
+        toast.error('Failed to load your results')
       } finally {
         setIsLoading(false)
       }
@@ -62,8 +65,10 @@ const ResultsPage = () => {
 
   if (isLoading) {
     return (
-      <div className='flex h-screen items-center justify-center'>
-        <div className='h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-primary'></div>
+      <div className='mx-auto w-full max-w-3xl space-y-5 p-6'>
+        <Skeleton className='h-8 w-72' />
+        <Skeleton className='h-4 w-full max-w-md' />
+        <Skeleton className='h-[70vh] w-full rounded-lg' />
       </div>
     )
   }
@@ -72,9 +77,9 @@ const ResultsPage = () => {
     <>
       {!submission?.pre_signed_file_url || !submissionId ? (
         <div className='flex h-screen flex-col items-center justify-center gap-2 duration-1000 animate-in fade-in'>
-          <Telescope className='h-10 w-10' />
-          <h1 className='text-2xl font-semibold'>Nothing to see here</h1>
-          <p className='text-sm text-gray-500'>
+          <Telescope className='h-10 w-10 text-neutral-400' />
+          <h1 className='text-2xl font-bold'>Nothing to see here</h1>
+          <p className='text-sm text-neutral-500'>
             No submission found. You need to submit your work before you can see
             feedback.
           </p>

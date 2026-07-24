@@ -26,7 +26,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, Check, Users2 } from 'lucide-react'
+import { Check, Users2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 type Row = PersonalAdjustmentSchema
@@ -174,28 +174,31 @@ export default function GroupMarkingPage() {
   const base = rows[0]?.group_score ?? 0
   const total = rows[0]?.group_total ?? 0
 
+  const goBack = () => {
+    setSelected(null)
+    setRows([])
+  }
+
   return (
-    <div className='mx-auto w-full max-w-4xl p-6 pb-24'>
-      <div className='mb-3 flex items-center gap-3'>
-        <Button
-          variant='outline'
-          size='sm'
-          onClick={() => {
-            setSelected(null)
-            setRows([])
-          }}
+    <div className='mx-auto w-full max-w-[900px] p-6 pb-24'>
+      {/* Breadcrumb, per the prototype header. */}
+      <div className='mb-1.5 text-[13px] text-neutral-400'>
+        <button
+          type='button'
+          onClick={goBack}
+          className='text-neutral-400 hover:text-neutral-600'
         >
-          <ArrowLeft className='mr-1 h-4 w-4' />
-          Back
-        </Button>
-        <span className='text-sm font-semibold'>{selected.group_name}</span>
-        <Badge variant='outline'>v{selected.submission_version}</Badge>
-        <Badge
-          variant='secondary'
-          className='bg-violet-100 font-medium text-violet-800'
+          Submissions
+        </button>{' '}
+        /{' '}
+        <button
+          type='button'
+          onClick={goBack}
+          className='text-neutral-400 hover:text-neutral-600'
         >
-          Group Submission
-        </Badge>
+          Group Marking
+        </button>{' '}
+        / Adjustment
       </div>
 
       <h1 className='text-2xl font-bold'>Personal Contribution Adjustment</h1>
@@ -257,7 +260,9 @@ export default function GroupMarkingPage() {
                     </span>
                     <Input
                       type='number'
-                      step='0.5'
+                      step='1'
+                      min='-20'
+                      max='20'
                       value={row.adjustment_score}
                       onChange={(e) =>
                         patchRow(row.student_id, {
@@ -288,12 +293,9 @@ export default function GroupMarkingPage() {
           </div>
         )}
       </Card>
-      <p className='mt-3 text-xs text-neutral-500'>
-        Final = base + adjustment. Adjustments can be positive or negative.
-      </p>
 
       <div className='fixed inset-x-0 bottom-0 z-40 border-t bg-neutral-100/95 backdrop-blur md:pl-64'>
-        <div className='mx-auto flex max-w-4xl items-center justify-end gap-3 px-6 py-3'>
+        <div className='mx-auto flex max-w-[900px] items-center justify-end gap-3 px-6 py-3'>
           {dirty ? (
             <span className='text-xs font-medium text-amber-600'>Unsaved changes</span>
           ) : (

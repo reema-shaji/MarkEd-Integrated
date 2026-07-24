@@ -117,7 +117,7 @@ export default function GroupSetsPage() {
 
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-4xl p-6'>
+      <div className='mx-auto w-full max-w-3xl p-6'>
         <Skeleton className='h-9 w-64' />
         <Skeleton className='mt-6 h-52' />
       </div>
@@ -125,12 +125,12 @@ export default function GroupSetsPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-4xl p-6'>
+    <div className='mx-auto w-full max-w-3xl p-6'>
       <div className='mb-5 flex items-center justify-between gap-4'>
-        <h1 className='text-2xl font-bold'>Group categories</h1>
+        <h1 className='text-2xl font-bold'>Group Categories</h1>
         <Button onClick={openCreate}>
           <Plus className='mr-1 h-4 w-4' />
-          Create group category
+          Create Group Category
         </Button>
       </div>
 
@@ -146,7 +146,7 @@ export default function GroupSetsPage() {
       ) : (
         <div className='overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm'>
           <div className='min-w-[640px]'>
-            <div className='grid grid-cols-[1.6fr_0.8fr_1.4fr_1fr_1.4fr] gap-4 bg-neutral-50 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400'>
+            <div className='grid grid-cols-[1.6fr_1fr_1fr_1fr_1.4fr] gap-4 bg-neutral-50 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400'>
               <span>Name</span>
               <span>Size</span>
               <span>Students</span>
@@ -156,7 +156,7 @@ export default function GroupSetsPage() {
             {sets.map((gs) => (
               <div
                 key={gs.id}
-                className='grid grid-cols-[1.6fr_0.8fr_1.4fr_1fr_1.4fr] items-center gap-4 border-t border-neutral-100 px-5 py-3.5 hover:bg-neutral-50'
+                className='grid grid-cols-[1.6fr_1fr_1fr_1fr_1.4fr] items-center gap-4 border-t border-neutral-100 px-5 py-3.5 hover:bg-neutral-50'
               >
                 <div className='min-w-0'>
                   <div className='truncate text-sm font-medium'>{gs.name}</div>
@@ -182,7 +182,7 @@ export default function GroupSetsPage() {
                     size='sm'
                     onClick={() => router.push(`/groupsets/${gs.id}`)}
                   >
-                    Manage groups
+                    Manage Groups
                   </Button>
                   <Button
                     size='sm'

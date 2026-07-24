@@ -135,8 +135,8 @@ export default function SubmitAssignmentPage() {
   }
 
   return (
-    <div className='container mx-auto max-w-3xl py-8'>
-      <Card className='max-w-2xl'>
+    <div className='mx-auto w-full max-w-2xl px-6 py-8'>
+      <Card className='w-full'>
         {previousSubmission ? (
           <CardContent className='pt-6'>
             <div className='space-y-6 text-center'>
@@ -177,8 +177,10 @@ export default function SubmitAssignmentPage() {
         ) : (
           <>
             <CardHeader>
-              <CardTitle>Submit Assignment</CardTitle>
-              <p className='text-sm text-muted-foreground'>
+              <CardTitle className='text-2xl font-bold'>
+                Submit Assignment
+              </CardTitle>
+              <p className='text-sm text-neutral-500'>
                 {submissionStatus.message}
               </p>
             </CardHeader>
@@ -201,9 +203,12 @@ export default function SubmitAssignmentPage() {
                     }
                     disabled={!submissionStatus.isOpen}
                   />
-                  <label htmlFor='honesty' className='text-sm leading-none'>
-                    I confirm that this is my own work and I have not
-                    plagiarized or copied from any unauthorized sources.
+                  <label
+                    htmlFor='honesty'
+                    className='text-sm leading-relaxed text-neutral-700'
+                  >
+                    I declare that this submission is my own work and that I
+                    have not plagiarised or colluded with others.
                   </label>
                 </div>
 
@@ -216,10 +221,12 @@ export default function SubmitAssignmentPage() {
                     }
                     disabled={!submissionStatus.isOpen}
                   />
-                  <label htmlFor='anonymous' className='text-sm leading-none'>
-                    I confirm that my submission does not contain any personal
-                    identifying information (such as name, email, or student
-                    number).
+                  <label
+                    htmlFor='anonymous'
+                    className='text-sm leading-relaxed text-neutral-700'
+                  >
+                    I understand that my submission will be anonymised and
+                    distributed to peers for review.
                   </label>
                 </div>
               </div>
@@ -230,8 +237,14 @@ export default function SubmitAssignmentPage() {
                   className='border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-900/10 dark:text-red-200'
                 >
                   <AlertTriangle className='h-4 w-4' />
-                  <AlertDescription className=''>
-                    Late submissions not accepted.
+                  <AlertDescription>
+                    <span className='block font-medium'>
+                      Late Submission Warning
+                    </span>
+                    <span className='mt-0.5 block text-sm'>
+                      Submissions after the deadline will incur a penalty as per
+                      university policy.
+                    </span>
                   </AlertDescription>
                 </Alert>
               )}

@@ -9,7 +9,7 @@
  * the unified /assignments/create/{course_id} endpoint.
  */
 
-import { ReactNode, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { DefaultService, GroupSetSchema } from '@/src/api'
 import { useCourse } from '@/src/contexts/course-context'
@@ -18,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -25,14 +26,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, Users, User } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 type AType = 'INDIVIDUAL' | 'GROUP'
 
 export default function CreateAssignmentPage() {
   const router = useRouter()
-  const { currentCourseId, currentCourse } = useCourse()
+  const { currentCourseId } = useCourse()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -102,18 +103,16 @@ export default function CreateAssignmentPage() {
     }
   }
 
-  const typeOptions: { value: AType; title: string; desc: string; icon: ReactNode }[] = [
+  const typeOptions: { value: AType; title: string; desc: string }[] = [
     {
       value: 'INDIVIDUAL',
       title: 'Individual',
       desc: 'Each student submits their own work.',
-      icon: <User className='h-4 w-4' />,
     },
     {
       value: 'GROUP',
       title: 'Group',
       desc: 'One submission per group, from any member.',
-      icon: <Users className='h-4 w-4' />,
     },
   ]
 
@@ -181,11 +180,8 @@ export default function CreateAssignmentPage() {
                     active ? 'border-neutral-900 bg-neutral-50' : 'border-neutral-200 hover:border-neutral-300'
                   }`}
                 >
-                  <span className='mb-1 flex items-center gap-1.5 text-sm font-semibold'>
-                    {opt.icon}
-                    {opt.title}
-                  </span>
-                  <span className='block text-xs leading-snug text-neutral-500'>{opt.desc}</span>
+                  <span className='mb-[3px] block text-sm font-semibold'>{opt.title}</span>
+                  <span className='block text-xs leading-[1.45] text-neutral-500'>{opt.desc}</span>
                 </button>
               )
             })}
@@ -196,7 +192,12 @@ export default function CreateAssignmentPage() {
             <div className='mt-4 grid grid-cols-[2fr_1fr_1fr] gap-3 border-t border-neutral-100 pt-4'>
               <div className='grid gap-1'>
                 <Label className='text-[13px] font-medium text-neutral-700'>Group Category</Label>
-                <Select value={groupSetId} onValueChange={setGroupSetId}>
+                <Select
+                  value={groupSetId}
+                  onValueChange={(v) =>
+                    v === '__new__' ? router.push('/groupsets') : setGroupSetId(v)
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder='Select a group category' />
                   </SelectTrigger>
@@ -206,6 +207,9 @@ export default function CreateAssignmentPage() {
                         {gs.name} ({gs.groups_count} groups)
                       </SelectItem>
                     ))}
+                    <SelectItem value='__new__'>
+                      + Create new group category…
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -222,83 +226,85 @@ export default function CreateAssignmentPage() {
 
           {/* Peer review toggle */}
           <div className='mt-4 border-t border-neutral-100 pt-4'>
-            <label className='flex cursor-pointer items-start gap-2.5'>
+            <label className='flex cursor-pointer items-center gap-2.5'>
               <input
                 type='checkbox'
                 checked={peerEnabled}
                 onChange={(e) => setPeerEnabled(e.target.checked)}
-                className='mt-0.5 h-[15px] w-[15px] accent-neutral-900'
+                className='h-[15px] w-[15px] accent-neutral-900'
               />
               <span className='text-[13px] font-semibold text-neutral-700'>
                 Enable Peer Review
-                <span className='mt-0.5 block text-xs font-normal text-neutral-400'>
+                <span className='mt-px block text-xs font-normal text-neutral-400'>
                   Students review each other&apos;s submissions anonymously. Works with
                   both Individual and Group assignments.
                 </span>
               </span>
             </label>
             {peerEnabled && (
-              <div className='mt-3.5 grid grid-cols-2 gap-3'>
-                <div className='grid gap-1'>
-                  <Label className='text-[13px] font-medium text-neutral-700'>Reviews per student</Label>
-                  <Input
-                    type='number'
-                    min={1}
-                    value={reviewsPerStudent}
-                    onChange={(e) => setReviewsPerStudent(Number(e.target.value))}
-                  />
+              <>
+                <div className='mt-3.5 grid grid-cols-2 gap-3'>
+                  <div className='grid gap-1'>
+                    <Label className='text-[13px] font-medium text-neutral-700'>Reviews per student</Label>
+                    <Input
+                      type='number'
+                      min={1}
+                      value={reviewsPerStudent}
+                      onChange={(e) => setReviewsPerStudent(Number(e.target.value))}
+                    />
+                  </div>
+                  <div className='grid gap-1'>
+                    <Label className='text-[13px] font-medium text-neutral-700'>Review deadline</Label>
+                    <Input type='datetime-local' value={reviewDeadline} onChange={(e) => setReviewDeadline(e.target.value)} />
+                  </div>
                 </div>
-                <div className='grid gap-1'>
-                  <Label className='text-[13px] font-medium text-neutral-700'>Review deadline</Label>
-                  <Input type='datetime-local' value={reviewDeadline} onChange={(e) => setReviewDeadline(e.target.value)} />
+                <div className='mt-3 rounded-md border border-neutral-100 bg-neutral-50 px-3 py-2.5 text-xs leading-normal text-neutral-500'>
+                  Reviewers are anonymised. For <b className='font-semibold'>Group</b>{' '}
+                  assignments with peer review, reviewers are allocated exclusively
+                  from students in other groups.
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Self-assessment toggle */}
-          <div className='mt-4 border-t border-neutral-100 pt-4'>
-            <label className='flex cursor-pointer items-start gap-2.5'>
-              <input
-                type='checkbox'
-                checked={saEnabled}
-                onChange={(e) => setSaEnabled(e.target.checked)}
-                className='mt-0.5 h-[15px] w-[15px] accent-neutral-900'
-              />
-              <span className='text-[13px] font-semibold text-neutral-700'>
-                Enable Self-Assessment
-                <span className='mt-0.5 block text-xs font-normal text-neutral-400'>
-                  Students reflect on their own work with a checklist, rubric self-grading
-                  and Gibbs reflection. Configure it after creating.
-                </span>
-              </span>
-            </label>
-            {saEnabled && (
-              <div className='mt-3.5 grid grid-cols-2 gap-3'>
-                <div className='grid gap-1'>
-                  <Label className='text-[13px] font-medium text-neutral-700'>Self-Assessment Deadline</Label>
-                  <Input type='datetime-local' value={saDeadline} onChange={(e) => setSaDeadline(e.target.value)} />
-                </div>
-              </div>
+              </>
             )}
           </div>
         </CardContent>
       </Card>
 
+      {/* Self-Assessment */}
+      <Card className='mb-5'>
+        <CardContent className='pt-6'>
+          <div className='flex items-center justify-between gap-4'>
+            <span>
+              <span className='block text-[15px] font-semibold'>Self-Assessment</span>
+              <span className='mt-0.5 block text-[13px] text-neutral-500'>
+                Checklist, rubric self-grading and guided reflection
+              </span>
+            </span>
+            <Switch
+              checked={saEnabled}
+              onCheckedChange={setSaEnabled}
+              aria-label='Enable Self-Assessment'
+            />
+          </div>
+          {saEnabled && (
+            <div className='mt-4 grid grid-cols-2 gap-3 border-t border-neutral-100 pt-4'>
+              <div className='grid gap-1'>
+                <Label className='text-[13px] font-medium text-neutral-700'>Self-Assessment Deadline</Label>
+                <Input type='datetime-local' value={saDeadline} onChange={(e) => setSaDeadline(e.target.value)} />
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Footer */}
-      <div className='flex items-center justify-between'>
-        <span className='text-xs text-neutral-400'>
-          {currentCourse ? `New assignment in ${currentCourse.courseCode}` : ''}
-        </span>
-        <div className='flex gap-2'>
-          <Button variant='outline' onClick={() => router.push('/assignments')}>
-            Cancel
-          </Button>
-          <Button onClick={create} disabled={submitting}>
-            {submitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-            Create Assignment
-          </Button>
-        </div>
+      <div className='flex justify-end gap-2 pb-8'>
+        <Button variant='outline' onClick={() => router.push('/assignments')}>
+          Cancel
+        </Button>
+        <Button onClick={create} disabled={submitting}>
+          {submitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+          Create Assignment
+        </Button>
       </div>
     </div>
   )

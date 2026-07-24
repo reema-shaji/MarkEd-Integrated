@@ -66,7 +66,7 @@ export default function GroupResultPage() {
   return (
     <div className='mx-auto w-full max-w-2xl p-6'>
       <div className='mb-1.5 text-[13px] text-neutral-400'>
-        My groups / Results
+        My Groups / Results
       </div>
       <h1 className='mb-5 text-2xl font-bold'>{result.group_name} — Results</h1>
 
@@ -84,11 +84,8 @@ export default function GroupResultPage() {
               <div className='text-[11px] font-semibold text-neutral-400'>
                 GROUP BASE SCORE
               </div>
-              <div className='mt-1 text-2xl font-bold tabular-nums'>
+              <div className='mt-1 text-[26px] font-bold tabular-nums'>
                 {b.group_score}
-              </div>
-              <div className='text-[11px] text-neutral-400'>
-                / {b.group_total}
               </div>
             </div>
             <div className='text-lg text-neutral-400'>+</div>
@@ -97,7 +94,7 @@ export default function GroupResultPage() {
                 YOUR ADJUSTMENT
               </div>
               <div
-                className={`mt-1 text-2xl font-bold tabular-nums ${
+                className={`mt-1 text-[26px] font-bold tabular-nums ${
                   adjustment < 0
                     ? 'text-red-600'
                     : adjustment > 0
@@ -113,11 +110,8 @@ export default function GroupResultPage() {
               <div className='text-[11px] font-semibold text-neutral-400'>
                 YOUR FINAL SCORE
               </div>
-              <div className='mt-1 text-2xl font-bold tabular-nums text-white'>
+              <div className='mt-1 text-[26px] font-bold tabular-nums text-white'>
                 {b.final_score}
-              </div>
-              <div className='text-[11px] text-neutral-400'>
-                {b.final_percentage.toFixed(1)}%
               </div>
             </div>
           </div>

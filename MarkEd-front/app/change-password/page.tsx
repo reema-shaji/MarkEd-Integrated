@@ -63,7 +63,7 @@ export default function ChangePasswordPage() {
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-neutral-100 p-6'>
-      <Card className='w-full max-w-md'>
+      <Card className='w-full max-w-[400px]'>
         <CardHeader>
           <CardTitle className='text-xl font-bold'>Change your password</CardTitle>
           <CardDescription>
@@ -72,7 +72,7 @@ export default function ChangePasswordPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={submit} className='grid gap-4'>
+          <form onSubmit={submit} className='grid gap-3.5'>
             <div className='grid gap-1.5'>
               <Label htmlFor='current'>Current password</Label>
               <Input

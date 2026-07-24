@@ -93,7 +93,7 @@ export default function DashboardPage() {
 
   if (!assignment || !stats) {
     return (
-      <div className='mx-auto w-full max-w-4xl space-y-5 p-6'>
+      <div className='mx-auto w-full max-w-3xl space-y-5 p-6'>
         <Skeleton className='h-8 w-56' />
         <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
           {Array.from({ length: 4 }).map((_, i) => (
@@ -113,7 +113,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-4xl space-y-5 p-6'>
+    <div className='mx-auto w-full max-w-3xl space-y-5 p-6'>
       <h1 className='text-2xl font-bold'>Staff Dashboard</h1>
 
       {/* Statistics Cards */}
@@ -124,11 +124,11 @@ export default function DashboardPage() {
               Total Submissions
             </div>
             <div className='mt-1 text-2xl font-bold'>
-              {stats.unique_submitters}
+              {stats.total_submissions}
+              <span className='ml-1 text-sm font-medium text-neutral-400'>
+                · {stats.unique_submitters} students
+              </span>
             </div>
-            <p className='mt-1 text-xs text-neutral-400'>
-              {stats.total_submissions} total uploads
-            </p>
           </CardContent>
         </Card>
 
@@ -139,8 +139,10 @@ export default function DashboardPage() {
             </div>
             <div className='mt-1 text-2xl font-bold'>
               {stats.active_users_24h}
+              <span className='ml-1 text-sm font-medium text-neutral-400'>
+                · last 24h
+              </span>
             </div>
-            <p className='mt-1 text-xs text-neutral-400'>in the last 24 hours</p>
           </CardContent>
         </Card>
 
@@ -153,10 +155,6 @@ export default function DashboardPage() {
               {stats.completion_rate}%
             </div>
             <Progress value={stats.completion_rate} className='mt-2 h-2' />
-            <p className='mt-2 text-xs text-neutral-400'>
-              {stats.peer_review_stats.COMPLETED || 0} of{' '}
-              {stats.total_peer_reviews} completed
-            </p>
           </CardContent>
         </Card>
 
@@ -167,10 +165,10 @@ export default function DashboardPage() {
             </div>
             <div className='mt-1 text-2xl font-bold'>
               {stats.average_reviews_per_student}
+              <span className='ml-1 text-sm font-medium text-neutral-400'>
+                · avg
+              </span>
             </div>
-            <p className='mt-1 text-xs text-neutral-400'>
-              average reviews assigned
-            </p>
           </CardContent>
         </Card>
       </div>
@@ -215,9 +213,9 @@ export default function DashboardPage() {
       </Card>
 
       <Card>
-        <CardHeader className='flex flex-row items-center justify-between'>
+        <CardHeader className='flex flex-row items-center justify-between gap-4'>
           <CardTitle className='text-base font-semibold'>
-            Peer Review Matches
+            Peer Review Matches — {assignment.assignmentTitle}
           </CardTitle>
           <Button
             onClick={handleMatchPeers}
@@ -238,30 +236,36 @@ export default function DashboardPage() {
         <CardContent>
           {matches.length > 0 ? (
             <div className='space-y-4'>
-              <div className='grid grid-cols-3 gap-4'>
-                <div className='rounded-lg border p-4 shadow-sm transition-colors hover:bg-accent/50'>
-                  <div className='flex flex-col items-center space-y-2'>
-                    <CheckCircle2 className='h-8 w-8 text-green-500' />
-                    <span className='text-sm font-medium'>Completed</span>
-                    <span className='text-2xl font-bold'>
+              <div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
+                <div className='flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3'>
+                  <CheckCircle2 className='h-5 w-5 shrink-0 text-green-600' />
+                  <div>
+                    <span className='block text-xs font-medium text-green-800'>
+                      Completed
+                    </span>
+                    <span className='block text-xl font-bold text-green-900'>
                       {stats.peer_review_stats.COMPLETED || 0}
                     </span>
                   </div>
                 </div>
-                <div className='rounded-lg border p-4 shadow-sm transition-colors hover:bg-accent/50'>
-                  <div className='flex flex-col items-center space-y-2'>
-                    <Clock className='h-8 w-8 text-yellow-500' />
-                    <span className='text-sm font-medium'>In Progress</span>
-                    <span className='text-2xl font-bold'>
+                <div className='flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3'>
+                  <Clock className='h-5 w-5 shrink-0 text-yellow-600' />
+                  <div>
+                    <span className='block text-xs font-medium text-yellow-800'>
+                      In Progress
+                    </span>
+                    <span className='block text-xl font-bold text-yellow-900'>
                       {stats.peer_review_stats.IN_PROGRESS || 0}
                     </span>
                   </div>
                 </div>
-                <div className='rounded-lg border p-4 shadow-sm transition-colors hover:bg-accent/50'>
-                  <div className='flex flex-col items-center space-y-2'>
-                    <Clock className='h-8 w-8 text-gray-400' />
-                    <span className='text-sm font-medium'>Not Started</span>
-                    <span className='text-2xl font-bold'>
+                <div className='flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3'>
+                  <Clock className='h-5 w-5 shrink-0 text-neutral-400' />
+                  <div>
+                    <span className='block text-xs font-medium text-neutral-600'>
+                      Not Started
+                    </span>
+                    <span className='block text-xl font-bold text-neutral-800'>
                       {stats.peer_review_stats.PENDING || 0}
                     </span>
                   </div>

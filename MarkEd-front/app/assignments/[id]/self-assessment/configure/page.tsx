@@ -29,12 +29,13 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { Check, ChevronDown, Plus, Trash2 } from 'lucide-react'
+import { Check, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ChecklistItem {
@@ -65,8 +66,16 @@ export default function SelfAssessmentConfigurePage() {
   const [tree, setTree] = useState<RubricTreeNode[]>([])
   const [selected, setSelected] = useState<Set<number>>(new Set())
 
-  const [newItem, setNewItem] = useState('')
-  const [addingItem, setAddingItem] = useState(false)
+  // Checklist add/edit/delete are handled through a modal, as in the prototype.
+  const [modal, setModal] = useState<
+    | { mode: 'add' }
+    | { mode: 'edit'; item: ChecklistItem }
+    | { mode: 'delete'; item: ChecklistItem }
+    | null
+  >(null)
+  const [draftName, setDraftName] = useState('')
+  const [draftDesc, setDraftDesc] = useState('')
+  const [busy, setBusy] = useState(false)
   const [baseline, setBaseline] = useState('')
 
   /** Snapshot of everything the single save persists, for dirty tracking. */
@@ -141,30 +150,66 @@ export default function SelfAssessmentConfigurePage() {
       return next
     })
 
-  // Checklist items are discrete list actions (add/remove immediately), exactly
-  // as Mingyue handled them through her modals.
-  const addChecklistItem = async () => {
-    if (!newItem.trim()) return
-    setAddingItem(true)
+  // Checklist items are discrete list actions handled through the prototype's
+  // add / edit / delete modals, each mapping to an immediate API call.
+  const openAdd = () => {
+    setDraftName('')
+    setDraftDesc('')
+    setModal({ mode: 'add' })
+  }
+  const openEdit = (item: ChecklistItem) => {
+    setDraftName(item.name)
+    setDraftDesc(item.description ?? '')
+    setModal({ mode: 'edit', item })
+  }
+
+  const confirmAdd = async () => {
+    if (!draftName.trim()) return
+    setBusy(true)
     try {
       const created = await DefaultService.addChecklistItem(assignmentId, {
-        name: newItem.trim(),
+        name: draftName.trim(),
+        description: draftDesc.trim() || undefined,
       })
       setChecklist((prev) => [...prev, created as ChecklistItem])
-      setNewItem('')
+      setModal(null)
     } catch {
       toast.error('Could not add that checklist item')
     } finally {
-      setAddingItem(false)
+      setBusy(false)
     }
   }
 
-  const deleteChecklistItem = async (itemId: number) => {
+  const confirmEdit = async () => {
+    if (modal?.mode !== 'edit' || !draftName.trim()) return
+    setBusy(true)
     try {
-      await DefaultService.deleteChecklistItem(itemId)
-      setChecklist((prev) => prev.filter((i) => i.id !== itemId))
+      const updated = await DefaultService.editChecklistItem(modal.item.id, {
+        name: draftName.trim(),
+        description: draftDesc.trim() || undefined,
+      })
+      setChecklist((prev) =>
+        prev.map((i) => (i.id === modal.item.id ? (updated as ChecklistItem) : i))
+      )
+      setModal(null)
+    } catch {
+      toast.error('Could not update that checklist item')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const confirmDelete = async () => {
+    if (modal?.mode !== 'delete') return
+    setBusy(true)
+    try {
+      await DefaultService.deleteChecklistItem(modal.item.id)
+      setChecklist((prev) => prev.filter((i) => i.id !== modal.item.id))
+      setModal(null)
     } catch {
       toast.error('Could not remove that checklist item')
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -223,7 +268,8 @@ export default function SelfAssessmentConfigurePage() {
       </p>
       <p className='mt-2 text-xs leading-relaxed text-neutral-400'>
         <b>Self-assessment</b> = the student&apos;s own evaluation of their work.{' '}
-        <b>Feedback</b> = your optional response to that self-assessment.
+        <b>Feedback</b> = your optional response to that self-assessment (enable
+        below).
       </p>
 
       {/* Master enable toggle. */}
@@ -252,9 +298,9 @@ export default function SelfAssessmentConfigurePage() {
             Deadline
           </div>
           <CardContent className='pt-4'>
-            {/* b-4: full label. b-11: required asterisk. */}
+            {/* b-4: deadline labelled in full. */}
             <Label htmlFor='sa-deadline' className='mb-1 block'>
-              Self-Assessment Deadline <span className='text-red-600'>*</span>
+              Self-Assessment Deadline
             </Label>
             <Input
               id='sa-deadline'
@@ -262,9 +308,6 @@ export default function SelfAssessmentConfigurePage() {
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
             />
-            <p className='mt-2 text-xs text-neutral-500'>
-              Submissions after this are recorded as late.
-            </p>
           </CardContent>
         </Card>
 
@@ -298,7 +341,7 @@ export default function SelfAssessmentConfigurePage() {
           enabled={Boolean(settings.use_checklist)}
           onToggle={(checked) => patchSettings({ use_checklist: checked })}
         >
-          <div className='flex flex-col gap-2'>
+          <div className='mb-3 flex flex-col gap-2'>
             {checklist.length === 0 && (
               <p className='text-sm text-neutral-500'>
                 No items yet. Add the things students should confirm they have done.
@@ -311,14 +354,24 @@ export default function SelfAssessmentConfigurePage() {
               >
                 <div className='flex items-center justify-between gap-2 bg-white px-3.5 py-2.5'>
                   <span className='text-[13px] font-semibold'>{item.name}</span>
-                  <button
-                    type='button'
-                    aria-label={`Remove ${item.name}`}
-                    onClick={() => deleteChecklistItem(item.id)}
-                    className='text-neutral-400 hover:text-red-600'
-                  >
-                    <Trash2 className='h-4 w-4' />
-                  </button>
+                  <span className='flex gap-1.5'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      className='h-7 px-2.5 text-[11px]'
+                      onClick={() => openEdit(item)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      className='h-7 border-red-200 px-2.5 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-600'
+                      onClick={() => setModal({ mode: 'delete', item })}
+                    >
+                      Delete
+                    </Button>
+                  </span>
                 </div>
                 {item.description && (
                   <div className='border-t border-neutral-100 bg-neutral-50 px-3.5 py-2 text-xs text-neutral-500'>
@@ -328,21 +381,9 @@ export default function SelfAssessmentConfigurePage() {
               </div>
             ))}
           </div>
-          <div className='mt-3 flex gap-2'>
-            <Input
-              value={newItem}
-              onChange={(e) => setNewItem(e.target.value)}
-              placeholder='New checklist item'
-              onKeyDown={(e) => e.key === 'Enter' && addChecklistItem()}
-            />
-            <Button
-              variant='outline'
-              onClick={addChecklistItem}
-              disabled={addingItem || !newItem.trim()}
-            >
-              <Plus className='h-4 w-4' />
-            </Button>
-          </div>
+          <Button variant='outline' size='sm' onClick={openAdd}>
+            + Add Item
+          </Button>
         </ConfigSection>
 
         {/* Rubric self-grading — the jsTree replacement */}
@@ -412,6 +453,84 @@ export default function SelfAssessmentConfigurePage() {
           </Button>
         </div>
       </div>
+
+      {/* Checklist add / edit / delete modal, faithful to the prototype. */}
+      {modal && (
+        <div
+          className='fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4'
+          onClick={() => !busy && setModal(null)}
+        >
+          <div
+            className='w-full max-w-[440px] rounded-lg bg-white p-5 shadow-lg'
+            onClick={(e) => e.stopPropagation()}
+          >
+            {modal.mode === 'delete' ? (
+              <>
+                <div className='mb-2.5 text-base font-semibold text-red-600'>
+                  Delete Checklist Item
+                </div>
+                <p className='mb-4 text-sm leading-relaxed text-neutral-600'>
+                  Are you sure you want to delete{' '}
+                  <b>{modal.item.name}</b>? This action cannot be undone.
+                </p>
+                <div className='flex justify-end gap-2'>
+                  <Button
+                    variant='outline'
+                    onClick={() => setModal(null)}
+                    disabled={busy}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className='bg-red-600 text-white hover:bg-red-700'
+                    onClick={confirmDelete}
+                    disabled={busy}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className='mb-3.5 text-base font-semibold'>
+                  {modal.mode === 'add'
+                    ? 'Add Checklist Item'
+                    : 'Edit Checklist Item'}
+                </div>
+                <Input
+                  autoFocus
+                  placeholder='Item name'
+                  value={draftName}
+                  onChange={(e) => setDraftName(e.target.value)}
+                  className='mb-2.5'
+                />
+                <Textarea
+                  rows={3}
+                  placeholder='Description'
+                  value={draftDesc}
+                  onChange={(e) => setDraftDesc(e.target.value)}
+                  className='mb-3.5'
+                />
+                <div className='flex justify-end gap-2'>
+                  <Button
+                    variant='outline'
+                    onClick={() => setModal(null)}
+                    disabled={busy}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={modal.mode === 'add' ? confirmAdd : confirmEdit}
+                    disabled={busy || !draftName.trim()}
+                  >
+                    {modal.mode === 'add' ? 'Add' : 'Save Changes'}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
