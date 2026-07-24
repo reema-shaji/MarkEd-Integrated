@@ -8,6 +8,7 @@ import type { AllSubmissionSchema } from '../models/AllSubmissionSchema';
 import type { AssignmentSchema } from '../models/AssignmentSchema';
 import type { AssignmentStatistics } from '../models/AssignmentStatistics';
 import type { AutoAssignRequest } from '../models/AutoAssignRequest';
+import type { ChangePasswordIn } from '../models/ChangePasswordIn';
 import type { ChecklistItemRequest } from '../models/ChecklistItemRequest';
 import type { ChecklistItemSchema } from '../models/ChecklistItemSchema';
 import type { CommentCreate } from '../models/CommentCreate';
@@ -26,7 +27,9 @@ import type { GroupSetUpdateRequest } from '../models/GroupSetUpdateRequest';
 import type { GroupSubmissionSchema } from '../models/GroupSubmissionSchema';
 import type { GroupSubmitRequest } from '../models/GroupSubmitRequest';
 import type { GroupUpdateRequest } from '../models/GroupUpdateRequest';
+import type { LoginIn } from '../models/LoginIn';
 import type { MarkerCommentUpdate } from '../models/MarkerCommentUpdate';
+import type { MessageOut } from '../models/MessageOut';
 import type { MoveMemberRequest } from '../models/MoveMemberRequest';
 import type { MyGroupResultSchema } from '../models/MyGroupResultSchema';
 import type { PeerAssignmentCreationResponse } from '../models/PeerAssignmentCreationResponse';
@@ -56,6 +59,7 @@ import type { StudentSelfAssessmentSchema } from '../models/StudentSelfAssessmen
 import type { SubmissionRequest } from '../models/SubmissionRequest';
 import type { SubmissionResponse } from '../models/SubmissionResponse';
 import type { SubmissionSchema } from '../models/SubmissionSchema';
+import type { TokenOut } from '../models/TokenOut';
 import type { UngroupedStudentSchema } from '../models/UngroupedStudentSchema';
 import type { UserSchema } from '../models/UserSchema';
 import type { WorkspaceCommentCreateRequest } from '../models/WorkspaceCommentCreateRequest';
@@ -86,6 +90,49 @@ export class DefaultService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/health/ping',
+        });
+    }
+    /**
+     * Login
+     * @param requestBody
+     * @returns TokenOut OK
+     * @throws ApiError
+     */
+    public static apiLogin(
+        requestBody: LoginIn,
+    ): CancelablePromise<TokenOut> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/auth/login',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Logout
+     * @returns MessageOut OK
+     * @throws ApiError
+     */
+    public static apiLogout(): CancelablePromise<MessageOut> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/auth/logout',
+        });
+    }
+    /**
+     * Change Password
+     * @param requestBody
+     * @returns MessageOut OK
+     * @throws ApiError
+     */
+    public static apiChangePassword(
+        requestBody: ChangePasswordIn,
+    ): CancelablePromise<MessageOut> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/auth/change-password',
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**

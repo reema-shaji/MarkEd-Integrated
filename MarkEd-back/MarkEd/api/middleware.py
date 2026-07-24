@@ -4,13 +4,31 @@ from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
 from django.contrib.sessions.models import Session
 
+from .token_auth import user_from_request
+
+
 class AuthMiddleware:
+    """Populate request auth attributes from a bearer token, else the session.
+
+    Every API route reads request.user_id / request.user_role /
+    request.is_authenticated, so resolving the bearer token here is all that is
+    needed to make the whole API token-authenticated — no route changes. The
+    session path is kept as a fallback for the legacy Django template pages.
+    request.user_role is the role's display name ('Academic', 'Marker', 'TA',
+    'Student'), matching what the session stored and what the route decorators
+    check against.
+    """
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # Add user info to request object if logged in
-        if request.session.get('is_login'):
+        user = user_from_request(request)
+        if user is not None:
+            request.user_id = user.id
+            request.user_role = user.get_role_display()
+            request.is_authenticated = True
+        elif request.session.get('is_login'):
             request.user_id = request.session.get('user_id')
             request.user_role = request.session.get('user_role')
             request.is_authenticated = True
@@ -19,11 +37,17 @@ class AuthMiddleware:
 
         return self.get_response(request)
 
+
 class AuthBackend:
+    """django-ninja auth backend: authenticates via bearer token or session."""
+
     def __init__(self):
         self.auth_middleware = AuthMiddleware(None)
 
     def __call__(self, request):
+        user = user_from_request(request)
+        if user is not None:
+            return {'user_id': user.id, 'user_role': user.get_role_display()}
         if request.session.get('is_login'):
             return {
                 'user_id': request.session.get('user_id'),

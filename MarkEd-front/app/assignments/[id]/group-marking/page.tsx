@@ -23,7 +23,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -37,7 +36,7 @@ import {
 import { ArrowLeft, Check, Users2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-interface Row extends PersonalAdjustmentSchema {}
+type Row = PersonalAdjustmentSchema
 
 export default function GroupMarkingPage() {
   const params = useParams()

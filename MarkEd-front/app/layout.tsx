@@ -1,13 +1,7 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
 import './globals.css'
-import { AppSidebar } from '@/components/sidebar/app-sidebar'
-import { SidebarProvider } from '@/components/ui/sidebar'
-import { Toaster } from '@/components/ui/sonner'
-import { UserProvider } from '@/src/contexts/user-context'
-import WarningBanner from '@/components/warning-banner'
-import { AssignmentProvider } from '@/src/contexts/assignment-context'
-import { CourseProvider } from '@/src/contexts/course-context'
+import { AppShell } from '@/components/app-shell'
 // import Script from 'next/script'
 
 
@@ -53,18 +47,7 @@ export default function RootLayout({
             MarkEd is still in development, please use a wider screen size!
           </p>
         </div>
-        <UserProvider>
-          <CourseProvider>
-            <AssignmentProvider>
-              <SidebarProvider className='invisible md:visible'>
-                <AppSidebar />
-                <WarningBanner />
-                <div className='m-auto w-full'>{children}</div>
-                <Toaster />
-              </SidebarProvider>
-            </AssignmentProvider>
-          </CourseProvider>
-        </UserProvider>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   )

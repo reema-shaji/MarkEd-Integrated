@@ -2,6 +2,7 @@ from ninja import NinjaAPI
 from .middleware import AuthBackend
 from .routes import (
     assignments,
+    auth,
     courses,
     files,
     groups,
@@ -16,6 +17,7 @@ api = NinjaAPI(auth=AuthBackend())
 
 # Register all routes
 api.add_router("/health", health.router)
+api.add_router("/auth", auth.router)
 api.add_router("/users", users.router)
 api.add_router("/courses", courses.router)
 api.add_router("/assignments", assignments.router)

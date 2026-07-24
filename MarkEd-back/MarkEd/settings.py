@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'MarkEd',
     'rest_framework',
     'ninja',
@@ -65,6 +66,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # CorsMiddleware must sit above CommonMiddleware so CORS headers are added
+    # to responses (and preflight OPTIONS handled) before anything else.
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -205,15 +209,53 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'yahoo addresses should work with these settings'
 EMAIL_HOST_PASSWORD = 'generate your own'
 
-# CSRF Settings
-CSRF_TRUSTED_ORIGINS = [
-    'https://marked.tomasmaillo.com',
-    'http://marked.tomasmaillo.com'
-]
+IS_PRODUCTION = os.getenv('DJANGO_ENV') == 'production'
 
-# Cookie settings
-CSRF_COOKIE_SECURE = os.getenv('DJANGO_ENV') == 'production'
-SESSION_COOKIE_SECURE = os.getenv('DJANGO_ENV') == 'production'
+# --- CORS (SPA on a different origin, e.g. Vercel) -------------------------
+# Auth is bearer-token, not cookies, so credentials are NOT needed cross-origin;
+# the browser sends the Authorization header, which CORS allows by default.
+# List the frontend origin(s) in CORS_ALLOWED_ORIGINS, and/or set
+# CORS_ALLOW_VERCEL=true to allow every *.vercel.app preview/production URL.
+CORS_ALLOWED_ORIGINS = [
+    o.strip() for o in os.getenv(
+        'CORS_ALLOWED_ORIGINS',
+        'http://localhost:3000,http://localhost'
+    ).split(',') if o.strip()
+]
+CORS_ALLOW_CREDENTIALS = False
+CORS_ALLOWED_ORIGIN_REGEXES = []
+if os.getenv('CORS_ALLOW_VERCEL', 'false').lower() == 'true':
+    CORS_ALLOWED_ORIGIN_REGEXES.append(
+        os.getenv('CORS_VERCEL_REGEX', r'^https://.*\.vercel\.app$')
+    )
+
+# --- CSRF / cookies --------------------------------------------------------
+# CSRF only matters for the legacy Django template pages; the SPA uses the
+# bearer token. Trusted origins come from env so deployment sets its own.
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()
+]
+CSRF_COOKIE_SECURE = IS_PRODUCTION
+SESSION_COOKIE_SECURE = IS_PRODUCTION
+
+# Behind Render's proxy, tell Django the original request was HTTPS so secure
+# cookies and redirects behave correctly.
+if IS_PRODUCTION:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# --- Cache (bearer-token store) --------------------------------------------
+# Tokens live in the cache. Django 4.2 ships a native Redis backend, so no
+# extra dependency is needed. REDIS_URL is provided by Render; locally it
+# falls back to the compose redis service.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': os.getenv('REDIS_URL', os.getenv('REDIS_HOST', 'redis://redis:6379/0')),
+    }
+}
+
+# How long a bearer token stays valid (seconds).
+SESSION_TOKEN_TTL = int(os.getenv('SESSION_TOKEN_TTL', str(60 * 60 * 24 * 7)))
 
 
 # View entire log

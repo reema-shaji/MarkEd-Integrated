@@ -30,7 +30,10 @@ build/ # Webpack build output
 .vscode/
 
 
-*.json
+# NOTE: a blanket `*.json` used to live here and silently excluded
+# package.json, package-lock.json, tsconfig.json, components.json, etc. —
+# which breaks fresh clones and any CI/Vercel/Render build. Removed. Only
+# ignore genuine data files, never config.
 *.csv
 *.xlsx
 *.xls

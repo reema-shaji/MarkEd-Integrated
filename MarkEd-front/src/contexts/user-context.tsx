@@ -2,6 +2,22 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { UserSchema, DefaultService } from '@/src/api'
+import { clearToken, initializeApi } from '@/src/api/config'
+
+// Configure the API client (base URL + bearer-token resolver) before any
+// provider issues a request. Safe to call more than once.
+initializeApi()
+
+/** Send the user to the SPA login page (respecting the /p basePath). */
+function redirectToLogin() {
+  clearToken()
+  if (
+    typeof window !== 'undefined' &&
+    !window.location.pathname.endsWith('/login')
+  ) {
+    window.location.href = '/p/login'
+  }
+}
 
 interface ExtendedUserSchema extends UserSchema {
   isStudent: boolean
@@ -46,7 +62,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         'status' in error &&
         error.status === 401
       ) {
-        window.location.href = '/login'
+        redirectToLogin()
       }
     } finally {
       setIsLoading(false)

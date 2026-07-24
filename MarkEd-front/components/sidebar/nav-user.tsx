@@ -16,10 +16,24 @@ import {
 } from '@/components/ui/sidebar'
 import { useUser } from '@/src/contexts/user-context'
 import { UserAvatar } from '@/components/user-avatar'
+import { DefaultService } from '@/src/api'
+import { clearToken } from '@/src/api/config'
 
 export function NavUser() {
   const { isMobile } = useSidebar()
   const { user } = useUser()
+
+  const logout = async () => {
+    // Revoke the token server-side, then drop it locally and return to login.
+    try {
+      await DefaultService.apiLogout()
+    } catch {
+      // Even if the revoke call fails, clear the local token so the browser
+      // is signed out.
+    }
+    clearToken()
+    window.location.href = '/p/login'
+  }
 
   return (
     <SidebarMenu>
@@ -40,11 +54,9 @@ export function NavUser() {
             align='end'
             sideOffset={4}
           >
-            <DropdownMenuItem>
-              <a href='/logout' className='flex items-center gap-2'>
-                <LogOut />
-                Log out
-              </a>
+            <DropdownMenuItem onClick={logout} className='cursor-pointer'>
+              <LogOut />
+              Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
