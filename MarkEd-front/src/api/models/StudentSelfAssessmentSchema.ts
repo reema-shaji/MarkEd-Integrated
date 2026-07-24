@@ -12,10 +12,10 @@ export type StudentSelfAssessmentSchema = {
     userName: string;
     submitted_at: string;
     is_late: boolean;
-    checklist?: Array<SAChecklistAnswerSchema>;
-    rubric?: Array<SARubricAnswerSchema>;
-    rubric_total?: number;
-    reflections?: Array<SAReflectionAnswerSchema>;
+    checklist: Array<SAChecklistAnswerSchema>;
+    rubric: Array<SARubricAnswerSchema>;
+    rubric_total: number;
+    reflections: Array<SAReflectionAnswerSchema>;
     feedback_text?: string;
 };
 

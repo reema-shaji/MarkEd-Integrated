@@ -92,18 +92,18 @@ class SelfAssessmentFormSchema(Schema):
     is_late: bool = False
 
     use_checklist: bool
-    checklist_items: List[ChecklistItemSchema] = []
+    checklist_items: List[ChecklistItemSchema]
 
     use_reflection: bool
-    reflection_prompts: List[ReflectionPromptSchema] = []
+    reflection_prompts: List[ReflectionPromptSchema]
 
     use_rubric: bool
-    rubric_items: List[RubricItemSchema] = []
+    rubric_items: List[RubricItemSchema]
 
     # Previously saved answers, so the form reopens where the student left off.
-    checklist_answers: Dict[str, bool] = {}
-    rubric_answers: Dict[str, int] = {}
-    reflection_answers: Dict[str, str] = {}
+    checklist_answers: Dict[str, bool]
+    rubric_answers: Dict[str, int]
+    reflection_answers: Dict[str, str]
     feedback_text: str = ''
     submitted_at: Optional[datetime] = None
 
@@ -149,10 +149,10 @@ class StudentSelfAssessmentSchema(Schema):
     userName: str
     submitted_at: datetime
     is_late: bool
-    checklist: List[SAChecklistAnswerSchema] = []
-    rubric: List[SARubricAnswerSchema] = []
-    rubric_total: float = 0
-    reflections: List[SAReflectionAnswerSchema] = []
+    checklist: List[SAChecklistAnswerSchema]
+    rubric: List[SARubricAnswerSchema]
+    rubric_total: float
+    reflections: List[SAReflectionAnswerSchema]
     feedback_text: str = ''
 
 

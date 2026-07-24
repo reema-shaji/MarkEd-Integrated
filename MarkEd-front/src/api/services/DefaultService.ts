@@ -895,44 +895,6 @@ export class DefaultService {
         });
     }
     /**
-     * Update Group
-     * @param groupId
-     * @param requestBody
-     * @returns GroupSchema OK
-     * @throws ApiError
-     */
-    public static updateGroup(
-        groupId: number,
-        requestBody: GroupUpdateRequest,
-    ): CancelablePromise<GroupSchema> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/groups/{group_id}',
-            path: {
-                'group_id': groupId,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * Delete Group
-     * @param groupId
-     * @returns ActionResponse OK
-     * @throws ApiError
-     */
-    public static deleteGroup(
-        groupId: number,
-    ): CancelablePromise<ActionResponse> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/groups/{group_id}',
-            path: {
-                'group_id': groupId,
-            },
-        });
-    }
-    /**
      * Add Group Members
      * @param groupId
      * @param requestBody
@@ -1223,6 +1185,44 @@ export class DefaultService {
             url: '/api/groups/group-submissions/{group_submission_id}/my-result',
             path: {
                 'group_submission_id': groupSubmissionId,
+            },
+        });
+    }
+    /**
+     * Update Group
+     * @param groupId
+     * @param requestBody
+     * @returns GroupSchema OK
+     * @throws ApiError
+     */
+    public static updateGroup(
+        groupId: number,
+        requestBody: GroupUpdateRequest,
+    ): CancelablePromise<GroupSchema> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/groups/{group_id}',
+            path: {
+                'group_id': groupId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Delete Group
+     * @param groupId
+     * @returns ActionResponse OK
+     * @throws ApiError
+     */
+    public static deleteGroup(
+        groupId: number,
+    ): CancelablePromise<ActionResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/groups/{group_id}',
+            path: {
+                'group_id': groupId,
             },
         });
     }
