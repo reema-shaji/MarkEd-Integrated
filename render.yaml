@@ -78,6 +78,12 @@ services:
         value: "true"
       - key: SEED_DEMO_PASSWORD
         sync: false              # ⚠ set a private password for a public deploy
+      # One-shot DB reset: set to "true" for a SINGLE deploy to WIPE all data and
+      # reseed a fresh, all-unsubmitted demo, then set back to "false". While it
+      # is "true", EVERY deploy erases all data. Use it to clear stale rows
+      # (e.g. old submissions) on a hosted DB with no shell.
+      - key: SEED_RESET
+        value: "false"
 
       # --- CORS: allow the Vercel frontend to call this API ------------------
       # Auth is a bearer token, so credentials/cookies are NOT sent cross-origin;
