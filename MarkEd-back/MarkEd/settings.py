@@ -102,25 +102,41 @@ WSGI_APPLICATION = 'MarkEd.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DATABASE_NAME', 'markeddb1'),
-        'HOST': os.getenv('DATABASE_HOST', 'localhost'),
-        'PORT': 3306,
-        'USER': os.getenv('DATABASE_USER', 'root'),
-        'PASSWORD': os.getenv('DATABASE_PASSWORD', 'new_password'),
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
-        },
-        'CONN_MAX_AGE': 60,
-        'POOL_OPTIONS': {
-            'POOL_SIZE': 20,
-            'POOL_TIMEOUT': 30,
+# Database.
+#
+# Locally and in the source branches this is MySQL 8 (Unified PRD §12.1). For
+# deployment on Render — which offers managed Postgres but not MySQL — set
+# DATABASE_URL (e.g. postgres://...) and the app runs Postgres instead, with no
+# code changes. When DATABASE_URL is unset, the MySQL configuration below is
+# used, so local development and the docker-compose stack are unchanged.
+if os.getenv('DATABASE_URL'):
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=os.getenv('DATABASE_SSL', 'true') == 'true',
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('DATABASE_NAME', 'markeddb1'),
+            'HOST': os.getenv('DATABASE_HOST', 'localhost'),
+            'PORT': 3306,
+            'USER': os.getenv('DATABASE_USER', 'root'),
+            'PASSWORD': os.getenv('DATABASE_PASSWORD', 'new_password'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            },
+            'CONN_MAX_AGE': 60,
+            'POOL_OPTIONS': {
+                'POOL_SIZE': 20,
+                'POOL_TIMEOUT': 30,
+            }
         }
     }
-}
 
 
 # Password validation

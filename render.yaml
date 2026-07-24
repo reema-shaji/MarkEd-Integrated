@@ -1,0 +1,107 @@
+# Render blueprint for the unified MarkEd system.
+#
+# STATUS: starting blueprint — deploy once and reconcile the env specifics
+# flagged below (marked  ⚠). The database switch it relies on (DATABASE_URL →
+# Postgres) is implemented and verified locally; the service wiring here still
+# needs one real deploy to shake out ports/hosts/CORS.
+#
+# Architecture on Render (Design/Unified PRD Option B):
+#   - Postgres (managed)         — Render offers Postgres, not MySQL, which is
+#                                  why the app reads DATABASE_URL (settings.py).
+#   - Redis / Key Value          — Celery broker + cache.
+#   - Backend web service        — Django + django-ninja API (Docker).
+#   - Frontend web service        — Next.js (Docker), OR host it on Vercel.
+#
+# There is no nginx service here: locally nginx reverse-proxies /api → backend
+# and everything else → frontend, but on Render each service gets its own URL,
+# so the frontend talks to the backend directly via NEXT_PUBLIC_API_URL and
+# CORS. File storage (submissions/instructions) needs an external S3/R2 bucket —
+# Render has no object store.
+
+databases:
+  - name: marked-db
+    databaseName: markeddb1
+    user: marked
+    plan: free
+
+services:
+  # --- Redis (Celery broker + cache) ---------------------------------------
+  - type: redis
+    name: marked-redis
+    plan: free
+    ipAllowList: []            # internal only
+    maxmemoryPolicy: noeviction
+
+  # --- Backend: Django + django-ninja API ----------------------------------
+  - type: web
+    name: marked-api
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile.django
+    dockerContext: ./MarkEd-back
+    plan: free
+    healthCheckPath: /api/health/health
+    # ⚠ The Docker image's default CMD runs the dev server. On Render, bind the
+    # PORT Render provides and serve with uvicorn/gunicorn. Override here:
+    dockerCommand: >
+      sh -c "python manage.py migrate --noinput &&
+             uvicorn MarkEd.asgi:application --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: marked-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: marked-redis
+          type: redis
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ENV
+        value: production        # DEBUG=False (settings.py line ~45)
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CELERY_BROKER_URL   # free tier has no worker; see note below
+        fromService:
+          name: marked-redis
+          type: redis
+          property: connectionString
+      # ⚠ File storage — point at an external S3-compatible bucket (AWS S3 /
+      # Cloudflare R2). Without these, submission/instruction PDFs will not load.
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: STORAGE_BUCKET_NAME
+        sync: false
+      # ⚠ OpenAI/ELM key for AI peer-review suggestions (optional; the review
+      # flow works without it, just with no AI coaching).
+      - key: OPENAI_API_KEY
+        sync: false
+      # ⚠ After the frontend deploys, set this to its URL so CORS/CSRF allow it.
+      - key: FRONTEND_ORIGIN
+        sync: false
+
+  # --- Frontend: Next.js ----------------------------------------------------
+  # Alternatively host this on Vercel (its natural home) and delete this block.
+  - type: web
+    name: marked-frontend
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile.nextjs
+    dockerContext: ./MarkEd-front
+    plan: free
+    envVars:
+      # ⚠ Set to the backend service URL once it is live, e.g.
+      #   https://marked-api.onrender.com
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+
+# NOTE — Celery on the free tier: Render's free plan has no background worker,
+# so AI suggestion tasks cannot run asynchronously. Either (a) upgrade and add a
+# `type: worker` service running `celery -A MarkEd worker -l info`, or (b) run
+# tasks inline. Peer review works either way; only the delayed AI coaching needs
+# the worker.
