@@ -1,9 +1,14 @@
 'use client'
 
 import * as React from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { AssignmentSchema, DefaultService, PeerMatch } from '@/src/api'
+import {
+  AssignmentSchema,
+  DefaultService,
+  PeerMatch,
+  PeerReviewSchemaWithStudent,
+} from '@/src/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Users, CheckCircle2, Clock } from 'lucide-react'
 import { toast } from 'sonner'
@@ -11,6 +16,7 @@ import { StatusDot } from '@/components/status-dot'
 import { CountdownCard, calculateTimeLeft } from '@/components/countdown-card'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useUser } from '@/src/contexts/user-context'
 
 type ReviewerGroup = {
   reviewer: {
@@ -51,7 +57,13 @@ export default function DashboardPage() {
   const [isMatching, setIsMatching] = React.useState(false)
   const [matches, setMatches] = React.useState<PeerMatch[]>([])
   const [stats, setStats] = React.useState<AssignmentStatistics | null>(null)
+  const [allocations, setAllocations] = React.useState<
+    PeerReviewSchemaWithStudent[]
+  >([])
   const params = useParams()
+  const router = useRouter()
+  const { user } = useUser()
+  const isAcademic = user?.isAcademic ?? true
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -71,6 +83,10 @@ export default function DashboardPage() {
     if (params.id) {
       fetchData()
       DefaultService.getMatchedPeers(Number(params.id)).then(setMatches)
+      // Markers/TAs see their own marking allocation, not the academic view.
+      DefaultService.getMarkerAllocations(Number(params.id))
+        .then(setAllocations)
+        .catch(() => {})
     }
   }, [params.id])
 
@@ -116,6 +132,87 @@ export default function DashboardPage() {
         </div>
         <Skeleton className='h-40 w-full rounded-lg' />
         <Skeleton className='h-64 w-full rounded-lg' />
+      </div>
+    )
+  }
+
+  // --- Marker / TA dashboard: their own marking allocation and queue -------
+  if (!isAcademic) {
+    const marked = allocations.filter((a) => a.status === 'COMPLETED').length
+    const pending = allocations.length - marked
+    return (
+      <div className='mx-auto w-full max-w-3xl space-y-5 p-6'>
+        <h1 className='text-2xl font-bold'>Marker Dashboard</h1>
+        <p className='-mt-3 text-sm text-neutral-500'>{assignment.assignmentTitle}</p>
+
+        <div className='grid grid-cols-2 gap-4 md:grid-cols-3'>
+          <Card>
+            <CardContent className='p-4'>
+              <div className='text-xs font-medium text-neutral-500'>My Marking Allocation</div>
+              <div className='mt-1 text-2xl font-bold'>{allocations.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className='p-4'>
+              <div className='text-xs font-medium text-neutral-500'>Marked</div>
+              <div className='mt-1 text-2xl font-bold'>
+                {marked}
+                <span className='ml-1 text-sm font-medium text-neutral-400'>
+                  /{allocations.length}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className='p-4'>
+              <div className='text-xs font-medium text-neutral-500'>Pending</div>
+              <div className='mt-1 text-2xl font-bold'>{pending}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-base font-semibold'>Marking Queue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {allocations.length === 0 ? (
+              <p className='py-8 text-center text-sm text-neutral-400'>
+                Nothing allocated to you yet. Once submissions are matched to
+                markers, they appear here.
+              </p>
+            ) : (
+              <div className='divide-y divide-neutral-100'>
+                {allocations.map((a) => (
+                  <div key={a.id} className='flex items-center justify-between py-2.5'>
+                    <div className='flex items-center gap-2.5'>
+                      <StatusDot
+                        status={
+                          a.status as 'COMPLETED' | 'IN_PROGRESS' | 'PENDING'
+                        }
+                      />
+                      <span className='text-sm font-medium'>{a.student_name}</span>
+                      <span className='font-mono text-xs text-neutral-400'>
+                        {a.student_number}
+                      </span>
+                    </div>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      onClick={() =>
+                        router.push(
+                          `/assignments/${params.id}/mark/${a.submission_id}`
+                        )
+                      }
+                    >
+                      {a.status === 'COMPLETED' ? 'Review' : 'Mark'}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     )
   }
