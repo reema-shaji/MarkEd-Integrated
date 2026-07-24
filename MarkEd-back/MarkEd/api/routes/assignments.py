@@ -7,12 +7,17 @@ from ..decorators import require_auth, check_permissions
 from ..permissions import IsCourseStaffFromAssignment, CanCreateAssignment
 from ...models import (
     Assignment,
+    Criteria,
+    Group,
     GroupMember,
     GroupSet,
     GroupSubmission,
+    GroupSubmissionCriteria,
     PeerReviewAllocation,
     SelfAssessmentSetting,
+    StudentSelfAssessmentSubmission,
     Submission,
+    SubmissionCriteria,
     Course2Student,
 )
 from ..schemas.peer_review import PeerMatch
@@ -531,7 +536,72 @@ def get_assignment_statistics(request, assignment_id: int):
     # Calculate completion rate
     completed_reviews = status_counts.get('COMPLETED', 0)
     completion_rate = (completed_reviews / total_peer_reviews * 100) if total_peer_reviews > 0 else 0
-    
+
+    # --- Dashboard breakdowns (prototype Academic Dashboard) ----------------
+    enrolled = Course2Student.objects.filter(course=assignment.course).count()
+    deadline = assignment.deadline
+    is_group = assignment.is_group_assignment()
+
+    # Latest submission per submitter (student, or group for group assignments),
+    # and the grade band from its rubric marks.
+    total_marks = sum(
+        c.marks for c in Criteria.objects.filter(assignment=assignment, parent=None)
+    )
+
+    def band(pct):
+        if pct >= 70: return '70+'
+        if pct >= 60: return '60-69'
+        if pct >= 50: return '50-59'
+        if pct >= 40: return '40-49'
+        return '0-39'
+
+    grade_distribution = {'0-39': 0, '40-49': 0, '50-59': 0, '60-69': 0, '70+': 0}
+    on_time = late = 0
+
+    if is_group:
+        latest = {}
+        for gs in (GroupSubmission.objects.filter(assignment=assignment, is_active=True)
+                   .order_by('group_id', '-submission_version')):
+            latest.setdefault(gs.group_id, gs)
+        expected = (Group.objects.filter(group_set=assignment.group_set, is_active=True).count()
+                    if assignment.group_set_id else 0)
+        for gs in latest.values():
+            if gs.submissionDateTime <= deadline:
+                on_time += 1
+            else:
+                late += 1
+            if total_marks > 0:
+                scored = sum(
+                    r.score or 0 for r in GroupSubmissionCriteria.objects.filter(group_submission=gs)
+                )
+                if scored > 0:
+                    grade_distribution[band(scored / total_marks * 100)] += 1
+        submitted = len(latest)
+    else:
+        latest = {}
+        for s in (Submission.objects.filter(assignment=assignment)
+                  .order_by('student_id', '-submissionDateTime')):
+            latest.setdefault(s.student_id, s)
+        expected = enrolled
+        for s in latest.values():
+            if s.submissionDateTime <= deadline:
+                on_time += 1
+            else:
+                late += 1
+            if total_marks > 0:
+                scored = sum(
+                    r.score or 0 for r in SubmissionCriteria.objects.filter(submission=s)
+                )
+                if scored > 0:
+                    grade_distribution[band(scored / total_marks * 100)] += 1
+        submitted = len(latest)
+
+    missing = max(0, expected - submitted)
+
+    sa_setting = SelfAssessmentSetting.objects.filter(assignment=assignment, enabled=True).first()
+    sa_submitted = (StudentSelfAssessmentSubmission.objects
+                    .filter(assignment=assignment).values('student').distinct().count())
+
     return {
         "total_submissions": total_submissions,
         "unique_submitters": unique_submitters,
@@ -539,5 +609,13 @@ def get_assignment_statistics(request, assignment_id: int):
         "total_peer_reviews": total_peer_reviews,
         "peer_review_stats": status_counts,
         "average_reviews_per_student": round(avg_reviews, 2),
-        "completion_rate": round(completion_rate, 2)
+        "completion_rate": round(completion_rate, 2),
+        "enrolled_students": enrolled,
+        "expected_submissions": expected,
+        "submission_on_time": on_time,
+        "submission_late": late,
+        "submission_missing": missing,
+        "self_assessment_enabled": bool(sa_setting),
+        "self_assessment_submitted": sa_submitted,
+        "grade_distribution": grade_distribution,
     }

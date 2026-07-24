@@ -89,3 +89,13 @@ class AssignmentStatistics(Schema):
     peer_review_stats: Dict[str, int]  # Status counts
     average_reviews_per_student: float
     completion_rate: float
+
+    # Dashboard breakdowns (prototype Academic Dashboard).
+    enrolled_students: int = 0
+    expected_submissions: int = 0
+    submission_on_time: int = 0
+    submission_late: int = 0
+    submission_missing: int = 0
+    self_assessment_enabled: bool = False
+    self_assessment_submitted: int = 0
+    grade_distribution: Dict[str, int] = {}

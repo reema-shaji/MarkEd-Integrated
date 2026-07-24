@@ -34,6 +34,14 @@ type AssignmentStatistics = {
   peer_review_stats: Record<string, number>
   average_reviews_per_student: number
   completion_rate: number
+  enrolled_students: number
+  expected_submissions: number
+  submission_on_time: number
+  submission_late: number
+  submission_missing: number
+  self_assessment_enabled: boolean
+  self_assessment_submitted: number
+  grade_distribution: Record<string, number>
 }
 
 export default function DashboardPage() {
@@ -160,15 +168,108 @@ export default function DashboardPage() {
 
         <Card>
           <CardContent className='p-4'>
-            <div className='text-xs font-medium text-neutral-500'>
-              Reviews Per Student
-            </div>
-            <div className='mt-1 text-2xl font-bold'>
-              {stats.average_reviews_per_student}
-              <span className='ml-1 text-sm font-medium text-neutral-400'>
-                · avg
-              </span>
-            </div>
+            {stats.self_assessment_enabled ? (
+              <>
+                <div className='text-xs font-medium text-neutral-500'>
+                  SA Submitted
+                </div>
+                <div className='mt-1 text-2xl font-bold'>
+                  {stats.self_assessment_submitted}
+                  <span className='ml-1 text-sm font-medium text-neutral-400'>
+                    /{stats.enrolled_students}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className='text-xs font-medium text-neutral-500'>
+                  Reviews Per Student
+                </div>
+                <div className='mt-1 text-2xl font-bold'>
+                  {stats.average_reviews_per_student}
+                  <span className='ml-1 text-sm font-medium text-neutral-400'>
+                    · avg
+                  </span>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Submission statistics + grade distribution (prototype Academic Dashboard) */}
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+        <Card>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-base font-semibold'>
+              Submission Statistics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const total = stats.expected_submissions || 1
+              const rows = [
+                { label: 'On time', value: stats.submission_on_time, cls: 'bg-green-500' },
+                { label: 'Late', value: stats.submission_late, cls: 'bg-amber-500' },
+                { label: 'Missing', value: stats.submission_missing, cls: 'bg-neutral-300' },
+              ]
+              return (
+                <div className='space-y-3'>
+                  {rows.map((r) => (
+                    <div key={r.label}>
+                      <div className='mb-1 flex items-center justify-between text-sm'>
+                        <span className='text-neutral-600'>{r.label}</span>
+                        <span className='font-medium tabular-nums'>{r.value}</span>
+                      </div>
+                      <div className='h-2 overflow-hidden rounded-full bg-neutral-100'>
+                        <div
+                          className={`h-full ${r.cls}`}
+                          style={{ width: `${(r.value / total) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <p className='pt-1 text-xs text-neutral-400'>
+                    Out of {stats.expected_submissions}{' '}
+                    {assignment.assignment_type === 'GROUP' ? 'groups' : 'students'}.
+                  </p>
+                </div>
+              )
+            })()}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-base font-semibold'>
+              Grade Distribution
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const bands = ['0-39', '40-49', '50-59', '60-69', '70+']
+              const counts = bands.map((b) => stats.grade_distribution?.[b] ?? 0)
+              const max = Math.max(1, ...counts)
+              const graded = counts.reduce((a, b) => a + b, 0)
+              return graded === 0 ? (
+                <p className='py-8 text-center text-sm text-neutral-400'>
+                  No marks yet — the histogram fills in as work is graded.
+                </p>
+              ) : (
+                <div className='flex h-40 items-end justify-between gap-2'>
+                  {bands.map((b, i) => (
+                    <div key={b} className='flex flex-1 flex-col items-center gap-1'>
+                      <div className='text-xs font-medium tabular-nums'>{counts[i]}</div>
+                      <div
+                        className='w-full rounded-t bg-neutral-800'
+                        style={{ height: `${(counts[i] / max) * 100}%`, minHeight: counts[i] ? 4 : 0 }}
+                      />
+                      <div className='text-[11px] text-neutral-500'>{b}</div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
           </CardContent>
         </Card>
       </div>
