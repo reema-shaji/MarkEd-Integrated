@@ -3,11 +3,14 @@
 /**
  * SPA login page.
  *
- * The source build authenticated through Django's server-rendered /login/ form
- * (session cookie). The unified build uses bearer tokens so the SPA can run on
- * a different origin from the API (Vercel + Render), matching the earlier
- * unified build's deployment. This page posts to /api/auth/login, stores the
- * returned token, and enters the app.
+ * Auth is bearer-token, so the SPA can run on a different origin from the API
+ * (Vercel + Render). This page posts to /api/auth/login, stores the returned
+ * token, and enters the app.
+ *
+ * Demo quick-access: optional buttons that sign in as a seeded demo account.
+ * They are NOT a shortcut — each runs the exact same token login as the form
+ * (a real POST to /api/auth/login with the demo credentials). They are gated
+ * behind NEXT_PUBLIC_SHOW_DEMO_LOGINS so a production deployment can hide them.
  */
 
 import { useState } from 'react'
@@ -29,6 +32,20 @@ import { Loader2 } from 'lucide-react'
 
 initializeApi()
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+
+// Demo quick-access is shown unless explicitly disabled. The password comes
+// from NEXT_PUBLIC_DEMO_PASSWORD (defaults to the local seed password); on a
+// deployment with a private SEED_DEMO_PASSWORD, set this to match or disable
+// the demo buttons entirely.
+const SHOW_DEMO = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS !== 'false'
+const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD || 'Test1234!'
+const DEMO_ACCOUNTS = [
+  { role: 'Academic', name: 'Dr Patel', userNumber: 'acad001' },
+  { role: 'Marker', name: 'Dr Roberts', userNumber: 'mark001' },
+  { role: 'Student', name: 'James Chen', userNumber: 'stud001' },
+]
+
 export default function LoginPage() {
   const router = useRouter()
   const [userNumber, setUserNumber] = useState('')
@@ -36,17 +53,16 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  /** The single login path — used by the form and by the demo buttons. */
+  const doLogin = async (userNumberValue: string, passwordValue: string) => {
     setError(null)
     setSubmitting(true)
     try {
       const response = await DefaultService.apiLogin({
-        userNumber: userNumber.trim(),
-        password,
+        userNumber: userNumberValue.trim(),
+        password: passwordValue,
       })
       setToken(response.token)
-      // First login forces a password change (Tomas's must_change_password).
       router.replace(
         response.must_change_password ? '/change-password' : '/assignments'
       )
@@ -64,12 +80,17 @@ export default function LoginPage() {
     }
   }
 
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    doLogin(userNumber, password)
+  }
+
   return (
     <div className='flex min-h-screen items-center justify-center bg-neutral-100 p-6'>
       <Card className='w-full max-w-sm'>
         <CardHeader className='items-center text-center'>
           <Image
-            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`}
+            src={`${basePath}/logo.png`}
             alt='MarkEd'
             width={40}
             height={40}
@@ -108,6 +129,38 @@ export default function LoginPage() {
               Log in
             </Button>
           </form>
+
+          {SHOW_DEMO && (
+            <div className='mt-6'>
+              <div className='mb-3 flex items-center gap-3'>
+                <div className='h-px flex-1 bg-neutral-200' />
+                <span className='text-[11px] font-semibold uppercase tracking-wide text-neutral-400'>
+                  Demo quick access
+                </span>
+                <div className='h-px flex-1 bg-neutral-200' />
+              </div>
+              <div className='grid gap-2'>
+                {DEMO_ACCOUNTS.map((account) => (
+                  <Button
+                    key={account.userNumber}
+                    type='button'
+                    variant='outline'
+                    disabled={submitting}
+                    onClick={() => doLogin(account.userNumber, DEMO_PASSWORD)}
+                    className='justify-start'
+                  >
+                    <span className='font-medium'>{account.role}</span>
+                    <span className='ml-2 text-xs text-muted-foreground'>
+                      {account.name}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+              <p className='mt-2 text-center text-[11px] text-neutral-400'>
+                These sign in through the normal authenticated flow.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

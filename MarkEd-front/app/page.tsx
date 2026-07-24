@@ -2,13 +2,15 @@
 'use client'
 
 /**
- * Root route. The unified navigation makes the Assignments page the landing
- * page after login (Design PRD §3.1), so this simply forwards there.
+ * Root route. Routes by auth state: a signed-in user lands on the Assignments
+ * page (the post-login landing page, Design PRD §3.1); anyone without a token
+ * goes to login. This avoids bouncing an unauthenticated visitor through
+ * /assignments and a 401 before reaching /login.
  */
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { initializeApi } from '@/src/api/config'
+import { getToken, initializeApi } from '@/src/api/config'
 import { Skeleton } from '@/components/ui/skeleton'
 
 initializeApi()
@@ -17,7 +19,7 @@ export default function Page() {
   const router = useRouter()
 
   useEffect(() => {
-    router.replace('/assignments')
+    router.replace(getToken() ? '/assignments' : '/login')
   }, [router])
 
   return (
