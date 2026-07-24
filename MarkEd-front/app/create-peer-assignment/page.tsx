@@ -1,13 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, Suspense } from 'react'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -22,7 +16,6 @@ import {
 } from '@/components/ui/form'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
 import { Calendar as Check, Info, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -33,6 +26,7 @@ import { FileUpload } from '@/components/file-upload'
 import { useSearchParams } from 'next/navigation'
 import Help from '@/components/help'
 import { DateTimePicker } from '@/components/date-time-picker'
+import { toast } from 'sonner'
 
 interface Course {
   id: number
@@ -180,20 +174,22 @@ function PeerAssignmentForm(): React.ReactElement {
       if (response.success) {
         setIsSuccess(true)
         setAssignmentId(response.assignment_id ?? null)
+        toast.success('Assignment created')
       } else {
         throw new Error(response.message)
       }
     } catch (error) {
       console.error('Failed to create peer review assignment:', error)
+      toast.error('Could not create assignment')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  return (
-    <div className='container mx-auto max-w-screen-md py-10'>
-      <Card>
-        {isSuccess ? (
+  if (isSuccess) {
+    return (
+      <div className='mx-auto w-full max-w-2xl p-6'>
+        <Card>
           <CardContent className='pt-6'>
             <div className='space-y-4 text-center'>
               <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600'>
@@ -202,7 +198,7 @@ function PeerAssignmentForm(): React.ReactElement {
               <h3 className='text-lg font-semibold'>
                 Assignment Created Successfully!
               </h3>
-              <p className='text-gray-500'>
+              <p className='text-neutral-500'>
                 Your peer review assignment has been created and is ready for
                 students.
               </p>
@@ -215,322 +211,323 @@ function PeerAssignmentForm(): React.ReactElement {
               </div>
             </div>
           </CardContent>
-        ) : (
-          <>
-            <CardHeader>
-              <CardTitle>
-                New Peer Review Assignment for {course?.courseName || '...'}
-              </CardTitle>
-              <CardDescription>
-                Set up a new peer review assignment for your students
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className='space-y-8'
-                >
-                  {/* Basic Info Section */}
-                  <div className='space-y-4'>
-                    <h3 className='text-lg font-semibold'>Basic Information</h3>
-                    <FormField
-                      control={form.control}
-                      name='title'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Assignment Title</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder='Enter assignment title'
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+        </Card>
+      </div>
+    )
+  }
 
-                    <FormField
-                      control={form.control}
-                      name='description'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder='Enter assignment description'
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+  return (
+    <div className='mx-auto w-full max-w-2xl p-6'>
+      <div className='mb-1.5 text-[13px] text-neutral-400'>
+        <Link href='/assignments' className='hover:text-neutral-600'>
+          Assignments
+        </Link>{' '}
+        / New
+      </div>
+      <h1 className='mb-5 text-2xl font-bold'>Create Assignment</h1>
 
-                    <FormField
-                      control={form.control}
-                      name='instructions'
-                      render={({ field: { onChange } }) => (
-                        <FormItem>
-                          <FormLabel>Instructions PDF</FormLabel>
-                          <FormControl>
-                            <FileUpload
-                              type='instruction'
-                              acceptedFileTypes={['application/pdf']}
-                              maxSizeMB={10}
-                              onUploadComplete={(urls: string[]) =>
-                                onChange(urls)
-                              }
-                              maxFiles={12}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Upload one or more PDF files with assignment
-                            instructions
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+          {/* Basic Information */}
+          <Card>
+            <CardContent className='space-y-4 p-6'>
+              <div>
+                <h2 className='text-[15px] font-semibold'>Basic Information</h2>
+                <p className='mt-0.5 text-[13px] text-neutral-500'>
+                  New peer review assignment for {course?.courseName || '...'}
+                </p>
+              </div>
 
-                  <Separator />
+              <FormField
+                control={form.control}
+                name='title'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Assignment Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter assignment title' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  {/* Dates Section */}
-                  <div className='space-y-4'>
-                    <h3 className='text-lg font-semibold'>Deadlines</h3>
-                    <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-                      <FormField
-                        control={form.control}
-                        name='releaseDate'
-                        render={({ field }) => (
-                          <FormItem className='flex flex-col'>
-                            <FormLabel>Release Date</FormLabel>
-                            <DateTimePicker
-                              date={field.value}
-                              setDate={(date) => field.onChange(date)}
-                            />
-                            <FormMessage />
-                          </FormItem>
-                        )}
+              <FormField
+                control={form.control}
+                name='description'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder='Enter assignment description'
+                        {...field}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                      <FormField
-                        control={form.control}
-                        name='dueDate'
-                        render={({ field }) => (
-                          <FormItem className='flex flex-col'>
-                            <FormLabel>Submission Due Date</FormLabel>
-                            <DateTimePicker
-                              date={field.value}
-                              setDate={(date) => field.onChange(date)}
-                              disabled={(date) =>
-                                date < new Date() ||
-                                (form.getValues('releaseDate') &&
-                                  date < form.getValues('releaseDate'))
-                              }
-                            />
-                            <FormMessage />
-                          </FormItem>
-                        )}
+              <FormField
+                control={form.control}
+                name='instructions'
+                render={({ field: { onChange } }) => (
+                  <FormItem>
+                    <FormLabel>Instructions PDF</FormLabel>
+                    <FormControl>
+                      <FileUpload
+                        type='instruction'
+                        acceptedFileTypes={['application/pdf']}
+                        maxSizeMB={10}
+                        onUploadComplete={(urls: string[]) => onChange(urls)}
+                        maxFiles={12}
                       />
-
-                      <FormField
-                        control={form.control}
-                        name='reviewDeadline'
-                        render={({ field }) => (
-                          <FormItem className='flex flex-col'>
-                            <FormLabel>Review Deadline</FormLabel>
-                            <DateTimePicker
-                              date={field.value}
-                              setDate={(date) => field.onChange(date)}
-                              disabled={(date) =>
-                                date < new Date() ||
-                                (form.getValues('dueDate') &&
-                                  date < form.getValues('dueDate'))
-                              }
-                            />
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Review Settings Section */}
-                  <div className='space-y-4'>
-                    <h3 className='text-lg font-semibold'>Review Settings</h3>
-
-                    <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                      <FormField
-                        control={form.control}
-                        name='reviewsPerStudent'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Peer Reviews Per Student</FormLabel>
-                            <FormControl>
-                              <Input
-                                type='number'
-                                min={1}
-                                max={10}
-                                {...field}
-                                onChange={(e) =>
-                                  field.onChange(parseInt(e.target.value))
-                                }
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Number of student submissions that each student
-                              must review (1-10)
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <StatsDisplay
-                      numStudents={numStudents}
-                      reviewsPerStudent={form.watch('reviewsPerStudent')}
-                      maxSubmissions={form.watch('maxSubmissionsPerStudent')}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  {/* Visibility & Permissions Section */}
-                  <div className='space-y-4'>
-                    <h3 className='text-lg font-semibold'>
-                      Visibility & Permissions
-                    </h3>
-
-                    <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                      <FormField
-                        control={form.control}
-                        name='allowLateSubmissions'
-                        render={({ field }) => (
-                          <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                            <div className='space-y-0.5'>
-                              <FormLabel className='text-base'>
-                                Allow Late Submissions
-                              </FormLabel>
-                              <FormDescription>
-                                Students can submit after the deadline
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                disabled={true}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name='isAnonymous'
-                        render={({ field }) => (
-                          <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                            <div className='space-y-0.5'>
-                              <FormLabel className='text-base'>
-                                Anonymous Reviews
-                              </FormLabel>
-                              <FormDescription>
-                                Hide reviewer identities from students
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                disabled={true}
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name='studentsCanSeeReviews'
-                        render={({ field }) => (
-                          <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                            <div className='space-y-0.5'>
-                              <FormLabel className='text-base'>
-                                Students Can See Reviews
-                              </FormLabel>
-                              <FormDescription>
-                                Students will receive peer reviews of their work
-                                by other students
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                disabled={true}
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name='markersCanSeeReviews'
-                        render={({ field }) => (
-                          <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                            <div className='space-y-0.5'>
-                              <FormLabel className='text-base'>
-                                Markers Can See Peer Reviews{' '}
-                                <Help>
-                                  This could influence the feedback process of
-                                  the marker.
-                                </Help>
-                              </FormLabel>
-                              <FormDescription>
-                                Markers can see peer reviews when marking.
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                disabled={true}
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <Button
-                    type='submit'
-                    disabled={isSubmitting}
-                    className='w-full'
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                        Creating Assignment...
-                      </>
-                    ) : (
-                      'Create Assignment'
-                    )}
-                  </Button>
-                </form>
-              </Form>
+                    </FormControl>
+                    <FormDescription>
+                      Upload one or more PDF files with assignment instructions
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
-          </>
-        )}
-      </Card>
+          </Card>
+
+          {/* Deadlines */}
+          <Card>
+            <CardContent className='space-y-4 p-6'>
+              <h2 className='text-[15px] font-semibold'>Deadlines</h2>
+              <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+                <FormField
+                  control={form.control}
+                  name='releaseDate'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-col'>
+                      <FormLabel>Release Date</FormLabel>
+                      <DateTimePicker
+                        date={field.value}
+                        setDate={(date) => field.onChange(date)}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='dueDate'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-col'>
+                      <FormLabel>Submission Due Date</FormLabel>
+                      <DateTimePicker
+                        date={field.value}
+                        setDate={(date) => field.onChange(date)}
+                        disabled={(date) =>
+                          date < new Date() ||
+                          (form.getValues('releaseDate') &&
+                            date < form.getValues('releaseDate'))
+                        }
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='reviewDeadline'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-col'>
+                      <FormLabel>Review Deadline</FormLabel>
+                      <DateTimePicker
+                        date={field.value}
+                        setDate={(date) => field.onChange(date)}
+                        disabled={(date) =>
+                          date < new Date() ||
+                          (form.getValues('dueDate') &&
+                            date < form.getValues('dueDate'))
+                        }
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Review Settings */}
+          <Card>
+            <CardContent className='space-y-4 p-6'>
+              <h2 className='text-[15px] font-semibold'>Review Settings</h2>
+
+              <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                <FormField
+                  control={form.control}
+                  name='reviewsPerStudent'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Peer Reviews Per Student</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='number'
+                          min={1}
+                          max={10}
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Number of student submissions that each student must
+                        review (1-10)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <StatsDisplay
+                numStudents={numStudents}
+                reviewsPerStudent={form.watch('reviewsPerStudent')}
+                maxSubmissions={form.watch('maxSubmissionsPerStudent')}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Visibility & Permissions */}
+          <Card>
+            <CardContent className='space-y-4 p-6'>
+              <h2 className='text-[15px] font-semibold'>
+                Visibility &amp; Permissions
+              </h2>
+
+              <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                <FormField
+                  control={form.control}
+                  name='allowLateSubmissions'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                      <div className='space-y-0.5'>
+                        <FormLabel className='text-base'>
+                          Allow Late Submissions
+                        </FormLabel>
+                        <FormDescription>
+                          Students can submit after the deadline
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={true}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='isAnonymous'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                      <div className='space-y-0.5'>
+                        <FormLabel className='text-base'>
+                          Anonymous Reviews
+                        </FormLabel>
+                        <FormDescription>
+                          Hide reviewer identities from students
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          disabled={true}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='studentsCanSeeReviews'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                      <div className='space-y-0.5'>
+                        <FormLabel className='text-base'>
+                          Students Can See Reviews
+                        </FormLabel>
+                        <FormDescription>
+                          Students will receive peer reviews of their work by
+                          other students
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          disabled={true}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='markersCanSeeReviews'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                      <div className='space-y-0.5'>
+                        <FormLabel className='text-base'>
+                          Markers Can See Peer Reviews{' '}
+                          <Help>
+                            This could influence the feedback process of the
+                            marker.
+                          </Help>
+                        </FormLabel>
+                        <FormDescription>
+                          Markers can see peer reviews when marking.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          disabled={true}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Footer actions */}
+          <div className='flex justify-end gap-2 pb-8'>
+            <Button asChild variant='outline'>
+              <Link href='/assignments'>Cancel</Link>
+            </Button>
+            <Button type='submit' disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Creating Assignment...
+                </>
+              ) : (
+                'Create Assignment'
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   )
 }

@@ -63,11 +63,12 @@ export default function ChangePasswordPage() {
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-neutral-100 p-6'>
-      <Card className='w-full max-w-sm'>
-        <CardHeader className='text-center'>
-          <CardTitle className='text-xl'>Change your password</CardTitle>
+      <Card className='w-full max-w-md'>
+        <CardHeader>
+          <CardTitle className='text-xl font-bold'>Change your password</CardTitle>
           <CardDescription>
-            Set a new password to continue.
+            This is your first login. You must set a new password before
+            continuing.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -93,6 +94,10 @@ export default function ChangePasswordPage() {
                 autoComplete='new-password'
                 required
               />
+              <p className='text-xs text-neutral-400'>
+                At least 8 characters. Avoid common or previously breached
+                passwords.
+              </p>
             </div>
             <div className='grid gap-1.5'>
               <Label htmlFor='confirm'>Confirm new password</Label>
@@ -108,7 +113,7 @@ export default function ChangePasswordPage() {
             {error && <p className='text-sm text-red-600'>{error}</p>}
             <Button type='submit' disabled={submitting}>
               {submitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-              Update password
+              Change Password & Continue
             </Button>
           </form>
         </CardContent>

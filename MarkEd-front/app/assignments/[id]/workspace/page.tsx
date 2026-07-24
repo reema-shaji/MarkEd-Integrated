@@ -171,7 +171,7 @@ export default function GroupWorkspacePage() {
 
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-3xl p-6'>
+      <div className='mx-auto w-full max-w-4xl p-6'>
         <Skeleton className='h-9 w-64' />
         <Skeleton className='mt-6 h-40' />
       </div>
@@ -180,7 +180,7 @@ export default function GroupWorkspacePage() {
 
   if (noGroup || !group) {
     return (
-      <div className='mx-auto w-full max-w-3xl p-6'>
+      <div className='mx-auto w-full max-w-4xl p-6'>
         <Card>
           <CardContent className='py-14 text-center text-sm text-muted-foreground'>
             You are not in a group for this assignment yet. Once your tutor
@@ -192,20 +192,40 @@ export default function GroupWorkspacePage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-3xl p-6'>
-      <div className='mb-5 flex items-start justify-between gap-3'>
-        <div>
-          <h1 className='text-2xl font-bold'>{group.name} workspace</h1>
-          <p className='mt-1 text-sm text-muted-foreground'>
-            {group.members.map((m) => m.userName).join(', ')}
-          </p>
-        </div>
+    <div className='mx-auto w-full max-w-4xl p-6'>
+      <div className='mb-1.5 text-[13px] text-neutral-400'>
+        My groups / {group.name} workspace
+      </div>
+      <div className='mb-3 flex flex-wrap items-center gap-3'>
+        <h1 className='text-2xl font-bold'>{group.name} — Group workspace</h1>
         {latestSubmission && (
           <Badge variant='outline' className='shrink-0'>
             <CheckCircle2 className='mr-1 h-3 w-3' />
             Submitted (v{latestSubmission.submission_version})
           </Badge>
         )}
+      </div>
+      <p className='mb-4 text-sm text-neutral-500'>
+        {group.members.map((m) => m.userName).join(', ')}
+      </p>
+
+      {/* Submission status banner — reinforces that uploading is not submitting. */}
+      <div className='mb-5 flex items-start gap-2.5 rounded-lg border border-green-200 bg-green-50 px-4 py-3'>
+        <CheckCircle2 className='mt-0.5 h-4 w-4 shrink-0 text-green-700' />
+        <p className='text-[13px] text-green-800'>
+          {latestSubmission ? (
+            <>
+              <b>Status:</b> Submitted v{latestSubmission.submission_version}.
+              Uploading to the workspace does <b>not</b> submit — confirm a
+              submission from a file below.
+            </>
+          ) : (
+            <>
+              <b>Status:</b> Not submitted yet. Uploading to the workspace does{' '}
+              <b>not</b> submit — confirm a submission from a file below.
+            </>
+          )}
+        </p>
       </div>
 
       {/* Upload area — clearly labelled as a shared drafting space, not the

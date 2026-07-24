@@ -13,10 +13,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { DefaultService, MyGroupResultSchema } from '@/src/api'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Minus, Plus, Users2 } from 'lucide-react'
 
 export default function GroupResultPage() {
   const params = useParams()
@@ -53,7 +51,7 @@ export default function GroupResultPage() {
     return (
       <div className='mx-auto w-full max-w-2xl p-6'>
         <Card>
-          <CardContent className='py-14 text-center text-sm text-muted-foreground'>
+          <CardContent className='py-14 text-center text-sm text-neutral-500'>
             {message}
           </CardContent>
         </Card>
@@ -63,93 +61,74 @@ export default function GroupResultPage() {
 
   const b = result.breakdown
   const adjustment = b.personal_adjustment
-  const AdjIcon = adjustment < 0 ? Minus : Plus
+  const adjustmentLabel = `${adjustment >= 0 ? '+' : '−'}${Math.abs(adjustment)}`
 
   return (
     <div className='mx-auto w-full max-w-2xl p-6'>
-      <div className='mb-1 flex items-center gap-2'>
-        <Users2 className='h-5 w-5 text-muted-foreground' />
-        <h1 className='text-2xl font-bold'>{result.group_name} result</h1>
+      <div className='mb-1.5 text-[13px] text-neutral-400'>
+        My groups / Results
       </div>
-      <p className='mb-5 text-sm text-muted-foreground'>
-        {result.finalised
-          ? 'Your final mark for this group assignment.'
-          : 'Provisional — your marker has not finalised contribution adjustments yet.'}
-      </p>
+      <h1 className='mb-5 text-2xl font-bold'>{result.group_name} — Results</h1>
 
-      <Card>
-        <CardHeader className='pb-2'>
-          <CardTitle className='text-base'>Score breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className='mb-4'>
+        <CardContent className='p-6'>
+          <p className='mb-4 text-[13px] text-neutral-500'>
+            {result.finalised
+              ? 'Your final score is the group’s base score adjusted for your personal contribution. The breakdown is fully transparent:'
+              : 'Provisional — your marker has not finalised contribution adjustments yet. Your final score is the group’s base score adjusted for your personal contribution:'}
+          </p>
+
           {/* base + adjustment = final, shown transparently. */}
-          <div className='grid gap-3'>
-            <Row
-              label='Group base score'
-              hint='The mark awarded to the whole group'
-              value={`${b.group_score} / ${b.group_total}`}
-            />
-            <Row
-              label='Your contribution adjustment'
-              hint={b.adjustment_reason || 'No reason recorded'}
-              value={
-                <span
-                  className={`inline-flex items-center gap-1 ${
-                    adjustment < 0
-                      ? 'text-red-600'
-                      : adjustment > 0
-                        ? 'text-green-600'
-                        : ''
-                  }`}
-                >
-                  <AdjIcon className='h-3.5 w-3.5' />
-                  {Math.abs(adjustment)}
-                </span>
-              }
-            />
-            <div className='mt-1 flex items-center justify-between border-t pt-3'>
-              <div>
-                <div className='text-sm font-semibold'>Your final score</div>
-                <div className='text-xs text-muted-foreground'>
-                  base {adjustment < 0 ? '−' : '+'} adjustment
-                </div>
+          <div className='grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 text-center'>
+            <div className='rounded-lg bg-neutral-50 p-4'>
+              <div className='text-[11px] font-semibold text-neutral-400'>
+                GROUP BASE SCORE
               </div>
-              <div className='text-right'>
-                <div className='text-2xl font-bold tabular-nums'>
-                  {b.final_score}
-                  <span className='text-base font-normal text-muted-foreground'>
-                    {' '}
-                    / {b.group_total}
-                  </span>
-                </div>
-                <Badge variant='secondary' className='mt-1'>
-                  {b.final_percentage.toFixed(1)}%
-                </Badge>
+              <div className='mt-1 text-2xl font-bold tabular-nums'>
+                {b.group_score}
+              </div>
+              <div className='text-[11px] text-neutral-400'>
+                / {b.group_total}
+              </div>
+            </div>
+            <div className='text-lg text-neutral-400'>+</div>
+            <div className='rounded-lg bg-neutral-50 p-4'>
+              <div className='text-[11px] font-semibold text-neutral-400'>
+                YOUR ADJUSTMENT
+              </div>
+              <div
+                className={`mt-1 text-2xl font-bold tabular-nums ${
+                  adjustment < 0
+                    ? 'text-red-600'
+                    : adjustment > 0
+                      ? 'text-green-600'
+                      : ''
+                }`}
+              >
+                {adjustmentLabel}
+              </div>
+            </div>
+            <div className='text-lg text-neutral-400'>=</div>
+            <div className='rounded-lg bg-neutral-900 p-4'>
+              <div className='text-[11px] font-semibold text-neutral-400'>
+                YOUR FINAL SCORE
+              </div>
+              <div className='mt-1 text-2xl font-bold tabular-nums text-white'>
+                {b.final_score}
+              </div>
+              <div className='text-[11px] text-neutral-400'>
+                {b.final_percentage.toFixed(1)}%
               </div>
             </div>
           </div>
+
+          {/* Marker's reason for the personal adjustment. */}
+          <div className='mt-4 rounded-md bg-neutral-50 px-3 py-2.5 text-xs leading-relaxed text-neutral-500'>
+            <b>Marker note:</b>{' '}
+            {b.adjustment_reason || 'No contribution note recorded.'}
+          </div>
         </CardContent>
       </Card>
-    </div>
-  )
-}
-
-function Row({
-  label,
-  hint,
-  value,
-}: {
-  label: string
-  hint: string
-  value: React.ReactNode
-}) {
-  return (
-    <div className='flex items-start justify-between gap-4'>
-      <div>
-        <div className='text-sm font-medium'>{label}</div>
-        <div className='text-xs text-muted-foreground'>{hint}</div>
-      </div>
-      <div className='shrink-0 text-sm font-medium tabular-nums'>{value}</div>
     </div>
   )
 }

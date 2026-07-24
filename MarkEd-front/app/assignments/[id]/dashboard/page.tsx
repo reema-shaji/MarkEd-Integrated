@@ -5,19 +5,12 @@ import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { AssignmentSchema, DefaultService, PeerMatch } from '@/src/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Loader2,
-  Users,
-  FileText,
-  Activity,
-  CheckCircle2,
-  Clock,
-  BarChart2,
-} from 'lucide-react'
+import { Loader2, Users, CheckCircle2, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { StatusDot } from '@/components/status-dot'
 import { CountdownCard, calculateTimeLeft } from '@/components/countdown-card'
 import { Progress } from '@/components/ui/progress'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type ReviewerGroup = {
   reviewer: {
@@ -63,6 +56,7 @@ export default function DashboardPage() {
         setStats(statsData as AssignmentStatistics)
       } catch (error) {
         console.error('Failed to fetch data:', error)
+        toast.error('Failed to load dashboard data')
       }
     }
 
@@ -98,18 +92,101 @@ export default function DashboardPage() {
   }
 
   if (!assignment || !stats) {
-    return <div>Loading...</div>
+    return (
+      <div className='mx-auto w-full max-w-4xl space-y-5 p-6'>
+        <Skeleton className='h-8 w-56' />
+        <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className='p-4'>
+                <Skeleton className='h-3 w-24' />
+                <Skeleton className='mt-3 h-7 w-16' />
+                <Skeleton className='mt-3 h-3 w-28' />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Skeleton className='h-40 w-full rounded-lg' />
+        <Skeleton className='h-64 w-full rounded-lg' />
+      </div>
+    )
   }
 
   return (
-    <div className='container mx-auto max-w-3xl space-y-6 py-6'>
+    <div className='mx-auto w-full max-w-4xl space-y-5 p-6'>
+      <h1 className='text-2xl font-bold'>Staff Dashboard</h1>
+
+      {/* Statistics Cards */}
+      <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+        <Card>
+          <CardContent className='p-4'>
+            <div className='text-xs font-medium text-neutral-500'>
+              Total Submissions
+            </div>
+            <div className='mt-1 text-2xl font-bold'>
+              {stats.unique_submitters}
+            </div>
+            <p className='mt-1 text-xs text-neutral-400'>
+              {stats.total_submissions} total uploads
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className='p-4'>
+            <div className='text-xs font-medium text-neutral-500'>
+              Active Users
+            </div>
+            <div className='mt-1 text-2xl font-bold'>
+              {stats.active_users_24h}
+            </div>
+            <p className='mt-1 text-xs text-neutral-400'>in the last 24 hours</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className='p-4'>
+            <div className='text-xs font-medium text-neutral-500'>
+              Review Progress
+            </div>
+            <div className='mt-1 text-2xl font-bold'>
+              {stats.completion_rate}%
+            </div>
+            <Progress value={stats.completion_rate} className='mt-2 h-2' />
+            <p className='mt-2 text-xs text-neutral-400'>
+              {stats.peer_review_stats.COMPLETED || 0} of{' '}
+              {stats.total_peer_reviews} completed
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className='p-4'>
+            <div className='text-xs font-medium text-neutral-500'>
+              Reviews Per Student
+            </div>
+            <div className='mt-1 text-2xl font-bold'>
+              {stats.average_reviews_per_student}
+            </div>
+            <p className='mt-1 text-xs text-neutral-400'>
+              average reviews assigned
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Assignment overview */}
       <Card className='w-full'>
         <CardHeader>
-          <CardTitle>{assignment.assignmentTitle}</CardTitle>
+          <CardTitle className='text-base font-semibold'>
+            {assignment.assignmentTitle}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
-            <p>{assignment.assignmentDescription}</p>
+            <p className='text-sm text-neutral-500'>
+              {assignment.assignmentDescription}
+            </p>
 
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
               <CountdownCard
@@ -137,73 +214,11 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Statistics Cards */}
-      <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-4'>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Total Submissions
-            </CardTitle>
-            <FileText className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{stats.unique_submitters}</div>
-            <p className='text-xs text-muted-foreground'>
-              {stats.total_submissions} total uploads
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Active Users</CardTitle>
-            <Activity className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{stats.active_users_24h}</div>
-            <p className='text-xs text-muted-foreground'>
-              in the last 24 hours
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Review Progress
-            </CardTitle>
-            <BarChart2 className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{stats.completion_rate}%</div>
-            <Progress value={stats.completion_rate} className='mt-2' />
-            <p className='mt-2 text-xs text-muted-foreground'>
-              {stats.peer_review_stats.COMPLETED || 0} of{' '}
-              {stats.total_peer_reviews} completed
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Reviews Per Student
-            </CardTitle>
-            <Users className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>
-              {stats.average_reviews_per_student}
-            </div>
-            <p className='text-xs text-muted-foreground'>
-              average reviews assigned
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader className='flex flex-row items-center justify-between'>
-          <CardTitle>Peer Review Matches</CardTitle>
+          <CardTitle className='text-base font-semibold'>
+            Peer Review Matches
+          </CardTitle>
           <Button
             onClick={handleMatchPeers}
             disabled={isMatching || assignment.is_peer_review_matching_complete}

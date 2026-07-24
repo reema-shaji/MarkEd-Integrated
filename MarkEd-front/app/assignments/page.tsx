@@ -120,23 +120,26 @@ export default function AssignmentsPage() {
 
   return (
     <div className='mx-auto w-full max-w-4xl p-6'>
-      <div className='mb-6 flex items-start justify-between gap-4'>
+      <div className='mb-5 flex items-start justify-between gap-4'>
         <div>
           <h1 className='text-2xl font-bold'>
             {currentCourse
               ? `${currentCourse.courseCode} — ${currentCourse.courseName}`
               : 'Assignments'}
           </h1>
-          <p className='mt-1 text-sm text-muted-foreground'>
+          <p className='mt-1 text-sm text-neutral-500'>
             {user?.isStaff
               ? 'Select an assignment to manage submissions, marking and configuration.'
               : 'Your assignments, group work, peer reviews and self-assessments.'}
           </p>
         </div>
         {user?.isAcademic && (
-          <Button onClick={() => router.push('/create-peer-assignment')}>
+          <Button
+            className='shrink-0'
+            onClick={() => router.push('/create-peer-assignment')}
+          >
             <Plus className='mr-1 h-4 w-4' />
-            New assignment
+            Create Assignment
           </Button>
         )}
       </div>
@@ -153,7 +156,7 @@ export default function AssignmentsPage() {
           </CardHeader>
           <CardContent className='flex flex-wrap items-center gap-2'>
             {groupSets.length === 0 ? (
-              <p className='text-sm text-muted-foreground'>
+              <p className='text-sm text-neutral-500'>
                 No group categories yet. Create one to organise students into teams.
               </p>
             ) : (
@@ -165,7 +168,7 @@ export default function AssignmentsPage() {
                   onClick={() => router.push(`/groupsets/${gs.id}`)}
                 >
                   {gs.name}
-                  <span className='ml-2 text-xs text-muted-foreground'>
+                  <span className='ml-2 text-xs text-neutral-500'>
                     {gs.groups_count} groups · {gs.students_count} students
                   </span>
                 </Button>
@@ -184,12 +187,12 @@ export default function AssignmentsPage() {
 
       {sorted.length === 0 ? (
         <Card>
-          <CardContent className='py-14 text-center text-sm text-muted-foreground'>
+          <CardContent className='py-14 text-center text-sm text-neutral-500'>
             No assignments in this course yet.
           </CardContent>
         </Card>
       ) : (
-        <div className='grid gap-4'>
+        <div className='flex flex-col gap-3'>
           {sorted.map((a) => {
             const phase = peerReviewPhase(a)
             const due = deadlineLabel(a.deadline)
@@ -206,58 +209,61 @@ export default function AssignmentsPage() {
                     router.push(`/assignments/${a.id}/${landing}`)
                   }
                 }}
-                className='cursor-pointer transition-colors hover:border-neutral-400'
+                className='cursor-pointer p-5 transition-colors hover:border-neutral-400'
               >
-                <CardHeader className='pb-2'>
-                  <div className='flex items-start justify-between gap-3'>
-                    <CardTitle className='text-lg'>{a.assignmentTitle}</CardTitle>
-                    <div className='flex shrink-0 flex-wrap justify-end gap-1'>
-                      <Badge variant='secondary'>
-                        {a.assignment_type === 'GROUP' ? (
-                          <>
-                            <Users2 className='mr-1 h-3 w-3' />
-                            Group
-                          </>
-                        ) : (
-                          'Individual'
-                        )}
-                      </Badge>
-                      {a.peer_review_enabled && (
-                        <Badge variant='outline'>
-                          <Users className='mr-1 h-3 w-3' />
-                          Peer Review
-                        </Badge>
-                      )}
-                      {a.self_assessment_enabled && (
-                        <Badge variant='outline'>
-                          <ClipboardCheck className='mr-1 h-3 w-3' />
-                          Self-Assessment
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {a.assignmentDescription && (
-                    <p className='mb-3 line-clamp-2 text-sm text-muted-foreground'>
-                      {a.assignmentDescription}
-                    </p>
-                  )}
-                  <div className='flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground'>
-                    <span
-                      className={`flex items-center gap-1 ${due.overdue ? 'text-neutral-500' : ''}`}
-                    >
-                      <CalendarClock className='h-3.5 w-3.5' />
-                      {due.text}
-                    </span>
-                    {phase && <span>Peer review: {phase}</span>}
-                    {a.self_assessment_enabled && a.self_assessment_deadline && (
-                      <span>
-                        Self-assessment due {formatDate(a.self_assessment_deadline)}
-                      </span>
+                <div className='mb-1.5 flex flex-wrap items-center gap-2.5'>
+                  <span className='text-base font-semibold'>
+                    {a.assignmentTitle}
+                  </span>
+                  <Badge variant='secondary' className='rounded-full'>
+                    {a.assignment_type === 'GROUP' ? (
+                      <>
+                        <Users2 className='mr-1 h-3 w-3' />
+                        Group
+                      </>
+                    ) : (
+                      'Individual'
                     )}
-                  </div>
-                </CardContent>
+                  </Badge>
+                  {a.peer_review_enabled && (
+                    <Badge variant='outline' className='rounded-full'>
+                      <Users className='mr-1 h-3 w-3' />
+                      Peer Review
+                    </Badge>
+                  )}
+                  {a.self_assessment_enabled && (
+                    <Badge variant='outline' className='rounded-full'>
+                      <ClipboardCheck className='mr-1 h-3 w-3' />
+                      Self-Assessment
+                    </Badge>
+                  )}
+                </div>
+                {a.assignmentDescription && (
+                  <p className='mb-2 line-clamp-2 text-sm text-neutral-500'>
+                    {a.assignmentDescription}
+                  </p>
+                )}
+                <div className='flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-500'>
+                  <span className='flex items-center gap-1'>
+                    <CalendarClock className='h-3.5 w-3.5' />
+                    {due.text}
+                  </span>
+                  {phase && (
+                    <>
+                      <span aria-hidden>·</span>
+                      <span>Peer review: {phase}</span>
+                    </>
+                  )}
+                  {a.self_assessment_enabled && a.self_assessment_deadline && (
+                    <>
+                      <span aria-hidden>·</span>
+                      <span>
+                        Self-assessment due{' '}
+                        {formatDate(a.self_assessment_deadline)}
+                      </span>
+                    </>
+                  )}
+                </div>
               </Card>
             )
           })}

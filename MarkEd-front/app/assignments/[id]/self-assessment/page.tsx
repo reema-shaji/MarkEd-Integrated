@@ -1,13 +1,12 @@
 'use client'
 
 /**
- * Student self-assessment form — ported from Mingyue's student/self_assessment.html.
+ * Student self-assessment form — ported from Mingyue's student/self_assessment.html
+ * and restyled to the unified "SA Form" prototype.
  *
- * Her three sections in her order: checklist, rubric self-grading, Gibbs
- * reflection. Sections are collapsible and expanded by default, the iteration-2
- * change that improved cognitive load and helped earn SUS 93.75.
- *
- * Carries over the low-effort fixes her evaluation motivated (Unified PRD §9):
+ * Three numbered sections in her order: checklist, rubric self-grading, Gibbs
+ * reflection. Each carries a "What & why / How" instruction line, matching the
+ * prototype and the low-effort fixes her evaluation motivated (Unified PRD §9):
  *   b-6  a subtitle distinguishing the checklist from the rubric
  *   b-12 an instruction line above the reflection prompts
  *   b-14 a confirmation after submitting
@@ -20,50 +19,37 @@ import { useParams } from 'next/navigation'
 import { DefaultService, SelfAssessmentFormSchema } from '@/src/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
-import { CalendarClock, Check, ChevronDown, ClipboardCheck } from 'lucide-react'
+import { CalendarClock, Check } from 'lucide-react'
 import { toast } from 'sonner'
 
+/** A plain numbered section card, faithful to the prototype's "1 · Checklist" heads. */
 function Section({
+  index,
   title,
   subtitle,
   children,
 }: {
+  index: number
   title: string
-  subtitle: string
+  subtitle: React.ReactNode
   children: React.ReactNode
 }) {
   return (
-    <Collapsible defaultOpen className='group/section'>
-      <Card>
-        <CollapsibleTrigger className='w-full text-left'>
-          <CardHeader className='pb-3'>
-            <div className='flex items-start justify-between gap-3'>
-              <div>
-                <CardTitle className='text-base'>{title}</CardTitle>
-                {/* Chevron signals the section is collapsible (b-5). */}
-                <p className='mt-1 text-sm font-normal text-muted-foreground'>
-                  {subtitle}
-                </p>
-              </div>
-              <ChevronDown className='mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-data-[state=closed]/section:-rotate-90' />
-            </div>
-          </CardHeader>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <CardContent>{children}</CardContent>
-        </CollapsibleContent>
-      </Card>
-    </Collapsible>
+    <Card>
+      <CardHeader className='pb-3'>
+        <CardTitle className='text-base'>
+          {index} · {title}
+        </CardTitle>
+        <p className='text-[13px] font-normal leading-relaxed text-neutral-500'>
+          {subtitle}
+        </p>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
   )
 }
 
@@ -147,82 +133,93 @@ export default function SelfAssessmentPage() {
 
   const checkedCount = Object.values(checklist).filter(Boolean).length
 
+  // Section numbers stay contiguous even when some sections are disabled.
+  let sectionIndex = 0
+
   return (
     <div className='mx-auto w-full max-w-3xl p-6'>
-      <div className='mb-5'>
-        <h1 className='flex items-center gap-2 text-2xl font-bold'>
-          <ClipboardCheck className='h-6 w-6' />
-          Self-assessment
-        </h1>
-        {/* b-8: students confused self-assessment with marker feedback. */}
-        <p className='mt-1 text-sm text-muted-foreground'>
-          This is your own reflection on your work. It is not your mark — your
-          marker sees it alongside your submission.
-        </p>
+      {/* Breadcrumb + title, per the prototype header. */}
+      <div className='mb-1 text-[13px] text-neutral-400'>Self-Assessment</div>
+      <h1 className='text-2xl font-bold'>Self-Assessment</h1>
+      {/* b-8: students confused self-assessment with marker feedback. */}
+      <p className='mt-1.5 text-[13px] leading-relaxed text-neutral-500'>
+        Your <b>self-assessment</b> is your own evaluation of your work. It is
+        not your mark — your marker sees it alongside your submission and may
+        respond with <b>feedback</b> on what you wrote.
+      </p>
 
-        <div className='mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground'>
-          {form.deadline && (
-            <span className='flex items-center gap-1'>
-              <CalendarClock className='h-3.5 w-3.5' />
-              {/* b-4: labelled in full. */}
-              Self-Assessment Deadline:{' '}
-              {new Date(form.deadline).toLocaleString(undefined, {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </span>
-          )}
-          {form.is_late && <Badge variant='secondary'>Deadline passed</Badge>}
-          {form.submitted_at && (
-            <Badge variant='outline'>
-              <Check className='mr-1 h-3 w-3' />
-              Last submitted{' '}
-              {new Date(form.submitted_at).toLocaleDateString(undefined, {
-                day: 'numeric',
-                month: 'short',
-              })}
-            </Badge>
-          )}
-        </div>
+      <div className='mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground'>
+        {form.deadline && (
+          <span className='flex items-center gap-1'>
+            <CalendarClock className='h-3.5 w-3.5' />
+            {/* b-4: labelled in full. */}
+            Self-Assessment Deadline:{' '}
+            {new Date(form.deadline).toLocaleString(undefined, {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        )}
+        {form.is_late && <Badge variant='secondary'>Deadline passed</Badge>}
+        {form.submitted_at && (
+          <Badge variant='outline'>
+            <Check className='mr-1 h-3 w-3' />
+            Last submitted{' '}
+            {new Date(form.submitted_at).toLocaleDateString(undefined, {
+              day: 'numeric',
+              month: 'short',
+            })}
+          </Badge>
+        )}
       </div>
 
-      <div className='grid gap-4'>
+      <div className='mt-5 grid gap-4'>
         {/* 1. Checklist */}
         {form.use_checklist && form.checklist_items.length > 0 && (
           <Section
+            index={++sectionIndex}
             title='Checklist'
             /* b-6: says plainly how this differs from the rubric below. */
-            subtitle={`Tick off what you have actually done. ${checkedCount} of ${form.checklist_items.length} ticked.`}
+            subtitle={
+              <>
+                <b>What &amp; why:</b> confirm you have addressed the key
+                requirements. <b>How:</b> tick each item you believe you have
+                completed. <span className='text-neutral-400'>({checkedCount} of {form.checklist_items.length} ticked)</span>
+              </>
+            }
           >
-            <div className='grid gap-3'>
-              {form.checklist_items.map((item) => (
-                <div key={item.id} className='flex items-start gap-3'>
-                  <Checkbox
-                    id={`check-${item.id}`}
-                    checked={Boolean(checklist[String(item.id)])}
-                    onCheckedChange={(value) =>
-                      setChecklist({ ...checklist, [String(item.id)]: value === true })
-                    }
-                    className='mt-0.5'
-                  />
-                  <div>
-                    <Label
-                      htmlFor={`check-${item.id}`}
-                      className='cursor-pointer font-normal'
-                    >
-                      {item.name}
-                    </Label>
-                    {item.description && (
-                      <p className='mt-0.5 text-xs text-muted-foreground'>
-                        {item.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div className='flex flex-col gap-2.5'>
+              {form.checklist_items.map((item) => {
+                const on = Boolean(checklist[String(item.id)])
+                return (
+                  <label
+                    key={item.id}
+                    className='flex cursor-pointer items-start gap-2.5 rounded-lg border border-neutral-100 px-3 py-2.5 transition-colors hover:border-neutral-200 hover:bg-neutral-50'
+                  >
+                    <input
+                      type='checkbox'
+                      checked={on}
+                      onChange={(e) =>
+                        setChecklist({ ...checklist, [String(item.id)]: e.target.checked })
+                      }
+                      className='mt-0.5 h-[15px] w-[15px] shrink-0 accent-neutral-900'
+                    />
+                    <span>
+                      <span className='block text-[13px] font-semibold'>
+                        {item.name}
+                      </span>
+                      {item.description && (
+                        <span className='mt-0.5 block text-xs leading-relaxed text-neutral-500'>
+                          {item.description}
+                        </span>
+                      )}
+                    </span>
+                  </label>
+                )
+              })}
             </div>
           </Section>
         )}
@@ -230,22 +227,30 @@ export default function SelfAssessmentPage() {
         {/* 2. Rubric self-grading */}
         {form.use_rubric && form.rubric_items.length > 0 && (
           <Section
-            title='Rubric self-grading'
+            index={++sectionIndex}
+            title='Rubric-Based Self-Grading'
             /* b-15: her students did not know why they were grading themselves. */
-            subtitle='Judge your own work against the same criteria your marker will use. Comparing your view with theirs is where most of the learning happens.'
+            subtitle={
+              <>
+                <b>What &amp; why:</b> grade yourself against the same rubric
+                your marker uses — comparing your view with theirs is where most
+                of the learning happens. <b>How:</b> select the level that best
+                describes your work.
+              </>
+            }
           >
-            <div className='grid gap-5'>
+            <div className='flex flex-col gap-4'>
               {form.rubric_items.map((criterion) => (
                 <div key={criterion.criteria_id}>
                   <div className='mb-2'>
-                    <div className='text-sm font-medium'>{criterion.name}</div>
+                    <div className='text-sm font-semibold'>{criterion.name}</div>
                     {criterion.full_path !== criterion.name && (
-                      <div className='text-xs text-muted-foreground'>
+                      <div className='text-xs text-neutral-500'>
                         {criterion.full_path}
                       </div>
                     )}
                   </div>
-                  <div className='grid gap-2'>
+                  <div className='flex flex-col gap-[7px]'>
                     {criterion.levels.map((level) => {
                       const selected = rubric[String(criterion.criteria_id)] === level.id
                       return (
@@ -258,23 +263,33 @@ export default function SelfAssessmentPage() {
                               [String(criterion.criteria_id)]: level.id,
                             })
                           }
-                          className={`rounded-md border p-3 text-left text-sm transition-colors ${
+                          className={`flex items-start gap-2.5 rounded-lg border p-3 text-left transition-colors ${
                             selected
-                              ? 'border-neutral-800 bg-neutral-50'
-                              : 'hover:border-neutral-400'
+                              ? 'border-[1.5px] border-neutral-900 bg-neutral-50'
+                              : 'border-neutral-200 hover:border-neutral-400'
                           }`}
                         >
-                          <div className='flex items-center justify-between gap-3'>
-                            <span className='font-medium'>{level.name}</span>
-                            <span className='shrink-0 text-xs text-muted-foreground'>
-                              {level.marks} marks
+                          {/* Radio indicator, matching the prototype's filled dot. */}
+                          <span
+                            className={`mt-0.5 h-3.5 w-3.5 shrink-0 rounded-full bg-white ${
+                              selected
+                                ? 'border-[4.5px] border-neutral-900'
+                                : 'border-[1.5px] border-neutral-300'
+                            }`}
+                          />
+                          <span>
+                            <span className='block text-[13px] font-semibold'>
+                              {level.name}{' '}
+                              <span className='font-normal text-neutral-500'>
+                                ({level.marks} marks)
+                              </span>
                             </span>
-                          </div>
-                          {level.description && (
-                            <p className='mt-1 text-xs text-muted-foreground'>
-                              {level.description}
-                            </p>
-                          )}
+                            {level.description && (
+                              <span className='mt-0.5 block text-xs leading-relaxed text-neutral-500'>
+                                {level.description}
+                              </span>
+                            )}
+                          </span>
                         </button>
                       )
                     })}
@@ -285,28 +300,33 @@ export default function SelfAssessmentPage() {
           </Section>
         )}
 
-        {/* 3. Gibbs reflection */}
+        {/* 3. Guided reflection */}
         {form.use_reflection && form.reflection_prompts.length > 0 && (
           <Section
-            title='Reflection'
+            index={++sectionIndex}
+            title='Guided Reflection'
             /* b-12: an instruction line, since the purpose was unclear. */
-            subtitle="These follow Gibbs' reflective cycle. Answer in a few sentences each — there are no right answers, and your marker reads them to understand how you worked."
+            subtitle={
+              <>
+                <b>What &amp; why:</b> reflect on your learning using the Gibbs
+                Reflective Cycle — there are no right answers. <b>How:</b> write
+                a short response for each stage.
+              </>
+            }
           >
-            <div className='grid gap-5'>
+            <div className='flex flex-col gap-3.5'>
               {form.reflection_prompts.map((prompt) => (
                 <div key={prompt.stage}>
                   <Label
                     htmlFor={`reflect-${prompt.stage}`}
-                    className='text-sm font-medium'
+                    className='mb-1.5 block text-[13px] font-normal'
                   >
-                    {prompt.label}
+                    <b>{prompt.label}:</b>{' '}
+                    <span className='text-neutral-500'>{prompt.prompt_text}</span>
                   </Label>
-                  <p className='mb-1.5 mt-0.5 text-xs text-muted-foreground'>
-                    {prompt.prompt_text}
-                  </p>
                   <Textarea
                     id={`reflect-${prompt.stage}`}
-                    rows={4}
+                    rows={3}
                     value={reflection[prompt.stage] ?? ''}
                     onChange={(e) =>
                       setReflection({ ...reflection, [prompt.stage]: e.target.value })
@@ -326,7 +346,7 @@ export default function SelfAssessmentPage() {
           </span>
         )}
         <Button onClick={submit} disabled={saving}>
-          {form.submitted_at ? 'Submit again' : 'Submit self-assessment'}
+          {form.submitted_at ? 'Submit again' : 'Submit Self-Assessment'}
         </Button>
       </div>
     </div>

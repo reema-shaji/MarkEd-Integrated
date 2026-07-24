@@ -2,19 +2,17 @@
 
 /**
  * Teacher self-assessment configuration — ported from Mingyue's
- * self_assessment_configuration.html and checklist_modals.html.
+ * self_assessment_configuration.html and restyled to the unified
+ * "SA Configuration" prototype.
  *
- * Her three configurable sections in her order: checklist, Gibbs reflection
- * prompts, rubric self-grading, plus the enable toggle and the separate
- * deadline. Her jsTree criteria picker becomes a plain checkbox tree (the
- * target architecture is React); the selection semantics are unchanged.
+ * A deadline card and a teacher-feedback card sit side by side, followed by
+ * collapsible Checklist / Rubric / Reflection sections. Everything persists
+ * through a single save (a-4) with dirty tracking and a saved indicator.
  *
  * Category-(b) fixes from her evaluation (Unified PRD §9):
  *   a-4  one save for the whole configuration, not several
  *   b-4  the deadline is labelled 'Self-Assessment Deadline' in full
  *   b-11 required fields are marked with an asterisk
- * Dirty tracking disables the save button until something changes and shows a
- * saved indicator afterwards.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -25,13 +23,18 @@ import {
   SelfAssessmentSettingSchema,
 } from '@/src/api'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Check, Plus, Trash2 } from 'lucide-react'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
+import { Check, ChevronDown, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ChecklistItem {
@@ -210,153 +213,188 @@ export default function SelfAssessmentConfigurePage() {
 
   return (
     <div className='mx-auto w-full max-w-3xl p-6 pb-24'>
-      <h1 className='text-2xl font-bold'>Self-assessment configuration</h1>
-      <p className='mt-1 text-sm text-muted-foreground'>
-        Choose what students reflect on, then save. Students see this once you
-        enable it.
+      <div className='mb-1 text-[13px] text-neutral-400'>
+        Assignments / Self-Assessment
+      </div>
+      <h1 className='text-2xl font-bold'>Self-Assessment Settings</h1>
+      <p className='mt-1.5 text-sm text-neutral-500'>
+        Configure the self-assessment components for this assignment. Students
+        complete these sections when submitting their self-assessment.
+      </p>
+      <p className='mt-2 text-xs leading-relaxed text-neutral-400'>
+        <b>Self-assessment</b> = the student&apos;s own evaluation of their work.{' '}
+        <b>Feedback</b> = your optional response to that self-assessment.
       </p>
 
-      <div className='mt-6 grid gap-4'>
-        {/* General settings */}
-        <Card>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-base'>General</CardTitle>
-          </CardHeader>
-          <CardContent className='grid gap-4'>
-            {[
-              ['enabled', 'Enable self-assessment for this assignment'],
-              ['use_checklist', 'Include a checklist'],
-              ['use_reflection', 'Include a Gibbs reflection'],
-              ['use_rubric', 'Include rubric self-grading'],
-            ].map(([key, label]) => (
-              <div key={key} className='flex items-center justify-between gap-4'>
-                <Label htmlFor={`sa-${key}`} className='font-normal'>
-                  {label}
-                </Label>
-                <Switch
-                  id={`sa-${key}`}
-                  checked={Boolean(settings[key as keyof SelfAssessmentSettingSchema])}
-                  onCheckedChange={(checked) =>
-                    patchSettings({ [key]: checked } as Partial<SelfAssessmentSettingSchema>)
-                  }
-                />
-              </div>
-            ))}
-            <div className='grid gap-1.5'>
-              {/* b-4: full label. */}
-              <Label htmlFor='sa-deadline'>
-                Self-Assessment Deadline <span className='text-red-600'>*</span>
-              </Label>
-              <Input
-                id='sa-deadline'
-                type='datetime-local'
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-              />
-              <p className='text-xs text-muted-foreground'>
-                Submissions after this are recorded as late.
-              </p>
-            </div>
+      {/* Master enable toggle. */}
+      <Card className='mt-6'>
+        <CardContent className='flex items-center justify-between gap-4 py-4'>
+          <div>
+            <Label htmlFor='sa-enabled' className='font-medium'>
+              Enable self-assessment for this assignment
+            </Label>
+            <p className='mt-0.5 text-xs text-neutral-500'>
+              Students see this once you enable it.
+            </p>
+          </div>
+          <Switch
+            id='sa-enabled'
+            checked={Boolean(settings.enabled)}
+            onCheckedChange={(checked) => patchSettings({ enabled: checked })}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Deadline + teacher-feedback, side by side per the prototype. */}
+      <div className='mt-4 grid gap-4 md:grid-cols-2'>
+        <Card className='overflow-hidden'>
+          <div className='border-b border-neutral-100 bg-neutral-50 px-5 py-3 text-sm font-semibold'>
+            Deadline
+          </div>
+          <CardContent className='pt-4'>
+            {/* b-4: full label. b-11: required asterisk. */}
+            <Label htmlFor='sa-deadline' className='mb-1 block'>
+              Self-Assessment Deadline <span className='text-red-600'>*</span>
+            </Label>
+            <Input
+              id='sa-deadline'
+              type='datetime-local'
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+            />
+            <p className='mt-2 text-xs text-neutral-500'>
+              Submissions after this are recorded as late.
+            </p>
           </CardContent>
         </Card>
 
-        {/* Checklist */}
-        {settings.use_checklist && (
-          <Card>
-            <CardHeader className='pb-3'>
-              <CardTitle className='text-base'>Checklist items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='grid gap-2'>
-                {checklist.length === 0 && (
-                  <p className='text-sm text-muted-foreground'>
-                    No items yet. Add the things students should confirm they have done.
-                  </p>
-                )}
-                {checklist.map((item) => (
-                  <div
-                    key={item.id}
-                    className='flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm'
-                  >
-                    <span>{item.name}</span>
-                    <button
-                      type='button'
-                      aria-label={`Remove ${item.name}`}
-                      onClick={() => deleteChecklistItem(item.id)}
-                      className='text-muted-foreground hover:text-red-600'
-                    >
-                      <Trash2 className='h-4 w-4' />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className='mt-3 flex gap-2'>
-                <Input
-                  value={newItem}
-                  onChange={(e) => setNewItem(e.target.value)}
-                  placeholder='New checklist item'
-                  onKeyDown={(e) => e.key === 'Enter' && addChecklistItem()}
-                />
-                <Button
-                  variant='outline'
-                  onClick={addChecklistItem}
-                  disabled={addingItem || !newItem.trim()}
-                >
-                  <Plus className='h-4 w-4' />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <Card className='overflow-hidden'>
+          <div className='border-b border-neutral-100 bg-neutral-50 px-5 py-3 text-sm font-semibold'>
+            Teacher Feedback on Self-Assessment
+          </div>
+          <CardContent className='pt-4'>
+            <label className='flex cursor-pointer items-center gap-2.5'>
+              <Checkbox
+                checked={Boolean(settings.needs_feedback)}
+                onCheckedChange={(checked) =>
+                  patchSettings({ needs_feedback: checked === true })
+                }
+              />
+              <span className='text-[13px] text-neutral-700'>
+                Enable feedback on self-assessment
+              </span>
+            </label>
+            <p className='mt-2 text-xs text-neutral-500'>
+              When on, you can respond to each student&apos;s self-assessment.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Gibbs reflection prompts */}
-        {settings.use_reflection && (
-          <Card>
-            <CardHeader className='pb-3'>
-              <CardTitle className='text-base'>Gibbs reflection prompts</CardTitle>
-            </CardHeader>
-            <CardContent className='grid gap-3'>
-              {prompts.map((prompt, index) => (
-                <div key={prompt.stage} className='grid gap-1.5'>
-                  <Label className='text-sm font-medium'>{prompt.label}</Label>
-                  <Input
-                    value={prompt.prompt_text}
-                    onChange={(e) => {
-                      const next = [...prompts]
-                      next[index] = { ...prompt, prompt_text: e.target.value }
-                      setPrompts(next)
-                    }}
-                  />
+      <div className='mt-4 grid gap-4'>
+        {/* Checklist */}
+        <ConfigSection
+          title='Checklist'
+          enabled={Boolean(settings.use_checklist)}
+          onToggle={(checked) => patchSettings({ use_checklist: checked })}
+        >
+          <div className='flex flex-col gap-2'>
+            {checklist.length === 0 && (
+              <p className='text-sm text-neutral-500'>
+                No items yet. Add the things students should confirm they have done.
+              </p>
+            )}
+            {checklist.map((item) => (
+              <div
+                key={item.id}
+                className='overflow-hidden rounded-lg border border-neutral-100'
+              >
+                <div className='flex items-center justify-between gap-2 bg-white px-3.5 py-2.5'>
+                  <span className='text-[13px] font-semibold'>{item.name}</span>
+                  <button
+                    type='button'
+                    aria-label={`Remove ${item.name}`}
+                    onClick={() => deleteChecklistItem(item.id)}
+                    className='text-neutral-400 hover:text-red-600'
+                  >
+                    <Trash2 className='h-4 w-4' />
+                  </button>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+                {item.description && (
+                  <div className='border-t border-neutral-100 bg-neutral-50 px-3.5 py-2 text-xs text-neutral-500'>
+                    {item.description}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className='mt-3 flex gap-2'>
+            <Input
+              value={newItem}
+              onChange={(e) => setNewItem(e.target.value)}
+              placeholder='New checklist item'
+              onKeyDown={(e) => e.key === 'Enter' && addChecklistItem()}
+            />
+            <Button
+              variant='outline'
+              onClick={addChecklistItem}
+              disabled={addingItem || !newItem.trim()}
+            >
+              <Plus className='h-4 w-4' />
+            </Button>
+          </div>
+        </ConfigSection>
 
         {/* Rubric self-grading — the jsTree replacement */}
-        {settings.use_rubric && (
-          <Card>
-            <CardHeader className='pb-1'>
-              <CardTitle className='text-base'>Rubric self-grading</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className='mb-3 text-xs text-muted-foreground'>
-                Choose which criteria students grade themselves against.
-              </p>
-              {tree.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>
-                  This assignment has no rubric criteria yet.
-                </p>
-              ) : (
-                <RubricTree
-                  nodes={tree}
-                  selected={selected}
-                  onToggle={toggleCriterion}
+        <ConfigSection
+          title='Rubric-Based Self-Grading'
+          enabled={Boolean(settings.use_rubric)}
+          onToggle={(checked) => patchSettings({ use_rubric: checked })}
+        >
+          <p className='mb-3 text-[13px] text-neutral-500'>
+            Select which marking criteria students self-grade against. Levels are
+            inherited from the assignment rubric.
+          </p>
+          {tree.length === 0 ? (
+            <p className='text-sm text-neutral-500'>
+              This assignment has no rubric criteria yet.
+            </p>
+          ) : (
+            <RubricTree
+              nodes={tree}
+              selected={selected}
+              onToggle={toggleCriterion}
+            />
+          )}
+        </ConfigSection>
+
+        {/* Gibbs reflection prompts */}
+        <ConfigSection
+          title='Guided Reflection'
+          enabled={Boolean(settings.use_reflection)}
+          onToggle={(checked) => patchSettings({ use_reflection: checked })}
+        >
+          <p className='mb-3 text-[13px] text-neutral-500'>
+            Six stages of the Gibbs Reflective Cycle. Prompts are editable.
+          </p>
+          <div className='flex flex-col gap-3'>
+            {prompts.map((prompt, index) => (
+              <div key={prompt.stage} className='grid gap-1.5'>
+                <Label className='text-[13px] font-medium text-neutral-700'>
+                  {prompt.label}
+                </Label>
+                <Input
+                  value={prompt.prompt_text}
+                  onChange={(e) => {
+                    const next = [...prompts]
+                    next[index] = { ...prompt, prompt_text: e.target.value }
+                    setPrompts(next)
+                  }}
                 />
-              )}
-            </CardContent>
-          </Card>
-        )}
+              </div>
+            ))}
+          </div>
+        </ConfigSection>
       </div>
 
       {/* Single sticky save bar with a saved indicator and dirty tracking. */}
@@ -378,6 +416,37 @@ export default function SelfAssessmentConfigurePage() {
   )
 }
 
+/** Collapsible component card with an enable toggle in its grey header. */
+function ConfigSection({
+  title,
+  enabled,
+  onToggle,
+  children,
+}: {
+  title: string
+  enabled: boolean
+  onToggle: (checked: boolean) => void
+  children: React.ReactNode
+}) {
+  return (
+    <Collapsible defaultOpen className='group/cfg'>
+      <Card className='overflow-hidden'>
+        <div className='flex items-center gap-3 border-b border-neutral-100 bg-neutral-50 px-5 py-3'>
+          <CollapsibleTrigger className='flex flex-1 items-center gap-2 text-left text-sm font-semibold'>
+            <ChevronDown className='h-4 w-4 text-neutral-400 transition-transform group-data-[state=closed]/cfg:-rotate-90' />
+            {title}
+          </CollapsibleTrigger>
+          {/* Untick to hide this section from students. */}
+          <Switch checked={enabled} onCheckedChange={onToggle} />
+        </div>
+        <CollapsibleContent>
+          <CardContent className='pt-4'>{children}</CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  )
+}
+
 /** Recursive checkbox tree — faithful to jsTree's hierarchy and selection. */
 function RubricTree({
   nodes,
@@ -391,21 +460,21 @@ function RubricTree({
   depth?: number
 }) {
   return (
-    <div className='grid gap-2' style={{ marginLeft: depth ? 16 : 0 }}>
+    <div className='grid gap-2.5' style={{ marginLeft: depth ? 16 : 0 }}>
       {nodes.map((node) => (
-        <div key={node.id} className='grid gap-2'>
-          <label className='flex items-center gap-2.5 rounded-md border px-3 py-2 text-sm'>
-            <Checkbox
-              checked={selected.has(node.id)}
-              onCheckedChange={() => onToggle(node.id)}
-            />
-            <span className='flex-1'>
-              <span className='font-medium'>{node.name}</span>
-              <span className='ml-2 text-xs text-muted-foreground'>
+        <div key={node.id} className='grid gap-2.5'>
+          <div className='rounded-lg border border-neutral-100 px-3.5 py-3'>
+            <label className='flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold'>
+              <Checkbox
+                checked={selected.has(node.id)}
+                onCheckedChange={() => onToggle(node.id)}
+              />
+              {node.name}
+              <span className='ml-1 text-xs font-normal text-neutral-500'>
                 {node.marks} marks
               </span>
-            </span>
-          </label>
+            </label>
+          </div>
           {node.children && node.children.length > 0 && (
             <RubricTree
               nodes={node.children}

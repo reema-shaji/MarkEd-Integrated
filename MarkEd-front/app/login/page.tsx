@@ -40,10 +40,29 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
 // the demo buttons entirely.
 const SHOW_DEMO = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS !== 'false'
 const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD || 'Test1234!'
+// Matches the seeded demo accounts (see seed_demo.py).
 const DEMO_ACCOUNTS = [
-  { role: 'Academic', name: 'Dr Patel', userNumber: 'acad001' },
-  { role: 'Marker', name: 'Dr Roberts', userNumber: 'mark001' },
-  { role: 'Student', name: 'James Chen', userNumber: 'stud001' },
+  {
+    role: 'Academic',
+    name: 'Dr Alan Whitfield',
+    subtitle: 'Course organiser · INF2-SEPP',
+    initials: 'AW',
+    userNumber: 'acad001',
+  },
+  {
+    role: 'Marker',
+    name: 'Ben Carter',
+    subtitle: 'Marker',
+    initials: 'BC',
+    userNumber: 'mark001',
+  },
+  {
+    role: 'Student',
+    name: 'Amara Okafor',
+    subtitle: 'Student · Team 1',
+    initials: 'AO',
+    userNumber: 'stud001',
+  },
 ]
 
 export default function LoginPage() {
@@ -87,7 +106,7 @@ export default function LoginPage() {
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-neutral-100 p-6'>
-      <Card className='w-full max-w-sm'>
+      <Card className='w-full max-w-md'>
         <CardHeader className='items-center text-center'>
           <Image
             src={`${basePath}/logo.png`}
@@ -96,18 +115,20 @@ export default function LoginPage() {
             height={40}
             className='mb-2'
           />
-          <CardTitle className='text-xl'>Welcome to MarkEd</CardTitle>
+          <CardTitle className='text-2xl font-bold text-neutral-900'>
+            Welcome to MarkEd
+          </CardTitle>
           <CardDescription>Sign in to access your assignments</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={submit} className='grid gap-4'>
             <div className='grid gap-1.5'>
-              <Label htmlFor='userNumber'>User number</Label>
+              <Label htmlFor='userNumber'>User Number</Label>
               <Input
                 id='userNumber'
                 value={userNumber}
                 onChange={(e) => setUserNumber(e.target.value)}
-                placeholder='e.g. acad001'
+                placeholder='e.g. B293734'
                 autoComplete='username'
                 required
               />
@@ -119,6 +140,7 @@ export default function LoginPage() {
                 type='password'
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder='Enter your password'
                 autoComplete='current-password'
                 required
               />
@@ -126,20 +148,20 @@ export default function LoginPage() {
             {error && <p className='text-sm text-red-600'>{error}</p>}
             <Button type='submit' disabled={submitting || !userNumber || !password}>
               {submitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-              Log in
+              Log In
             </Button>
           </form>
 
           {SHOW_DEMO && (
-            <div className='mt-6'>
-              <div className='mb-3 flex items-center gap-3'>
+            <div className='mt-5'>
+              <div className='mb-3 flex items-center gap-2.5'>
                 <div className='h-px flex-1 bg-neutral-200' />
-                <span className='text-[11px] font-semibold uppercase tracking-wide text-neutral-400'>
-                  Demo quick access
+                <span className='text-[11px] font-semibold uppercase tracking-wider text-neutral-400'>
+                  Prototype quick access
                 </span>
                 <div className='h-px flex-1 bg-neutral-200' />
               </div>
-              <div className='grid gap-2'>
+              <div className='grid gap-1.5'>
                 {DEMO_ACCOUNTS.map((account) => (
                   <Button
                     key={account.userNumber}
@@ -147,17 +169,27 @@ export default function LoginPage() {
                     variant='outline'
                     disabled={submitting}
                     onClick={() => doLogin(account.userNumber, DEMO_PASSWORD)}
-                    className='justify-start'
+                    className='h-auto justify-start gap-2.5 px-3 py-2.5 text-left'
                   >
-                    <span className='font-medium'>{account.role}</span>
-                    <span className='ml-2 text-xs text-muted-foreground'>
-                      {account.name}
+                    <span className='flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-neutral-200 text-[11px] font-semibold text-neutral-600'>
+                      {account.initials}
+                    </span>
+                    <span className='flex-1'>
+                      <span className='block text-[13px] font-semibold text-neutral-900'>
+                        {account.name}
+                      </span>
+                      <span className='block text-[11px] font-normal text-neutral-500'>
+                        {account.subtitle}
+                      </span>
+                    </span>
+                    <span className='rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600'>
+                      {account.role}
                     </span>
                   </Button>
                 ))}
               </div>
-              <p className='mt-2 text-center text-[11px] text-neutral-400'>
-                These sign in through the normal authenticated flow.
+              <p className='mt-4 text-center text-xs text-neutral-400'>
+                MarkEd v4.0 · Unified
               </p>
             </div>
           )}

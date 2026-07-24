@@ -3,7 +3,9 @@
 import React from 'react'
 import { useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
 import { AssignmentSchema, DefaultService } from '@/src/api'
 import { CountdownCard } from '@/components/countdown-card'
 
@@ -38,6 +40,7 @@ export default function AssignmentHomePage() {
         setAssignment(assignmentData)
       } catch (error) {
         console.error('Error fetching data:', error)
+        toast.error('Failed to load assignment')
       }
     }
 
@@ -48,22 +51,39 @@ export default function AssignmentHomePage() {
 
   if (!assignment) {
     return (
-      <div className='flex min-h-screen items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin' />
+      <div className='mx-auto w-full max-w-2xl space-y-4 p-6'>
+        <Card>
+          <CardHeader>
+            <Skeleton className='h-7 w-64' />
+          </CardHeader>
+          <CardContent className='space-y-6'>
+            <Skeleton className='h-4 w-full' />
+            <Skeleton className='h-4 w-3/4' />
+            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+              <Skeleton className='h-28 w-full rounded-lg' />
+              <Skeleton className='h-28 w-full rounded-lg' />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className='container mx-auto space-y-6 py-6'>
-      <Card className='mx-auto max-w-3xl'>
+    <div className='mx-auto w-full max-w-2xl space-y-4 p-6'>
+      <Card>
         <CardHeader>
-          <CardTitle className='text-2xl'>
-            {assignment.assignmentTitle}
-          </CardTitle>
+          <div className='flex flex-wrap items-center gap-2'>
+            <CardTitle className='text-2xl font-bold'>
+              {assignment.assignmentTitle}
+            </CardTitle>
+            {assignment.peer_review_enabled && (
+              <Badge variant='secondary'>Peer Review</Badge>
+            )}
+          </div>
         </CardHeader>
         <CardContent className='space-y-6'>
-          <p className='text-muted-foreground'>
+          <p className='text-sm text-neutral-500'>
             {assignment.assignmentDescription}
           </p>
 
@@ -87,9 +107,9 @@ export default function AssignmentHomePage() {
                 />
               )}
           </div>
-          
+
           {assignment.assignment_instructions && (
-            <p className='text-center text-sm text-muted-foreground'>
+            <p className='text-center text-sm text-neutral-400'>
               Check the sidebar for instruction files
             </p>
           )}

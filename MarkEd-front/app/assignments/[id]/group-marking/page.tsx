@@ -2,12 +2,13 @@
 
 /**
  * Group marking and personal contribution adjustment — ported from Hao's
- * personal_contribution_form.html and his get_personal_final_score() logic.
+ * personal_contribution_form.html and restyled to the unified "Group Marking"
+ * and "Contribution Adjustment" prototypes.
  *
  * His contribution adjustment was the most-praised part of his evaluation
- * because the score breakdown was transparent: base + adjustment = final, shown
- * per member. That is reproduced faithfully — the formula is additive and
- * visible, and every member's final score updates live as the marker types.
+ * because the breakdown was transparent: base + adjustment = final, shown per
+ * member. That is reproduced faithfully — the formula is additive and visible,
+ * and every member's final score updates live as the marker types.
  *
  * A marker picks a group submission, then sets each member's adjustment and
  * reason; one save writes them all at once, as his form did.
@@ -21,18 +22,10 @@ import {
   PersonalAdjustmentSchema,
 } from '@/src/api'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { ArrowLeft, Check, Users2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -127,15 +120,15 @@ export default function GroupMarkingPage() {
   if (!selected) {
     return (
       <div className='mx-auto w-full max-w-4xl p-6'>
-        <h1 className='text-2xl font-bold'>Group marking</h1>
-        <p className='mt-1 text-sm text-muted-foreground'>
+        <h1 className='text-2xl font-bold'>Group Marking</h1>
+        <p className='mt-1 text-sm text-neutral-500'>
           Pick a group to review its mark and set each member&apos;s
           contribution adjustment.
         </p>
         <div className='mt-6 grid gap-3'>
           {submissions.length === 0 ? (
             <Card>
-              <CardContent className='py-12 text-center text-sm text-muted-foreground'>
+              <CardContent className='py-12 text-center text-sm text-neutral-500'>
                 No group submissions yet.
               </CardContent>
             </Card>
@@ -152,14 +145,20 @@ export default function GroupMarkingPage() {
                 className='cursor-pointer transition-colors hover:border-neutral-400'
               >
                 <CardContent className='flex items-center justify-between py-4'>
-                  <div className='flex items-center gap-2'>
-                    <Users2 className='h-4 w-4 text-muted-foreground' />
-                    <span className='font-medium'>{submission.group_name}</span>
+                  <div className='flex items-center gap-2.5'>
+                    <Users2 className='h-4 w-4 text-neutral-400' />
+                    <span className='font-semibold'>{submission.group_name}</span>
                     <Badge variant='outline' className='text-[10px]'>
                       v{submission.submission_version}
                     </Badge>
+                    <Badge
+                      variant='secondary'
+                      className='bg-violet-100 text-[10px] font-medium text-violet-800'
+                    >
+                      Group Submission
+                    </Badge>
                   </div>
-                  <span className='text-xs text-muted-foreground'>
+                  <span className='text-xs text-neutral-500'>
                     Submitted by {submission.submitted_by_name}
                   </span>
                 </CardContent>
@@ -177,101 +176,121 @@ export default function GroupMarkingPage() {
 
   return (
     <div className='mx-auto w-full max-w-4xl p-6 pb-24'>
-      <Button
-        variant='ghost'
-        size='sm'
-        className='mb-3 -ml-2'
-        onClick={() => {
-          setSelected(null)
-          setRows([])
-        }}
-      >
-        <ArrowLeft className='mr-1 h-4 w-4' />
-        All groups
-      </Button>
-
-      <div className='mb-1 flex items-center gap-2'>
-        <h1 className='text-2xl font-bold'>{selected.group_name}</h1>
+      <div className='mb-3 flex items-center gap-3'>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => {
+            setSelected(null)
+            setRows([])
+          }}
+        >
+          <ArrowLeft className='mr-1 h-4 w-4' />
+          Back
+        </Button>
+        <span className='text-sm font-semibold'>{selected.group_name}</span>
         <Badge variant='outline'>v{selected.submission_version}</Badge>
+        <Badge
+          variant='secondary'
+          className='bg-violet-100 font-medium text-violet-800'
+        >
+          Group Submission
+        </Badge>
       </div>
-      <p className='text-sm text-muted-foreground'>
-        Group base score <b>{base}</b> / {total}. Each member&apos;s final score
-        is the base plus their individual adjustment.
+
+      <h1 className='text-2xl font-bold'>Personal Contribution Adjustment</h1>
+      <p className='mt-1.5 text-sm text-neutral-500'>
+        Adjust individual scores based on each student&apos;s contribution.{' '}
+        <b>Final = Base + Adjustment (points)</b> — the breakdown is shown to
+        students.
       </p>
 
-      <Card className='mt-5'>
-        <CardHeader className='pb-2'>
-          <CardTitle className='text-base'>Personal contribution</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingRows ? (
+      {/* Summary info bar. */}
+      <div className='mt-5 flex flex-wrap gap-x-6 gap-y-1 rounded-lg border border-neutral-200 bg-white px-5 py-4 text-sm shadow-sm'>
+        <span className='text-neutral-500'>
+          Group: <b className='text-neutral-900'>{selected.group_name}</b>
+        </span>
+        <span className='text-neutral-500'>
+          Version:{' '}
+          <b className='text-neutral-900'>v{selected.submission_version}</b>
+        </span>
+        <span className='text-neutral-500'>
+          Group Score:{' '}
+          <b className='text-base text-neutral-900'>
+            {base} / {total}
+          </b>
+        </span>
+      </div>
+
+      <Card className='mt-4 overflow-hidden'>
+        {loadingRows ? (
+          <CardContent className='py-6'>
             <Skeleton className='h-40' />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead className='w-24 text-right'>Base</TableHead>
-                  <TableHead className='w-32'>Adjustment</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead className='w-24 text-right'>Final</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((row) => {
-                  const final = row.group_score + (row.adjustment_score || 0)
-                  return (
-                    <TableRow key={row.student_id}>
-                      <TableCell>
-                        <div className='font-medium'>{row.userName}</div>
-                        <div className='font-mono text-xs text-muted-foreground'>
-                          {row.userNumber}
-                        </div>
-                      </TableCell>
-                      <TableCell className='text-right tabular-nums text-muted-foreground'>
-                        {row.group_score}
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type='number'
-                          step='0.5'
-                          value={row.adjustment_score}
-                          onChange={(e) =>
-                            patchRow(row.student_id, {
-                              adjustment_score: Number(e.target.value),
-                            })
-                          }
-                          className='h-8'
-                          aria-label={`Adjustment for ${row.userName}`}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={row.adjustment_reason ?? ''}
-                          onChange={(e) =>
-                            patchRow(row.student_id, {
-                              adjustment_reason: e.target.value,
-                            })
-                          }
-                          placeholder='Optional reason'
-                          className='h-8'
-                          aria-label={`Reason for ${row.userName}`}
-                        />
-                      </TableCell>
-                      <TableCell className='text-right font-medium tabular-nums'>
-                        {final}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          )}
-          <p className='mt-3 text-xs text-muted-foreground'>
-            Final = base + adjustment. Adjustments can be positive or negative.
-          </p>
-        </CardContent>
+          </CardContent>
+        ) : (
+          <div className='overflow-x-auto'>
+            <div className='min-w-[720px]'>
+              {/* Column header. */}
+              <div className='grid grid-cols-[1.4fr_.8fr_.8fr_.9fr_.8fr_1.8fr] gap-2 border-b border-neutral-100 bg-neutral-50 px-5 py-2.5 text-[11px] font-semibold tracking-wide text-neutral-400'>
+                <span>STUDENT</span>
+                <span>ID</span>
+                <span>SCORE</span>
+                <span>ADJ ±</span>
+                <span>FINAL</span>
+                <span>REASON</span>
+              </div>
+              {rows.map((row) => {
+                const final = row.group_score + (row.adjustment_score || 0)
+                return (
+                  <div
+                    key={row.student_id}
+                    className='grid grid-cols-[1.4fr_.8fr_.8fr_.9fr_.8fr_1.8fr] items-center gap-2 border-b border-neutral-100 px-5 py-3 last:border-b-0'
+                  >
+                    <span className='text-[13px] font-semibold'>
+                      {row.userName}
+                    </span>
+                    <span className='font-mono text-xs text-neutral-500'>
+                      {row.userNumber}
+                    </span>
+                    <span className='text-[13px] tabular-nums text-neutral-500'>
+                      {row.group_score}
+                    </span>
+                    <Input
+                      type='number'
+                      step='0.5'
+                      value={row.adjustment_score}
+                      onChange={(e) =>
+                        patchRow(row.student_id, {
+                          adjustment_score: Number(e.target.value),
+                        })
+                      }
+                      className='h-8 w-[70px] text-center'
+                      aria-label={`Adjustment for ${row.userName}`}
+                    />
+                    <span className='justify-self-start rounded-md bg-neutral-900 px-2.5 py-1 text-sm font-bold tabular-nums text-white'>
+                      {final}
+                    </span>
+                    <Input
+                      value={row.adjustment_reason ?? ''}
+                      onChange={(e) =>
+                        patchRow(row.student_id, {
+                          adjustment_reason: e.target.value,
+                        })
+                      }
+                      placeholder='Optional reason…'
+                      className='h-8'
+                      aria-label={`Reason for ${row.userName}`}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </Card>
+      <p className='mt-3 text-xs text-neutral-500'>
+        Final = base + adjustment. Adjustments can be positive or negative.
+      </p>
 
       <div className='fixed inset-x-0 bottom-0 z-40 border-t bg-neutral-100/95 backdrop-blur md:pl-64'>
         <div className='mx-auto flex max-w-4xl items-center justify-end gap-3 px-6 py-3'>

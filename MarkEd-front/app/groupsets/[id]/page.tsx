@@ -23,10 +23,8 @@ import {
   UngroupedStudentSchema,
 } from '@/src/api'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
@@ -53,7 +51,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, Plus, Shuffle, Trash2, UserPlus, X } from 'lucide-react'
+import { Plus, Shuffle, User, UserPlus, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 const UNGROUPED = 'ungrouped'
@@ -213,7 +211,7 @@ export default function GroupManagementPage() {
     return (
       <div className='mx-auto w-full max-w-6xl p-6'>
         <Skeleton className='h-9 w-72' />
-        <div className='mt-6 grid grid-cols-[280px_1fr] gap-5'>
+        <div className='mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]'>
           <Skeleton className='h-96' />
           <Skeleton className='h-96' />
         </div>
@@ -225,107 +223,60 @@ export default function GroupManagementPage() {
 
   return (
     <div className='mx-auto w-full max-w-6xl p-6'>
-      <Button
-        variant='ghost'
-        size='sm'
-        className='mb-3 -ml-2'
-        onClick={() => router.push('/groupsets')}
-      >
-        <ArrowLeft className='mr-1 h-4 w-4' />
-        Group categories
-      </Button>
+      <div className='mb-1.5 text-[13px] text-neutral-400'>
+        <button
+          type='button'
+          onClick={() => router.push('/groupsets')}
+          className='text-neutral-400 hover:text-neutral-600'
+        >
+          Group categories
+        </button>{' '}
+        / {groupSet?.name}
+      </div>
 
-      <div className='mb-5 flex flex-wrap items-start justify-between gap-3'>
+      <div className='mb-3 flex flex-wrap items-start justify-between gap-3'>
         <div>
-          <h1 className='text-2xl font-bold'>{groupSet?.name}</h1>
-          <p className='mt-1 text-sm text-muted-foreground'>
+          <h1 className='text-2xl font-bold'>Group management</h1>
+          <p className='mt-1 text-sm text-neutral-500'>
             {groups.length} groups · {ungrouped.length} unassigned · size{' '}
             {groupSet?.min_group_size}–{groupSet?.max_group_size}
           </p>
         </div>
         <div className='flex flex-wrap gap-2'>
-          <Button variant='outline' onClick={() => setCreateOpen(true)} disabled={busy}>
-            <Plus className='mr-1 h-4 w-4' />
-            Create group
-          </Button>
           <Button variant='outline' onClick={() => setRandomOpen(true)} disabled={busy}>
             <Shuffle className='mr-1 h-4 w-4' />
             Random assign
           </Button>
           <Button variant='outline' onClick={runAutoAssign} disabled={busy}>
             <UserPlus className='mr-1 h-4 w-4' />
-            Auto-assign unassigned
+            Auto-assign ungrouped
+          </Button>
+          <Button onClick={() => setCreateOpen(true)} disabled={busy}>
+            <Plus className='mr-1 h-4 w-4' />
+            Create group
           </Button>
         </div>
       </div>
 
-      <div className='grid gap-5 lg:grid-cols-[280px_1fr]'>
-        {/* Unassigned students — the drag source, and a drop target for
-            returning someone to the pool. */}
-        <Card
-          onDragOver={(e) => {
-            e.preventDefault()
-            setDragOver(UNGROUPED)
-          }}
-          onDragLeave={() => setDragOver(null)}
-          onDrop={(e) => onDrop(e, UNGROUPED)}
-          className={dragOver === UNGROUPED ? 'border-neutral-800' : undefined}
-        >
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-sm'>
-              Unassigned students ({ungrouped.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder='Search students…'
-              className='mb-3'
-            />
-            <div className='flex max-h-[28rem] flex-col gap-1.5 overflow-y-auto'>
-              {filteredUngrouped.length === 0 ? (
-                <p className='py-6 text-center text-xs text-muted-foreground'>
-                  {ungrouped.length === 0
-                    ? 'Everyone has a group.'
-                    : 'No students match that search.'}
-                </p>
-              ) : (
-                filteredUngrouped.map((student) => (
-                  <div
-                    key={student.student_id}
-                    draggable
-                    onDragStart={(e) =>
-                      e.dataTransfer.setData('text/plain', String(student.student_id))
-                    }
-                    className='flex cursor-grab items-center justify-between gap-2 rounded-md border bg-white px-2.5 py-2 text-sm active:cursor-grabbing'
-                  >
-                    <span className='truncate'>{student.userName}</span>
-                    <span className='shrink-0 font-mono text-[11px] text-muted-foreground'>
-                      {student.userNumber}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      <p className='mb-4 text-xs text-neutral-400'>
+        Drag students between groups, or into the Unassigned panel. Changes save
+        automatically.
+      </p>
 
+      <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]'>
         {/* Group cards — drop targets. */}
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
+        <div className='grid content-start gap-4 sm:grid-cols-2'>
           {groups.length === 0 && (
-            <Card className='sm:col-span-2 xl:col-span-3'>
-              <CardContent className='py-12 text-center text-sm text-muted-foreground'>
-                No groups yet. Create one, or use random assign to build them all
-                at once.
-              </CardContent>
-            </Card>
+            <div className='rounded-lg border border-neutral-200 bg-white py-12 text-center text-sm text-neutral-500 shadow-sm sm:col-span-2'>
+              No groups yet. Create one, or use random assign to build them all
+              at once.
+            </div>
           )}
 
           {groups.map((group) => {
             const full = group.members.length >= maxSize
             return (
-              <Card
+              <div
                 key={group.id}
                 onDragOver={(e) => {
                   e.preventDefault()
@@ -333,34 +284,42 @@ export default function GroupManagementPage() {
                 }}
                 onDragLeave={() => setDragOver(null)}
                 onDrop={(e) => onDrop(e, String(group.id))}
-                className={
-                  dragOver === String(group.id) ? 'border-neutral-800' : undefined
-                }
+                className={`overflow-hidden rounded-lg border bg-white shadow-sm ${
+                  dragOver === String(group.id)
+                    ? 'border-neutral-800'
+                    : 'border-neutral-200'
+                }`}
               >
-                <CardHeader className='pb-2'>
-                  <div className='flex items-start justify-between gap-2'>
-                    <CardTitle className='text-sm'>{group.name}</CardTitle>
-                    <div className='flex items-center gap-1'>
-                      <Badge variant={full ? 'secondary' : 'outline'} className='text-[10px]'>
-                        {group.members.length}/{maxSize}
-                      </Badge>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-6 w-6'
-                        aria-label={`Delete ${group.name}`}
-                        onClick={() => deleteGroup(group)}
-                        disabled={busy}
-                      >
-                        <Trash2 className='h-3.5 w-3.5' />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className='flex min-h-[4rem] flex-col gap-1.5'>
+                <div className='flex items-center justify-between gap-2 border-b border-neutral-100 bg-neutral-50 px-3.5 py-2.5'>
+                  <span className='flex min-w-0 items-center gap-2'>
+                    <span className='truncate text-sm font-semibold'>
+                      {group.name}
+                    </span>
+                    <span
+                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${
+                        full
+                          ? 'border-neutral-300 bg-neutral-200 text-neutral-700'
+                          : 'border-neutral-200 bg-neutral-100 text-neutral-600'
+                      }`}
+                    >
+                      {group.members.length}/{maxSize}
+                    </span>
+                  </span>
+                  <button
+                    type='button'
+                    aria-label={`Delete ${group.name}`}
+                    onClick={() => deleteGroup(group)}
+                    disabled={busy}
+                    className='shrink-0 rounded px-1.5 py-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50'
+                  >
+                    Delete
+                  </button>
+                </div>
+
+                <div className='p-2.5'>
+                  <div className='flex min-h-[100px] flex-col gap-1.5'>
                     {group.members.length === 0 ? (
-                      <p className='py-3 text-center text-xs text-muted-foreground'>
+                      <p className='py-6 text-center text-xs text-neutral-400'>
                         Drag students here
                       </p>
                     ) : (
@@ -374,15 +333,23 @@ export default function GroupManagementPage() {
                               String(member.student_id)
                             )
                           }
-                          className='group/member flex cursor-grab items-center justify-between gap-2 rounded-md border bg-white px-2.5 py-1.5 text-sm active:cursor-grabbing'
+                          className='group/member flex cursor-grab items-center gap-2.5 rounded-md border-[1.5px] border-neutral-200 bg-white px-3 py-2 hover:border-neutral-400 hover:shadow-sm active:cursor-grabbing'
                         >
-                          <span className='truncate'>{member.userName}</span>
+                          <User className='h-4 w-4 shrink-0 text-neutral-400' />
+                          <span className='min-w-0 flex-1'>
+                            <span className='block truncate text-[13px] font-semibold text-neutral-700'>
+                              {member.userName}
+                            </span>
+                            <span className='block truncate text-[11px] text-neutral-400'>
+                              {member.userNumber}
+                            </span>
+                          </span>
                           <button
                             type='button'
                             aria-label={`Remove ${member.userName} from ${group.name}`}
                             onClick={() => move(member.student_id, null)}
                             disabled={busy}
-                            className='shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-red-600 group-hover/member:opacity-100 focus:opacity-100'
+                            className='shrink-0 text-neutral-400 opacity-0 transition-opacity hover:text-red-600 group-hover/member:opacity-100 focus:opacity-100'
                           >
                             <X className='h-3.5 w-3.5' />
                           </button>
@@ -399,7 +366,7 @@ export default function GroupManagementPage() {
                       onValueChange={(value) => move(Number(value), group.id)}
                     >
                       <SelectTrigger
-                        className='mt-3 h-8 text-xs'
+                        className='mt-2.5 h-8 text-xs'
                         aria-label={`Add a student to ${group.name}`}
                       >
                         <SelectValue placeholder='+ Add student' />
@@ -416,10 +383,69 @@ export default function GroupManagementPage() {
                       </SelectContent>
                     </Select>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )
           })}
+        </div>
+
+        {/* Unassigned students — the drag source, and a drop target for
+            returning someone to the pool. */}
+        <div
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragOver(UNGROUPED)
+          }}
+          onDragLeave={() => setDragOver(null)}
+          onDrop={(e) => onDrop(e, UNGROUPED)}
+          className={`flex max-h-[36rem] flex-col overflow-hidden rounded-lg border-2 border-dashed bg-white ${
+            dragOver === UNGROUPED ? 'border-neutral-800' : 'border-neutral-300'
+          }`}
+        >
+          <div className='flex items-center justify-between gap-2 border-b border-neutral-100 bg-neutral-50 px-3.5 py-2.5'>
+            <span className='text-sm font-semibold'>Unassigned students</span>
+            <span className='shrink-0 rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-600'>
+              {ungrouped.length}
+            </span>
+          </div>
+          <div className='p-2.5'>
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder='Search students…'
+              className='h-8 text-xs'
+            />
+          </div>
+          <div className='flex flex-1 flex-col gap-1.5 overflow-y-auto px-2.5 pb-2.5'>
+            {filteredUngrouped.length === 0 ? (
+              <p className='py-6 text-center text-xs text-neutral-400'>
+                {ungrouped.length === 0
+                  ? 'Everyone has a group.'
+                  : 'No students match that search.'}
+              </p>
+            ) : (
+              filteredUngrouped.map((student) => (
+                <div
+                  key={student.student_id}
+                  draggable
+                  onDragStart={(e) =>
+                    e.dataTransfer.setData('text/plain', String(student.student_id))
+                  }
+                  className='flex cursor-grab items-center gap-2.5 rounded-md border-[1.5px] border-neutral-200 bg-white px-3 py-2 hover:border-neutral-400 hover:shadow-sm active:cursor-grabbing'
+                >
+                  <User className='h-4 w-4 shrink-0 text-neutral-400' />
+                  <span className='min-w-0 flex-1'>
+                    <span className='block truncate text-[13px] font-semibold text-neutral-700'>
+                      {student.userName}
+                    </span>
+                    <span className='block truncate text-[11px] text-neutral-400'>
+                      {student.userNumber}
+                    </span>
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
