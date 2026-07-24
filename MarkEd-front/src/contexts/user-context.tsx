@@ -15,7 +15,7 @@ function redirectToLogin() {
     typeof window !== 'undefined' &&
     !window.location.pathname.endsWith('/login')
   ) {
-    window.location.href = '/p/login'
+    window.location.href = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/login`
   }
 }
 

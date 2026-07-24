@@ -69,7 +69,7 @@ export default function LoginPage() {
       <Card className='w-full max-w-sm'>
         <CardHeader className='items-center text-center'>
           <Image
-            src='/p/logo.png'
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`}
             alt='MarkEd'
             width={40}
             height={40}

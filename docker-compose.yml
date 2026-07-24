@@ -64,6 +64,9 @@ services:
       - "3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost
+      # Local nginx serves the SPA under /p (and Django under /). On Vercel this
+      # is left unset, so the standalone frontend serves from the domain root.
+      - NEXT_PUBLIC_BASE_PATH=/p
       - NODE_ENV=development
 
   nginx:

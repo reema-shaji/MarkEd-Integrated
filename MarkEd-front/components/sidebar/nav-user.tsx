@@ -32,7 +32,7 @@ export function NavUser() {
       // is signed out.
     }
     clearToken()
-    window.location.href = '/p/login'
+    window.location.href = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/login`
   }
 
   return (

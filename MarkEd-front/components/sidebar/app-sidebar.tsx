@@ -46,7 +46,7 @@ export function AppSidebar({ ...props }) {
                 <a href='/' className='flex items-center gap-2'>
                   <div className='bg-sidebar-muted flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground'>
                     <Image
-                      src='/p/logo.png'
+                      src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`}
                       alt='MarkEd'
                       width={32}
                       height={32}
