@@ -91,6 +91,43 @@ class PeerAssignmentCreationResponse(Schema):
     message: str
     assignment_id: Optional[int] = None
 
+class AssignmentUpdateRequest(Schema):
+    """Editable assignment fields (prototype "Customization"). The assignment
+    *type* is intentionally omitted — it is fixed at creation because it
+    determines submission and review behaviour."""
+    assignmentTitle: Optional[str] = None
+    assignmentDescription: Optional[str] = None
+    assignmentWebsite: Optional[str] = None
+    deadline: Optional[datetime] = None
+
+
+class StructureCriterionSchema(Schema):
+    id: int
+    name: str
+    marks: float
+
+
+class AssignmentStructureSchema(Schema):
+    """Marking criteria + self-assessment status (prototype "Assignment
+    Structure")."""
+    criteria: List[StructureCriterionSchema] = []
+    self_assessment_enabled: bool = False
+
+
+class CriterionUpsertRequest(Schema):
+    name: Optional[str] = None
+    marks: Optional[float] = None
+
+
+class MarkerJobSchema(Schema):
+    """Per-marker marking allocation summary (prototype "Marking Jobs")."""
+    marker_id: int
+    marker_name: str
+    allocated: int
+    completed: int
+    status: str  # 'Not Started' | 'In Progress' | 'Complete'
+
+
 class AssignmentStatistics(Schema):
     total_submissions: int
     unique_submitters: int

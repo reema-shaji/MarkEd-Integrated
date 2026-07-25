@@ -871,3 +871,27 @@ class SelfAssessmentRubricSelection(models.Model):
 
     class Meta:
         unique_together = ('assignment', 'criteria')
+
+
+class FeedbackBankEntry(models.Model):
+    """A reusable feedback snippet a marker can save and reuse while marking
+    (prototype "Feedback Bank").
+
+    Distinct from `SavedFeedback`/`Feedback`, which are tied to a specific
+    SubmissionElement being marked; a bank entry is standalone, reusable text
+    with a category and lightweight usage/reaction counters.
+    """
+    owner: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='feedback_bank_entries')
+    course: models.ForeignKey = models.ForeignKey('Course', on_delete=models.CASCADE, null=True, blank=True, related_name='feedback_bank_entries')
+    text: models.TextField = models.TextField()
+    category: models.CharField = models.CharField(max_length=60, blank=True, default='')
+    used_count: models.IntegerField = models.IntegerField(default=0)
+    up_count: models.IntegerField = models.IntegerField(default=0)
+    down_count: models.IntegerField = models.IntegerField(default=0)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-used_count', '-created_at']
+
+    def __str__(self) -> str:
+        return f"{self.category or 'General'}: {self.text[:40]}"

@@ -1,12 +1,13 @@
 from ninja import Router
 from typing import List, Set
 from django.db import models
-from ..schemas.assignment import AssignmentSchema, AssignmentCreateRequest, MyAssignmentStatusSchema, PeerAssignmentRequest, PeerAssignmentCreationResponse, AssignmentStatistics
+from ..schemas.assignment import AssignmentSchema, AssignmentCreateRequest, MyAssignmentStatusSchema, PeerAssignmentRequest, PeerAssignmentCreationResponse, AssignmentStatistics, AssignmentUpdateRequest, AssignmentStructureSchema, StructureCriterionSchema, CriterionUpsertRequest, MarkerJobSchema
 from ..schemas.feedback import CreationResponse
 from ..decorators import require_auth, check_permissions
 from ..permissions import IsCourseStaffFromAssignment, CanCreateAssignment
 from ...models import (
     Assignment,
+    Course2Marker,
     Criteria,
     Group,
     GroupMember,
@@ -653,3 +654,129 @@ def get_assignment_statistics(request, assignment_id: int):
         "self_assessment_submitted": sa_submitted,
         "grade_distribution": grade_distribution,
     }
+
+
+# --- Customization: edit an assignment's basic fields -----------------------
+@router.patch("/{assignment_id}", response=AssignmentSchema, operation_id="updateAssignment")
+@require_auth(roles=['Academic', 'Marker', 'TA'])
+@check_permissions(IsCourseStaffFromAssignment)
+def update_assignment(request, assignment_id: int, data: AssignmentUpdateRequest):
+    """Update the editable fields of an assignment (prototype "Customization").
+
+    Only title, description, website and deadline can change; the assignment
+    type is fixed at creation. Fields left unset in the request are untouched.
+    """
+    assignment = Assignment.objects.select_related('selfassessmentsetting').get(id=assignment_id)
+    if data.assignmentTitle is not None:
+        assignment.assignmentTitle = data.assignmentTitle
+    if data.assignmentDescription is not None:
+        assignment.assignmentDescription = data.assignmentDescription
+    if data.assignmentWebsite is not None:
+        assignment.assignmentWebsite = data.assignmentWebsite or None
+    if data.deadline is not None:
+        assignment.deadline = data.deadline
+    assignment.save()
+    return assignment
+
+
+# --- Assignment Structure: marking criteria ---------------------------------
+@router.get("/{assignment_id}/structure", response=AssignmentStructureSchema, operation_id="getAssignmentStructure")
+@require_auth(roles=['Academic', 'Marker', 'TA'])
+@check_permissions(IsCourseStaffFromAssignment)
+def get_assignment_structure(request, assignment_id: int):
+    """The assignment's top-level marking criteria plus whether self-assessment
+    is enabled (prototype "Assignment Structure")."""
+    roots = Criteria.objects.filter(assignment_id=assignment_id, parent__isnull=True).order_by('id')
+    sa = SelfAssessmentSetting.objects.filter(assignment_id=assignment_id).first()
+    return {
+        "criteria": [{"id": c.id, "name": c.name, "marks": c.marks} for c in roots],
+        "self_assessment_enabled": bool(sa and sa.enabled),
+    }
+
+
+@router.post("/{assignment_id}/criteria", response=StructureCriterionSchema, operation_id="createAssignmentCriterion")
+@require_auth(roles=['Academic', 'Marker', 'TA'])
+@check_permissions(IsCourseStaffFromAssignment)
+def create_assignment_criterion(request, assignment_id: int, data: CriterionUpsertRequest):
+    """Add a top-level marking criterion to an assignment."""
+    criterion = Criteria.objects.create(
+        assignment_id=assignment_id,
+        name=data.name or 'New criterion',
+        marks=data.marks if data.marks is not None else 0,
+    )
+    return {"id": criterion.id, "name": criterion.name, "marks": criterion.marks}
+
+
+@router.patch("/{assignment_id}/criteria/{criteria_id}", response=StructureCriterionSchema, operation_id="updateAssignmentCriterion")
+@require_auth(roles=['Academic', 'Marker', 'TA'])
+@check_permissions(IsCourseStaffFromAssignment)
+def update_assignment_criterion(request, assignment_id: int, criteria_id: int, data: CriterionUpsertRequest):
+    """Rename or re-weight a marking criterion."""
+    criterion = Criteria.objects.get(id=criteria_id, assignment_id=assignment_id)
+    if data.name is not None:
+        criterion.name = data.name
+    if data.marks is not None:
+        criterion.marks = data.marks
+    criterion.save()
+    return {"id": criterion.id, "name": criterion.name, "marks": criterion.marks}
+
+
+# --- Jobs: per-marker marking allocation summary ----------------------------
+@router.get("/{assignment_id}/marker-jobs", response=List[MarkerJobSchema], operation_id="getMarkerJobs")
+@require_auth(roles=['Academic', 'TA'])
+@check_permissions(IsCourseStaffFromAssignment)
+def get_marker_jobs(request, assignment_id: int):
+    """Per-marker marking progress for an assignment (prototype "Marking Jobs").
+
+    `allocated` is the shared pool size (all submissions for the assignment);
+    `completed` is how many distinct submissions each marker has marked. This
+    reflects the codebase's open-pool marking model rather than a per-marker
+    hard allocation.
+    """
+    assignment = Assignment.objects.get(id=assignment_id)
+    is_group = assignment.assignment_type == 'GROUP'
+
+    if is_group:
+        allocated = GroupSubmission.objects.filter(
+            assignment_id=assignment_id, is_active=True
+        ).values('group_id').distinct().count()
+    else:
+        allocated = Submission.objects.filter(
+            assignment_id=assignment_id
+        ).values('student_id').distinct().count()
+
+    markers = (
+        Course2Marker.objects
+        .filter(course=assignment.course)
+        .select_related('marker')
+    )
+
+    rows = []
+    for c2m in markers:
+        marker = c2m.marker
+        if is_group:
+            completed = (
+                GroupSubmissionCriteria.objects
+                .filter(group_submission__assignment_id=assignment_id, marker=marker)
+                .values('group_submission_id').distinct().count()
+            )
+        else:
+            completed = (
+                SubmissionCriteria.objects
+                .filter(submission__assignment_id=assignment_id, marker=marker)
+                .values('submission_id').distinct().count()
+            )
+        if allocated and completed >= allocated:
+            status = 'Complete'
+        elif completed > 0:
+            status = 'In Progress'
+        else:
+            status = 'Not Started'
+        rows.append({
+            "marker_id": marker.id,
+            "marker_name": marker.userName,
+            "allocated": allocated,
+            "completed": completed,
+            "status": status,
+        })
+    return rows

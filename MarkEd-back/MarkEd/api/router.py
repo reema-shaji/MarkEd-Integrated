@@ -4,6 +4,7 @@ from .routes import (
     assignments,
     auth,
     courses,
+    feedback_bank,
     files,
     groups,
     health,
@@ -35,3 +36,6 @@ api.add_router("/groups", groups.groups_router)
 # the student form live under /assignments; item-scoped edits under /self-assessment.
 api.add_router("/assignments", self_assessment.router)
 api.add_router("/self-assessment", self_assessment.sa_router)
+
+# Feedback bank: reusable marker feedback snippets (prototype "Feedback Bank").
+api.add_router("/feedback-bank", feedback_bank.router)

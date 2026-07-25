@@ -8,6 +8,8 @@ import type { AllSubmissionSchema } from '../models/AllSubmissionSchema';
 import type { AssignmentCreateRequest } from '../models/AssignmentCreateRequest';
 import type { AssignmentSchema } from '../models/AssignmentSchema';
 import type { AssignmentStatistics } from '../models/AssignmentStatistics';
+import type { AssignmentStructureSchema } from '../models/AssignmentStructureSchema';
+import type { AssignmentUpdateRequest } from '../models/AssignmentUpdateRequest';
 import type { AutoAssignRequest } from '../models/AutoAssignRequest';
 import type { ChangePasswordIn } from '../models/ChangePasswordIn';
 import type { ChecklistItemRequest } from '../models/ChecklistItemRequest';
@@ -15,8 +17,12 @@ import type { ChecklistItemSchema } from '../models/ChecklistItemSchema';
 import type { CommentCreate } from '../models/CommentCreate';
 import type { CourseSchema } from '../models/CourseSchema';
 import type { CreationResponse } from '../models/CreationResponse';
+import type { CriterionUpsertRequest } from '../models/CriterionUpsertRequest';
 import type { DismissedLLMFeedbackResponse } from '../models/DismissedLLMFeedbackResponse';
 import type { DismissLLMFeedbackRequest } from '../models/DismissLLMFeedbackRequest';
+import type { FeedbackBankActionResponse } from '../models/FeedbackBankActionResponse';
+import type { FeedbackBankCreateRequest } from '../models/FeedbackBankCreateRequest';
+import type { FeedbackBankSchema } from '../models/FeedbackBankSchema';
 import type { FileAccessResponse } from '../models/FileAccessResponse';
 import type { FileUploadResponse } from '../models/FileUploadResponse';
 import type { GroupCreateRequest } from '../models/GroupCreateRequest';
@@ -32,6 +38,7 @@ import type { GroupSubmitRequest } from '../models/GroupSubmitRequest';
 import type { GroupUpdateRequest } from '../models/GroupUpdateRequest';
 import type { LoginIn } from '../models/LoginIn';
 import type { MarkerCommentUpdate } from '../models/MarkerCommentUpdate';
+import type { MarkerJobSchema } from '../models/MarkerJobSchema';
 import type { MessageOut } from '../models/MessageOut';
 import type { MoveMemberRequest } from '../models/MoveMemberRequest';
 import type { MyAssignmentStatusSchema } from '../models/MyAssignmentStatusSchema';
@@ -59,6 +66,7 @@ import type { SelfAssessmentSettingSchema } from '../models/SelfAssessmentSettin
 import type { SelfAssessmentSettingUpdateRequest } from '../models/SelfAssessmentSettingUpdateRequest';
 import type { SelfAssessmentSubmitRequest } from '../models/SelfAssessmentSubmitRequest';
 import type { SelfAssessmentSubmitResponse } from '../models/SelfAssessmentSubmitResponse';
+import type { StructureCriterionSchema } from '../models/StructureCriterionSchema';
 import type { StudentSelfAssessmentSchema } from '../models/StudentSelfAssessmentSchema';
 import type { SubmissionRequest } from '../models/SubmissionRequest';
 import type { SubmissionResponse } from '../models/SubmissionResponse';
@@ -244,6 +252,31 @@ export class DefaultService {
         });
     }
     /**
+     * Update Assignment
+     * Update the editable fields of an assignment (prototype "Customization").
+     *
+     * Only title, description, website and deadline can change; the assignment
+     * type is fixed at creation. Fields left unset in the request are untouched.
+     * @param assignmentId
+     * @param requestBody
+     * @returns AssignmentSchema OK
+     * @throws ApiError
+     */
+    public static updateAssignment(
+        assignmentId: number,
+        requestBody: AssignmentUpdateRequest,
+    ): CancelablePromise<AssignmentSchema> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/assignments/{assignment_id}',
+            path: {
+                'assignment_id': assignmentId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
      * Get My Assignment Status
      * The current student's own status for an assignment (Assignment Detail):
      * their group, whether they've submitted, and whether that was late.
@@ -354,6 +387,95 @@ export class DefaultService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/assignments/{assignment_id}/statistics',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Get Assignment Structure
+     * The assignment's top-level marking criteria plus whether self-assessment
+     * is enabled (prototype "Assignment Structure").
+     * @param assignmentId
+     * @returns AssignmentStructureSchema OK
+     * @throws ApiError
+     */
+    public static getAssignmentStructure(
+        assignmentId: number,
+    ): CancelablePromise<AssignmentStructureSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/assignments/{assignment_id}/structure',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Create Assignment Criterion
+     * Add a top-level marking criterion to an assignment.
+     * @param assignmentId
+     * @param requestBody
+     * @returns StructureCriterionSchema OK
+     * @throws ApiError
+     */
+    public static createAssignmentCriterion(
+        assignmentId: number,
+        requestBody: CriterionUpsertRequest,
+    ): CancelablePromise<StructureCriterionSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/assignments/{assignment_id}/criteria',
+            path: {
+                'assignment_id': assignmentId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Update Assignment Criterion
+     * Rename or re-weight a marking criterion.
+     * @param assignmentId
+     * @param criteriaId
+     * @param requestBody
+     * @returns StructureCriterionSchema OK
+     * @throws ApiError
+     */
+    public static updateAssignmentCriterion(
+        assignmentId: number,
+        criteriaId: number,
+        requestBody: CriterionUpsertRequest,
+    ): CancelablePromise<StructureCriterionSchema> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/assignments/{assignment_id}/criteria/{criteria_id}',
+            path: {
+                'assignment_id': assignmentId,
+                'criteria_id': criteriaId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get Marker Jobs
+     * Per-marker marking progress for an assignment (prototype "Marking Jobs").
+     *
+     * `allocated` is the shared pool size (all submissions for the assignment);
+     * `completed` is how many distinct submissions each marker has marked. This
+     * reflects the codebase's open-pool marking model rather than a per-marker
+     * hard allocation.
+     * @param assignmentId
+     * @returns MarkerJobSchema OK
+     * @throws ApiError
+     */
+    public static getMarkerJobs(
+        assignmentId: number,
+    ): CancelablePromise<Array<MarkerJobSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/assignments/{assignment_id}/marker-jobs',
             path: {
                 'assignment_id': assignmentId,
             },
@@ -1699,6 +1821,100 @@ export class DefaultService {
             },
             body: requestBody,
             mediaType: 'application/json',
+        });
+    }
+    /**
+     * List Feedback Bank
+     * The current marker's saved feedback snippets, optionally by category.
+     * @param category
+     * @returns FeedbackBankSchema OK
+     * @throws ApiError
+     */
+    public static listFeedbackBank(
+        category?: (string | null),
+    ): CancelablePromise<Array<FeedbackBankSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/feedback-bank/',
+            query: {
+                'category': category,
+            },
+        });
+    }
+    /**
+     * Create Feedback Bank Entry
+     * Save a reusable feedback snippet.
+     * @param requestBody
+     * @returns FeedbackBankSchema OK
+     * @throws ApiError
+     */
+    public static createFeedbackBankEntry(
+        requestBody: FeedbackBankCreateRequest,
+    ): CancelablePromise<FeedbackBankSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/feedback-bank/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Delete Feedback Bank Entry
+     * Delete one of the current marker's snippets.
+     * @param entryId
+     * @returns FeedbackBankActionResponse OK
+     * @throws ApiError
+     */
+    public static deleteFeedbackBankEntry(
+        entryId: number,
+    ): CancelablePromise<FeedbackBankActionResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/feedback-bank/{entry_id}',
+            path: {
+                'entry_id': entryId,
+            },
+        });
+    }
+    /**
+     * Use Feedback Bank Entry
+     * Record that a snippet was reused (increments its usage counter).
+     * @param entryId
+     * @returns FeedbackBankSchema OK
+     * @throws ApiError
+     */
+    public static useFeedbackBankEntry(
+        entryId: number,
+    ): CancelablePromise<FeedbackBankSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/feedback-bank/{entry_id}/use',
+            path: {
+                'entry_id': entryId,
+            },
+        });
+    }
+    /**
+     * React Feedback Bank Entry
+     * Thumbs up/down a snippet ('up' or 'down').
+     * @param entryId
+     * @param reaction
+     * @returns FeedbackBankSchema OK
+     * @throws ApiError
+     */
+    public static reactFeedbackBankEntry(
+        entryId: number,
+        reaction: string,
+    ): CancelablePromise<FeedbackBankSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/feedback-bank/{entry_id}/react',
+            path: {
+                'entry_id': entryId,
+            },
+            query: {
+                'reaction': reaction,
+            },
         });
     }
 }
