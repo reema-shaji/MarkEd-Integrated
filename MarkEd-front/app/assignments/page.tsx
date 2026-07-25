@@ -250,7 +250,6 @@ export default function AssignmentsPage() {
           {visible.map((a) => {
             const phase = peerReviewPhase(a)
             const due = deadlineLabel(a.deadline)
-            const landing = user?.isStaff ? 'dashboard' : 'home'
             const isGroup = a.assignment_type === 'GROUP'
             return (
               <div
@@ -312,14 +311,49 @@ export default function AssignmentsPage() {
                   )}
                 </div>
                 <div className='flex flex-wrap gap-2'>
-                  <button
-                    onClick={() =>
-                      router.push(`/assignments/${a.id}/${landing}`)
-                    }
-                    className='rounded-[9px] bg-[#131A26] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#243247]'
-                  >
-                    {user?.isStaff ? 'Open dashboard' : 'View assignment'}
-                  </button>
+                  {user?.isStaff ? (
+                    <button
+                      onClick={() => router.push(`/assignments/${a.id}/dashboard`)}
+                      className='rounded-[9px] bg-[#131A26] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#243247]'
+                    >
+                      Open dashboard
+                    </button>
+                  ) : (
+                    <>
+                      {/* Primary action mirrors the prototype: group work opens the
+                          shared workspace; individual work goes to submit. */}
+                      <button
+                        onClick={() =>
+                          router.push(
+                            `/assignments/${a.id}/${isGroup ? 'workspace' : 'submit'}`
+                          )
+                        }
+                        className='rounded-[9px] bg-[#131A26] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#243247]'
+                      >
+                        {isGroup ? 'Group Workspace' : 'Submit Work'}
+                      </button>
+                      {a.peer_review_enabled && (
+                        <button
+                          onClick={() =>
+                            router.push(`/assignments/${a.id}/peer-review`)
+                          }
+                          className='rounded-[9px] border border-[#DED8CA] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+                        >
+                          My Reviews
+                        </button>
+                      )}
+                      <button
+                        onClick={() =>
+                          router.push(
+                            `/assignments/${a.id}/${isGroup ? 'group-result' : 'results'}`
+                          )
+                        }
+                        className='rounded-[9px] border border-[#DED8CA] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+                      >
+                        Results
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )
