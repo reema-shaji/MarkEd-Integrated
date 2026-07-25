@@ -65,6 +65,12 @@ export function AppHero() {
   const courseTabs: Tab[] = React.useMemo(() => {
     const t: Tab[] = [
       {
+        label: 'Dashboard',
+        seg: 'course-dashboard',
+        href: '/dashboard',
+        active: pathname === '/dashboard',
+      },
+      {
         label: 'Assignments',
         seg: 'assignments',
         href: '/assignments',
@@ -74,6 +80,14 @@ export function AppHero() {
           pathname.startsWith('/create-peer-assignment'),
       },
     ]
+    if (user?.isStudent) {
+      t.push({
+        label: 'My Groups',
+        seg: 'my-groups',
+        href: '/my-groups',
+        active: pathname.startsWith('/my-groups'),
+      })
+    }
     if (user?.isAcademic) {
       t.push({
         label: 'Group Categories',
@@ -100,7 +114,12 @@ export function AppHero() {
     const t: Tab[] = []
     if (user?.isStaff) {
       t.push(mk('Dashboard', 'dashboard', ['dashboard', '']))
-      if (isGroup) t.push(mk('Group Marking', 'group-marking', ['group-marking', 'mark']))
+      t.push(mk('Submissions', 'submissions'))
+      t.push(mk('Marking', 'marking-queue', ['marking-queue', 'mark', 'marker-review']))
+      if (isGroup) t.push(mk('Group Marking', 'group-marking'))
+      t.push(mk('Structure', 'structure'))
+      t.push(mk('Customization', 'customization'))
+      if (user?.isAcademic || user?.isTA) t.push(mk('Jobs', 'jobs'))
       if (isGroup && currentAssignment.group_set_id) {
         t.push({
           label: 'Group Management',

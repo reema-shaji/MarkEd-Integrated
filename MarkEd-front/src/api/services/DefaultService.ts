@@ -1877,13 +1877,13 @@ export class DefaultService {
         });
     }
     /**
-     * Use Feedback Bank Entry
+     * Mark Feedback Bank Used
      * Record that a snippet was reused (increments its usage counter).
      * @param entryId
      * @returns FeedbackBankSchema OK
      * @throws ApiError
      */
-    public static useFeedbackBankEntry(
+    public static markFeedbackBankUsed(
         entryId: number,
     ): CancelablePromise<FeedbackBankSchema> {
         return __request(OpenAPI, {

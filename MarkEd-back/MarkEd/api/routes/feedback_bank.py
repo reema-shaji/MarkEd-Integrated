@@ -46,9 +46,9 @@ def delete_feedback_bank_entry(request, entry_id: int):
     return {"success": True, "message": "Deleted"}
 
 
-@router.post("/{entry_id}/use", response=FeedbackBankSchema, operation_id="useFeedbackBankEntry")
+@router.post("/{entry_id}/use", response=FeedbackBankSchema, operation_id="markFeedbackBankUsed")
 @require_auth(roles=STAFF_ROLES)
-def use_feedback_bank_entry(request, entry_id: int):
+def mark_feedback_bank_used(request, entry_id: int):
     """Record that a snippet was reused (increments its usage counter)."""
     entry = FeedbackBankEntry.objects.get(id=entry_id, owner_id=request.user_id)
     entry.used_count += 1

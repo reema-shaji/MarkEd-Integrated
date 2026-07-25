@@ -1,0 +1,160 @@
+'use client'
+
+import * as React from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { AllSubmissionSchema, DefaultService } from '@/src/api'
+import { FileText } from 'lucide-react'
+import { toast } from 'sonner'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useUser } from '@/src/contexts/user-context'
+
+function formatWhen(iso: string): string {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return '—'
+  return d.toLocaleString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export default function SubmissionsPage() {
+  const params = useParams()
+  const router = useRouter()
+  const { user, isLoading: userLoading } = useUser()
+  const [submissions, setSubmissions] = React.useState<
+    AllSubmissionSchema[] | null
+  >(null)
+
+  React.useEffect(() => {
+    if (!params.id) return
+    DefaultService.getAllSubmissions(Number(params.id))
+      .then((data) => setSubmissions(data))
+      .catch((error) => {
+        console.error('Failed to fetch submissions:', error)
+        toast.error('Failed to load submissions')
+        setSubmissions([])
+      })
+  }, [params.id])
+
+  // Defensive role guard — the linking tab is already staff-gated.
+  if (!userLoading && user && !user.isStaff) {
+    return (
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+        <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-10 text-center'>
+          <div className='text-[15px] font-semibold text-[#131A26]'>
+            Not available
+          </div>
+          <p className='mt-1 text-sm text-[#8A9099]'>
+            This page is only available to staff.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (submissions === null) {
+    return (
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+        <Skeleton className='mb-1 h-7 w-40' />
+        <Skeleton className='mb-5 h-4 w-28' />
+        <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className='flex items-center justify-between border-b border-[#F0ECE4] px-5 py-[15px] last:border-b-0'
+            >
+              <Skeleton className='h-5 w-56' />
+              <Skeleton className='h-7 w-20' />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  const countLabel = `${submissions.length} submission${
+    submissions.length === 1 ? '' : 's'
+  }`
+
+  return (
+    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mb-5 flex flex-wrap items-end justify-between gap-4'>
+        <div>
+          <div className='text-[23px] font-semibold tracking-[-.5px] text-[#131A26]'>
+            Submissions
+          </div>
+          <div className='mt-0.5 text-[13px] font-medium text-[#8A9099]'>
+            {countLabel}
+          </div>
+        </div>
+        <div className='flex gap-2'>
+          <select className='rounded-[9px] border border-[#DED8CA] bg-white px-[11px] py-2 text-[13px] text-[#2C3444]'>
+            <option>All statuses</option>
+            <option>Unmarked</option>
+            <option>In progress</option>
+            <option>Marked</option>
+          </select>
+        </div>
+      </div>
+
+      {submissions.length === 0 ? (
+        <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-12 text-center'>
+          <FileText className='mx-auto h-10 w-10 text-[#8A9099]' />
+          <div className='mt-3 text-[15px] font-semibold text-[#131A26]'>
+            No submissions yet
+          </div>
+          <p className='mt-1 text-sm text-[#8A9099]'>
+            Submissions will appear here once students hand in their work.
+          </p>
+        </div>
+      ) : (
+        <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+          <div className='grid grid-cols-[1.9fr_1.1fr_.9fr_.8fr_.9fr] border-b border-[#EAE5DB] px-5 py-3 text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+            <span>Student</span>
+            <span>Submitted</span>
+            <span>Version</span>
+            <span>Status</span>
+            <span className='text-right'>Score</span>
+          </div>
+          {submissions.map((s) => (
+            <div
+              key={s.id}
+              className='grid grid-cols-[1.9fr_1.1fr_.9fr_.8fr_.9fr] items-center border-b border-[#F0ECE4] px-5 py-[13px] last:border-b-0 hover:bg-[#FAF8F4]'
+            >
+              <span className='text-[13px] font-semibold text-[#131A26]'>
+                {s.student_name}{' '}
+                <span className='ml-1 font-mono text-[12px] font-normal text-[#8A9099]'>
+                  {s.student_number}
+                </span>
+              </span>
+              <span className='text-[12px] text-[#5A6070]'>
+                {formatWhen(s.submissionDateTime)}
+              </span>
+              <span className='font-mono text-[12px] text-[#5A6070]'>—</span>
+              <span>
+                <span className='inline-block whitespace-nowrap rounded-[6px] bg-[#E9F1EA] px-2 py-0.5 text-[11px] font-semibold text-[#2F7D4F]'>
+                  Submitted
+                </span>
+              </span>
+              <span className='flex items-center justify-end gap-2.5'>
+                <span className='font-mono text-[13px] font-semibold text-[#131A26]'>
+                  —
+                </span>
+                <button
+                  onClick={() =>
+                    router.push(`/assignments/${params.id}/mark/${s.id}`)
+                  }
+                  className='rounded-[9px] border border-[#DED8CA] bg-white px-[13px] py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+                >
+                  Mark
+                </button>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
