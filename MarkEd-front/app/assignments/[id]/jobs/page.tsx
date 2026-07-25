@@ -72,7 +72,7 @@ export default function JobsPage() {
   // Role guard — the linking tab is already gated, this is just defense.
   if (!isUserLoading && !isAcademic) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-[#EAE5DB] bg-white px-6 py-12 text-center'>
           <p className='text-sm text-[#8A9099]'>
             Marking Jobs is not available for your role.
@@ -83,7 +83,7 @@ export default function JobsPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='mb-5 flex items-center justify-between'>
         <div className='text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
           Marking Jobs

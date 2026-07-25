@@ -116,7 +116,7 @@ export default function GroupSetsPage() {
 
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='h-9 w-64' />
         <Skeleton className='mt-6 h-52' />
       </div>
@@ -124,7 +124,7 @@ export default function GroupSetsPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='mb-5 flex items-center justify-between gap-4'>
         <h1 className='text-[23px] font-semibold tracking-[-0.5px] text-ink'>
           Group Categories

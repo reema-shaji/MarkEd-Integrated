@@ -7,7 +7,7 @@ import {
   DefaultService,
   PeerReviewCommentSchema,
 } from '@/src/api'
-import { Loader2, MessageSquare } from 'lucide-react'
+import { MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { useUser } from '@/src/contexts/user-context'
 import { FeedbackBankDialog } from '@/components/feedback-bank-dialog'
@@ -138,7 +138,7 @@ export default function MarkerReviewPage() {
   // Role guard — the linking tab is already gated; this is defence in depth.
   if (isStudent) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-[#EAE5DB] bg-white px-5 py-12 text-center'>
           <div className='text-[15px] font-semibold text-[#131A26]'>
             Not available
@@ -220,8 +220,20 @@ export default function MarkerReviewPage() {
         {/* Right — reviewer filters + comment cards */}
         <div className='flex w-[384px] flex-none flex-col gap-3.5 overflow-y-auto border-l border-[#E3DFD5] bg-white p-4'>
           {isLoading ? (
-            <div className='flex items-center justify-center py-16 text-[#8A9099]'>
-              <Loader2 className='h-6 w-6 animate-spin' />
+            <div className='flex flex-col gap-3.5'>
+              {[0, 1, 2].map((i) => (
+                <div key={i} className='animate-pulse rounded-[12px] border border-[#EAE5DB] bg-white p-3.5'>
+                  <div className='mb-2.5 flex items-center gap-2.5'>
+                    <div className='h-[30px] w-[30px] rounded-[12px] bg-[#EFEBE2]' />
+                    <div className='flex-1'>
+                      <div className='mb-1.5 h-3 w-24 rounded bg-[#EFEBE2]' />
+                      <div className='h-2.5 w-16 rounded bg-[#F0ECE4]' />
+                    </div>
+                  </div>
+                  <div className='mb-1.5 h-3 w-full rounded bg-[#F0ECE4]' />
+                  <div className='h-3 w-4/5 rounded bg-[#F0ECE4]' />
+                </div>
+              ))}
             </div>
           ) : hasError ? (
             <div className='rounded-[12px] border border-[#EAE5DB] bg-[#FAF8F4] px-4 py-10 text-center'>

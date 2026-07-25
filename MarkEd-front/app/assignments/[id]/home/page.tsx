@@ -96,7 +96,7 @@ export default function AssignmentHomePage() {
 
   if (!assignment) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='mb-7 h-16 w-full max-w-[62ch]' />
         <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-2'>
           {[0, 1].map((i) => (
@@ -188,7 +188,7 @@ export default function AssignmentHomePage() {
   const resultSeg = isGroup ? 'group-result' : 'results'
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       {/* Brief */}
       <div className='mb-7 max-w-[62ch] text-[15.5px] leading-[1.72] text-[#454C5C]'>
         {assignment.assignmentDescription || 'No description provided.'}

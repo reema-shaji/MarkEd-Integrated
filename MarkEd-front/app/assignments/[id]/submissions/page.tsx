@@ -41,7 +41,7 @@ export default function SubmissionsPage() {
   // Defensive role guard — the linking tab is already staff-gated.
   if (!userLoading && user && !user.isStaff) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-10 text-center'>
           <div className='text-[15px] font-semibold text-[#131A26]'>
             Not available
@@ -56,7 +56,7 @@ export default function SubmissionsPage() {
 
   if (submissions === null) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='mb-1 h-7 w-40' />
         <Skeleton className='mb-5 h-4 w-28' />
         <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
@@ -79,7 +79,7 @@ export default function SubmissionsPage() {
   }`
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='mb-5 flex flex-wrap items-end justify-between gap-4'>
         <div>
           <div className='text-[23px] font-semibold tracking-[-.5px] text-[#131A26]'>

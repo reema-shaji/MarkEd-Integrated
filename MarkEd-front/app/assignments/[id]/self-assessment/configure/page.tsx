@@ -240,7 +240,7 @@ export default function SelfAssessmentConfigurePage() {
 
   if (isLoading || !settings) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='h-8 w-80' />
         <div className='mt-6 grid gap-4'>
           <Skeleton className='h-40 rounded-[14px]' />
@@ -252,7 +252,7 @@ export default function SelfAssessmentConfigurePage() {
 
   return (
     <>
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-28 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-28 pt-8'>
         <div className='text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
           Self-Assessment Settings
         </div>
@@ -444,7 +444,7 @@ export default function SelfAssessmentConfigurePage() {
 
       {/* Single sticky save bar with a saved indicator and dirty tracking. */}
       <div className='fixed inset-x-0 bottom-0 z-40 border-t border-[#EAE5DB] bg-[#F5F3EF]'>
-        <div className='mx-auto flex w-full max-w-[880px] items-center gap-3 px-7 py-3.5'>
+        <div className='mx-auto flex w-full max-w-[1200px] items-center gap-3 px-7 py-3.5'>
           {dirty ? (
             <span className='flex-1 text-[12.5px] font-medium text-[#8A5D14]'>
               Unsaved changes · they apply to every student on this assignment.

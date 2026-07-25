@@ -41,7 +41,7 @@ export default function GroupResultPage() {
 
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='h-8 w-40 rounded-[9px]' />
         <Skeleton className='mt-6 h-64 rounded-[14px]' />
       </div>
@@ -60,7 +60,7 @@ export default function GroupResultPage() {
 
   if (message || !result) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         {backButton}
         <div className='mb-1 text-[21px] font-semibold -tracking-[.45px] text-[#131A26]'>
           Results
@@ -86,7 +86,7 @@ export default function GroupResultPage() {
   const adjustmentLabel = `${adjustment >= 0 ? '+' : '−'}${Math.abs(adjustment)}`
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       {backButton}
       <div className='mb-1 text-[21px] font-semibold -tracking-[.45px] text-[#131A26]'>
         Results

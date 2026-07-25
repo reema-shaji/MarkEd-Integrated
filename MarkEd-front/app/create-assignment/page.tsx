@@ -118,7 +118,7 @@ export default function CreateAssignmentPage() {
 
   return (
     <div className='mx-auto flex min-h-full w-full flex-col'>
-      <div className='mx-auto w-full max-w-[880px] px-7 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pt-8'>
         {/* Breadcrumb */}
         <div className='mb-[5px] text-[12.5px] text-[#8A9099]'>
           <button
@@ -430,7 +430,7 @@ export default function CreateAssignmentPage() {
 
       {/* Sticky footer */}
       <div className='sticky bottom-0 z-20 mt-auto border-t border-[#EAE5DB] bg-[#F5F3EF]'>
-        <div className='mx-auto flex w-full max-w-[880px] items-center gap-3 px-7 py-3.5'>
+        <div className='mx-auto flex w-full max-w-[1200px] items-center gap-3 px-7 py-3.5'>
           <span className='flex-1 text-[12.5px] text-[#8A9099]'>
             Fields marked required must be completed.
           </span>

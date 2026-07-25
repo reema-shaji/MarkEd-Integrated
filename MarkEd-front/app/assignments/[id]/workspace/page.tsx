@@ -185,7 +185,7 @@ export default function GroupWorkspacePage() {
 
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='h-9 w-64' />
         <Skeleton className='mt-6 h-40' />
       </div>
@@ -194,7 +194,7 @@ export default function GroupWorkspacePage() {
 
   if (noGroup || !group) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-line-card bg-white py-14 text-center text-sm text-muted2'>
           You are not in a group for this assignment yet. Once your tutor
           assigns you to a team, your shared workspace appears here.
@@ -206,7 +206,7 @@ export default function GroupWorkspacePage() {
   const submitted = !!latestSubmission
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='mb-1.5 flex items-center gap-2.5'>
         <span className='text-[21px] font-semibold tracking-[-0.45px] text-ink'>
           Group Workspace

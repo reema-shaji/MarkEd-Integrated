@@ -47,7 +47,7 @@ export default function MyGroupsPage() {
   // Role guard — the linking tab is already gated, this is just defense.
   if (!isUserLoading && !isStudent) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-[#EAE5DB] bg-white px-6 py-12 text-center'>
           <p className='text-sm text-[#8A9099]'>
             My Groups is only available to students.
@@ -58,7 +58,7 @@ export default function MyGroupsPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='mb-5 text-[23px] font-semibold tracking-[-.5px] text-[#131A26]'>
         My Groups
       </div>

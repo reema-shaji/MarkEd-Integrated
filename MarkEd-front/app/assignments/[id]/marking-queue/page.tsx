@@ -30,7 +30,7 @@ export default function MarkingQueuePage() {
   // Defensive role guard — the linking tab is already role-gated to markers.
   if (!userLoading && user && user.isStudent) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-10 text-center'>
           <div className='text-[15px] font-semibold text-[#131A26]'>
             Not available
@@ -45,7 +45,7 @@ export default function MarkingQueuePage() {
 
   if (allocations === null) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='mb-1 h-6 w-40' />
         <Skeleton className='mb-5 h-4 w-72' />
         <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
@@ -64,7 +64,7 @@ export default function MarkingQueuePage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
         My Allocation
       </div>

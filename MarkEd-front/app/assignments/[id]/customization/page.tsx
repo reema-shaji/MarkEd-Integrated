@@ -99,7 +99,7 @@ export default function CustomizationPage() {
   // Defence-in-depth role guard: this tab is already staff-gated.
   if (user && !user.isStaff) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-[#EAE5DB] bg-white px-5 py-12 text-center text-sm text-[#8A9099]'>
           This page is not available for your role.
         </div>
@@ -109,7 +109,7 @@ export default function CustomizationPage() {
 
   if (loadFailed) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-[#EAE5DB] bg-white px-5 py-12 text-center text-sm text-[#8A9099]'>
           We couldn&apos;t load this assignment. Please try again later.
         </div>
@@ -119,7 +119,7 @@ export default function CustomizationPage() {
 
   if (!assignment) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='mb-[18px] h-6 w-48' />
         <Skeleton className='h-80 w-full rounded-[14px]' />
       </div>
@@ -138,7 +138,7 @@ export default function CustomizationPage() {
     'w-full rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#DED8CA]'
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='mb-[18px] text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
         Customization
       </div>

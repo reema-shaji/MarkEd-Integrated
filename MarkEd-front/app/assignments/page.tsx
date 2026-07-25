@@ -138,7 +138,7 @@ export default function AssignmentsPage() {
 
   if (coursesLoading || isLoading) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='h-9 w-64' />
         <div className='mt-6 flex flex-col gap-3'>
           {[0, 1, 2].map((i) => (
@@ -150,7 +150,7 @@ export default function AssignmentsPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       {/* Header row */}
       <div className='mb-5 flex items-center justify-between gap-4'>
         <div className='text-[23px] font-semibold tracking-[-0.5px] text-[#131A26]'>

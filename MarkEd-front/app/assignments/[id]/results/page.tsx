@@ -72,7 +72,7 @@ const ResultsPage = () => {
 
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-[880px] space-y-5 px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] space-y-5 px-7 pb-12 pt-8'>
         <Skeleton className='h-8 w-40 rounded-[9px]' />
         <Skeleton className='h-4 w-full max-w-md' />
         <Skeleton className='h-[70vh] w-full rounded-[14px]' />
@@ -83,7 +83,7 @@ const ResultsPage = () => {
   return (
     <>
       {!submission?.pre_signed_file_url || !submissionId ? (
-        <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8 duration-1000 animate-in fade-in'>
+        <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8 duration-1000 animate-in fade-in'>
           <div className='mb-1 text-[21px] font-semibold -tracking-[.45px] text-[#131A26]'>
             Results
           </div>

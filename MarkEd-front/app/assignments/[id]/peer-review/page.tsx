@@ -28,7 +28,7 @@ export default function PeerReviewListPage() {
   // Defensive role guard — the linking tab is already student-gated.
   if (!userLoading && user && !user.isStudent) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-10 text-center'>
           <div className='text-[15px] font-semibold text-[#131A26]'>
             Not available
@@ -43,7 +43,7 @@ export default function PeerReviewListPage() {
 
   if (reviews === null) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='mb-3 h-4 w-32' />
         <Skeleton className='mb-1 h-6 w-40' />
         <Skeleton className='mb-5 h-4 w-80' />
@@ -57,7 +57,7 @@ export default function PeerReviewListPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <button
         onClick={() => router.push(`/assignments/${params.id}/home`)}
         className='flex items-center gap-[7px] pb-3 text-[12.5px] font-medium text-[#5A6070] hover:text-[#131A26]'

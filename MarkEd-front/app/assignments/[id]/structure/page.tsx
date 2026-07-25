@@ -103,7 +103,7 @@ export default function AssignmentStructurePage() {
   // Defence-in-depth role guard: this tab is already staff-gated.
   if (user && !user.isStaff) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-[#EAE5DB] bg-white px-5 py-12 text-center text-sm text-[#8A9099]'>
           This page is not available for your role.
         </div>
@@ -113,7 +113,7 @@ export default function AssignmentStructurePage() {
 
   if (loadFailed) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-[#EAE5DB] bg-white px-5 py-12 text-center text-sm text-[#8A9099]'>
           We couldn&apos;t load the assignment structure. Please try again later.
         </div>
@@ -123,7 +123,7 @@ export default function AssignmentStructurePage() {
 
   if (!structure) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='mb-[18px] h-6 w-56' />
         <Skeleton className='mb-4 h-48 w-full rounded-[14px]' />
         <Skeleton className='h-20 w-full rounded-[14px]' />
@@ -177,7 +177,7 @@ export default function AssignmentStructurePage() {
   )
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='mb-[18px] text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
         Assignment Structure
       </div>

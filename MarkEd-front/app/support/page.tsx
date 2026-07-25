@@ -41,7 +41,7 @@ export default function SupportPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <h1 className='mb-5 text-[23px] font-semibold tracking-[-0.5px] text-ink'>
         Support
       </h1>

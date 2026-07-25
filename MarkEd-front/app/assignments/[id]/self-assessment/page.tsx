@@ -101,7 +101,7 @@ export default function SelfAssessmentPage() {
 
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='h-8 w-72' />
         <div className='mt-6 grid gap-4'>
           <Skeleton className='h-48 rounded-[14px]' />
@@ -113,7 +113,7 @@ export default function SelfAssessmentPage() {
 
   if (unavailable || !form) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='rounded-[14px] border border-[#EAE5DB] bg-white py-14 text-center text-sm text-[#5A6070]'>
           {unavailable}
         </div>
@@ -125,7 +125,7 @@ export default function SelfAssessmentPage() {
   let sectionIndex = 0
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
         Self-Assessment
       </div>

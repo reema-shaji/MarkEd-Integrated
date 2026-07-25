@@ -10,10 +10,10 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
 import { AssignmentSchema, DefaultService } from '@/src/api'
 import { useUser } from '@/src/contexts/user-context'
 import { useCourse } from '@/src/contexts/course-context'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 
 function typeBadge(a: AssignmentSchema) {
@@ -85,8 +85,24 @@ export default function CourseDashboardPage() {
 
   if (loading) {
     return (
-      <div className='flex flex-1 items-center justify-center'>
-        <Loader2 className='h-5 w-5 animate-spin text-faint' />
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
+        <Skeleton className='mb-5 h-24 rounded-[14px]' />
+        <div className='mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2'>
+          <Skeleton className='h-32 rounded-[14px]' />
+          <Skeleton className='h-32 rounded-[14px]' />
+        </div>
+        <div className='overflow-hidden rounded-[14px] border border-line-card bg-white'>
+          <Skeleton className='h-12 rounded-none' />
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className='flex items-center gap-3 border-b border-line-soft px-5 py-3.5 last:border-b-0'>
+              <div className='flex-1'>
+                <Skeleton className='mb-2 h-4 w-48' />
+                <Skeleton className='h-3 w-32' />
+              </div>
+              <Skeleton className='h-5 w-16 rounded-md' />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -99,7 +115,7 @@ export default function CourseDashboardPage() {
     )
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='mb-5 rounded-[14px] border border-line-card bg-white p-6'>
         <div className='text-[23px] font-semibold tracking-[-.5px] text-ink'>
           {currentCourse ? `${currentCourse.courseCode} — ${currentCourse.courseName}` : 'Dashboard'}

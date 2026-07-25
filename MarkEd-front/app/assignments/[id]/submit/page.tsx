@@ -131,7 +131,7 @@ export default function SubmitAssignmentPage() {
   const isOpen = submissionStatus.isOpen
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <button
         onClick={() => router.push(`/assignments/${unwrappedParams.id}/home`)}
         className='flex items-center gap-[7px] border-none bg-none pb-3 text-[12.5px] font-medium text-[#5A6070] hover:text-[#131A26]'

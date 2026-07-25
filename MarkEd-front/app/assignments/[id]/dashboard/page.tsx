@@ -114,7 +114,7 @@ export default function DashboardPage() {
 
   if (!assignment || !stats) {
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <Skeleton className='mb-5 h-7 w-48' />
         <div className='mb-5 grid grid-cols-2 gap-4 md:grid-cols-4'>
           {Array.from({ length: 4 }).map((_, i) => (
@@ -143,7 +143,7 @@ export default function DashboardPage() {
       { label: 'Pending', value: String(pending) },
     ]
     return (
-      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='mb-5 text-[23px] font-semibold tracking-[-.5px] text-[#131A26]'>
           Marker Dashboard
         </div>
@@ -234,7 +234,7 @@ export default function DashboardPage() {
   const graded = gradeCounts.reduce((a, b) => a + b, 0)
 
   return (
-    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+    <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='mb-5 text-[23px] font-semibold tracking-[-.5px] text-[#131A26]'>
         Staff Dashboard
       </div>

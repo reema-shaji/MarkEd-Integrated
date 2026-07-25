@@ -169,7 +169,7 @@ export function AppHero() {
     <div className='flex-none bg-[linear-gradient(160deg,#131A26_0%,#1E2B3E_100%)]'>
       {/* Title zone */}
       {inAssignment ? (
-        <div className='mx-auto w-full max-w-[880px] px-7 pb-5 pt-7'>
+        <div className='mx-auto w-full max-w-[1200px] px-7 pb-5 pt-7'>
           <button
             onClick={() => router.push('/assignments')}
             className='flex items-center gap-1.5 pb-3 text-xs font-medium text-white/60 hover:text-white'
@@ -197,7 +197,7 @@ export function AppHero() {
           </div>
         </div>
       ) : (
-        <div className='mx-auto w-full max-w-[880px] px-7 pb-5 pt-7'>
+        <div className='mx-auto w-full max-w-[1200px] px-7 pb-5 pt-7'>
           <div className='font-mono text-[11.5px] tracking-[.4px] text-white/60'>
             {courseCode || ' '}
           </div>
@@ -207,23 +207,18 @@ export function AppHero() {
         </div>
       )}
 
-      {/* Tabs */}
+      {/* Tabs (animated sliding underline) */}
       {tabs.length > 0 ? (
-        <div className='mx-auto flex w-full max-w-[880px] gap-0.5 overflow-x-auto px-7 [scrollbar-width:none]'>
-          {tabs.map((tab) => (
-            <button
-              key={tab.seg}
-              onClick={() => (tab.seg === 'peer-review' ? goPeerTab() : router.push(tab.href))}
-              className={`flex items-center gap-1.5 whitespace-nowrap border-b-[3px] px-3.5 py-[11px] text-[13.5px] transition-colors ${
-                tab.active
-                  ? 'border-white font-semibold text-white'
-                  : 'border-transparent font-normal text-white/70 hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <TabBar
+          variant='hero'
+          items={tabs.map((tab) => ({
+            key: tab.seg,
+            label: tab.label,
+            active: tab.active,
+            onClick: () =>
+              tab.seg === 'peer-review' ? goPeerTab() : router.push(tab.href),
+          }))}
+        />
       ) : (
         <div className='h-3.5' />
       )}
@@ -231,44 +226,120 @@ export function AppHero() {
       {/* Student peer-review sub-tabs */}
       {showSubTabs && (
         <div className='flex-none border-b border-[#EAE5DB] bg-white'>
-          <div className='mx-auto flex w-full max-w-[880px] gap-0.5 overflow-x-auto px-7'>
-            {!peerReviews?.length ? (
-              <span className='px-3 py-2.5 text-[13px] text-faint'>
+          {!peerReviews?.length ? (
+            <div className='mx-auto w-full max-w-[1200px] px-7'>
+              <span className='block px-3 py-2.5 text-[13px] text-faint'>
                 Reviews will appear here once matching runs.
               </span>
-            ) : (
-              peerReviews.map((review) => {
-                const active =
-                  params['peer-review-id'] === String(review.submission_id)
-                return (
-                  <button
-                    key={review.id}
-                    onClick={() =>
-                      router.push(
-                        `/assignments/${assignmentId}/peer-review/${review.submission_id}`
-                      )
+            </div>
+          ) : (
+            <TabBar
+              variant='sub'
+              items={peerReviews.map((review) => ({
+                key: String(review.id),
+                leading: (
+                  <StatusDot
+                    status={
+                      isPeerReviewComplete(review.submission_id)
+                        ? 'COMPLETED'
+                        : (review.status as 'COMPLETED' | 'IN_PROGRESS' | 'PENDING')
                     }
-                    className={`flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] transition-colors ${
-                      active
-                        ? 'border-ink font-semibold text-ink'
-                        : 'border-transparent font-normal text-muted2 hover:text-ink'
-                    }`}
-                  >
-                    <StatusDot
-                      status={
-                        isPeerReviewComplete(review.submission_id)
-                          ? 'COMPLETED'
-                          : (review.status as 'COMPLETED' | 'IN_PROGRESS' | 'PENDING')
-                      }
-                    />
-                    <span className='truncate'>{review.student_name}</span>
-                  </button>
-                )
-              })
-            )}
-          </div>
+                  />
+                ),
+                label: <span className='truncate'>{review.student_name}</span>,
+                active: params['peer-review-id'] === String(review.submission_id),
+                onClick: () =>
+                  router.push(
+                    `/assignments/${assignmentId}/peer-review/${review.submission_id}`
+                  ),
+              }))}
+            />
+          )}
         </div>
       )}
+    </div>
+  )
+}
+
+// --- Animated tab bar --------------------------------------------------------
+// A horizontal tab strip with a highlight underline that slides + resizes to
+// the active tab whenever it changes (or the window resizes). Used for both the
+// dark hero tabs ('hero') and the white peer-review sub-tabs ('sub').
+type BarItem = {
+  key: string
+  label: React.ReactNode
+  leading?: React.ReactNode
+  active: boolean
+  onClick: () => void
+}
+
+function TabBar({ items, variant }: { items: BarItem[]; variant: 'hero' | 'sub' }) {
+  const barRef = React.useRef<HTMLDivElement>(null)
+  const btnRefs = React.useRef<Record<string, HTMLButtonElement | null>>({})
+  const [ind, setInd] = React.useState({ left: 0, width: 0, visible: false })
+  const activeKey = items.find((i) => i.active)?.key
+  const hero = variant === 'hero'
+
+  React.useLayoutEffect(() => {
+    const measure = () => {
+      const bar = barRef.current
+      const btn = activeKey ? btnRefs.current[activeKey] : null
+      if (!bar || !btn) {
+        setInd((p) => (p.visible ? { ...p, visible: false } : p))
+        return
+      }
+      const b = bar.getBoundingClientRect()
+      const e = btn.getBoundingClientRect()
+      setInd({ left: e.left - b.left + bar.scrollLeft, width: e.width, visible: true })
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    // Re-measure once fonts settle so the underline lines up with final widths.
+    const t = setTimeout(measure, 120)
+    return () => {
+      window.removeEventListener('resize', measure)
+      clearTimeout(t)
+    }
+  }, [activeKey, items.length])
+
+  return (
+    <div className='mx-auto w-full max-w-[1200px] px-7'>
+      <div ref={barRef} className='relative flex gap-0.5 overflow-x-auto [scrollbar-width:none]'>
+        {items.map((item) => (
+          <button
+            key={item.key}
+            ref={(el) => {
+              btnRefs.current[item.key] = el
+            }}
+            onClick={item.onClick}
+            className={`flex items-center gap-1.5 whitespace-nowrap px-3.5 transition-colors ${
+              hero ? 'py-[11px] text-[13.5px]' : 'py-2.5 text-[13px]'
+            } ${
+              item.active
+                ? hero
+                  ? 'font-semibold text-white'
+                  : 'font-semibold text-ink'
+                : hero
+                  ? 'font-normal text-white/70 hover:text-white'
+                  : 'font-normal text-muted2 hover:text-ink'
+            }`}
+          >
+            {item.leading}
+            {item.label}
+          </button>
+        ))}
+        <span
+          aria-hidden
+          className={`pointer-events-none absolute bottom-0 left-0 rounded-full transition-[transform,width,opacity] duration-300 ease-out ${
+            hero ? 'h-[3px] bg-white' : 'h-[2px] bg-ink'
+          }`}
+          style={{
+            width: ind.width,
+            transform: `translateX(${ind.left}px)`,
+            opacity: ind.visible ? 1 : 0,
+          }}
+        />
+      </div>
     </div>
   )
 }
