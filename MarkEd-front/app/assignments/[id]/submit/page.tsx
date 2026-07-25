@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { FileUpload } from '@/components/file-upload'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { DefaultService } from '@/src/api'
 import { toast } from 'sonner'
-import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { useAssignment } from '@/src/contexts/assignment-context'
 
 interface PreviousSubmission {
@@ -18,7 +18,6 @@ interface PreviousSubmission {
 
 export default function SubmitAssignmentPage() {
   const unwrappedParams = useParams()
-  const router = useRouter()
   const { currentAssignment, submissionStatus } = useAssignment()
   const [agreedToHonesty, setAgreedToHonesty] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([])
@@ -132,13 +131,6 @@ export default function SubmitAssignmentPage() {
 
   return (
     <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
-      <button
-        onClick={() => router.push(`/assignments/${unwrappedParams.id}/home`)}
-        className='flex items-center gap-[7px] border-none bg-none pb-3 text-[12.5px] font-medium text-[#5A6070] hover:text-[#131A26]'
-      >
-        <ArrowLeft className='h-[13px] w-[13px]' />
-        Back to assignment
-      </button>
 
       <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-6'>
         <div className='mb-1 text-[21px] font-semibold -tracking-[.45px] text-[#131A26]'>

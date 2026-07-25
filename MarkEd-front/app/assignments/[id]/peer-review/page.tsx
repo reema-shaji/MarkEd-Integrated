@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { DefaultService, PeerReviewSchema } from '@/src/api'
-import { ArrowLeft, Check, Users } from 'lucide-react'
+import { Check, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUser } from '@/src/contexts/user-context'
@@ -58,13 +58,6 @@ export default function PeerReviewListPage() {
 
   return (
     <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
-      <button
-        onClick={() => router.push(`/assignments/${params.id}/home`)}
-        className='flex items-center gap-[7px] pb-3 text-[12.5px] font-medium text-[#5A6070] hover:text-[#131A26]'
-      >
-        <ArrowLeft className='h-[13px] w-[13px]' />
-        Back to assignment
-      </button>
 
       <div className='text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
         Peer Review

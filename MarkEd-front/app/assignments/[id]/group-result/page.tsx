@@ -11,14 +11,12 @@
  */
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { DefaultService, MyGroupResultSchema } from '@/src/api'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft } from 'lucide-react'
 
 export default function GroupResultPage() {
   const params = useParams()
-  const router = useRouter()
   const assignmentId = Number(params.id)
 
   const [result, setResult] = useState<MyGroupResultSchema | null>(null)
@@ -48,20 +46,10 @@ export default function GroupResultPage() {
     )
   }
 
-  const backButton = (
-    <button
-      onClick={() => router.push(`/assignments/${assignmentId}/home`)}
-      className='flex items-center gap-[7px] border-none bg-none pb-3 text-[12.5px] font-medium text-[#5A6070] hover:text-[#131A26]'
-    >
-      <ArrowLeft className='h-[13px] w-[13px]' />
-      Back to assignment
-    </button>
-  )
 
   if (message || !result) {
     return (
       <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
-        {backButton}
         <div className='mb-1 text-[21px] font-semibold -tracking-[.45px] text-[#131A26]'>
           Results
         </div>
@@ -87,7 +75,6 @@ export default function GroupResultPage() {
 
   return (
     <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
-      {backButton}
       <div className='mb-1 text-[21px] font-semibold -tracking-[.45px] text-[#131A26]'>
         Results
       </div>
