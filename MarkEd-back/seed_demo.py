@@ -177,7 +177,11 @@ for a in (a_ind, a_grp, a_peer, a_grp_peer):
         StudentSubmission.objects.get_or_create(
             assignment=a, user=u,
             defaults=dict(is_multisubmission_allowed=1, maximum_submissions=3, file_number=1, files='{}'))
+# Self-assessment configured (setup only — no student self-assessments submitted)
+# on both an INDIVIDUAL (CW1) and a GROUP (CW2) assignment so both combinations
+# are testable.
 _self_assessment(a_ind)
+_self_assessment(a_grp)
 
 # --- Course B: lighter demo (INF3-ADS); first 12 students dual-enrolled -------
 course_b = Course.objects.get_or_create(
@@ -192,6 +196,7 @@ b_peer = _assignment(course_b, 'A2: Peer-Reviewed Problem Set', now + datetime.t
                      reviews_per_student=2, review_deadline=now + datetime.timedelta(days=13))
 for a in (b_ind, b_peer):
     _rubric(a)
+_self_assessment(b_ind)
 
 print(f"""
 Seed complete (setup only).
