@@ -16,11 +16,18 @@ interface PreviousSubmission {
   isLoadingUrl?: boolean
 }
 
+/** Storage keys look like "submission/<uuid>/Original Name.pdf" — show just the
+ *  original filename (the last path segment). */
+function displayName(key: string) {
+  return key?.split('/').pop() || key
+}
+
 export default function SubmitAssignmentPage() {
   const unwrappedParams = useParams()
   const { currentAssignment, submissionStatus } = useAssignment()
   const [agreedToHonesty, setAgreedToHonesty] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([])
+  const [uploadKey, setUploadKey] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [previousSubmission, setPreviousSubmission] =
@@ -90,6 +97,9 @@ export default function SubmitAssignmentPage() {
       setAgreedToHonesty(false)
       setConfirmedAnonymous(false)
       setUploadedFiles([])
+      // Remount FileUpload so its staged-file chip clears — the file now lives
+      // in the "Current submission" block above.
+      setUploadKey((k) => k + 1)
 
       toast.success('Assignment submitted successfully')
     } catch (err) {
@@ -155,7 +165,7 @@ export default function SubmitAssignmentPage() {
               <span className='text-[19px]'>📕</span>
               <span className='min-w-0 flex-1'>
                 <span className='block truncate text-[13.5px] font-semibold text-[#131A26]'>
-                  {previousSubmission.filename}
+                  {displayName(previousSubmission.filename)}
                 </span>
                 <span className='mt-px block text-[12px] text-[#A29A8C]'>
                   {previousSubmission.uploadedAt.toLocaleString()}
@@ -176,6 +186,7 @@ export default function SubmitAssignmentPage() {
           <>
             <div className='mb-5'>
               <FileUpload
+                key={uploadKey}
                 onUploadComplete={(urls) => setUploadedFiles(urls)}
                 acceptedFileTypes={['application/pdf']}
                 maxSizeMB={5}

@@ -10,7 +10,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AssignmentSchema, DefaultService } from '@/src/api'
+import { AssignmentSchema, DefaultService, MyAssignmentStatusSchema } from '@/src/api'
 import { useUser } from '@/src/contexts/user-context'
 import { useCourse } from '@/src/contexts/course-context'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -47,25 +47,58 @@ export default function CourseDashboardPage() {
   const { user } = useUser()
   const { currentCourse, currentCourseId } = useCourse()
   const [assignments, setAssignments] = useState<AssignmentSchema[]>([])
+  const [statusMap, setStatusMap] = useState<
+    Record<number, MyAssignmentStatusSchema>
+  >({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    DefaultService.getAssignments(currentCourseId ?? undefined)
-      .then((res) => {
-        if (!cancelled) setAssignments(res)
-      })
-      .catch(() => {
+    const load = async () => {
+      try {
+        const res = await DefaultService.getAssignments(currentCourseId ?? undefined)
+        if (cancelled) return
+        setAssignments(res)
+        if (user?.isStudent) {
+          const statuses = await Promise.all(
+            res.map((a) =>
+              DefaultService.getMyAssignmentStatus(a.id).catch(() => null)
+            )
+          )
+          if (cancelled) return
+          const map: Record<number, MyAssignmentStatusSchema> = {}
+          res.forEach((a, i) => {
+            const s = statuses[i]
+            if (s) map[a.id] = s
+          })
+          setStatusMap(map)
+        }
+      } catch {
         if (!cancelled) toast.error('Could not load the dashboard')
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false)
-      })
+      }
+    }
+    load()
     return () => {
       cancelled = true
     }
-  }, [currentCourseId])
+  }, [currentCourseId, user?.isStudent])
+
+  const studentStatus = (a: AssignmentSchema) => {
+    const s = statusMap[a.id]
+    if (s?.submitted)
+      return {
+        txt: s.is_late ? 'Submitted (late)' : 'Submitted',
+        fg: '#2F7D4F',
+        bg: '#E9F1EA',
+      }
+    const closed = new Date(a.deadline).getTime() < Date.now()
+    return closed
+      ? { txt: 'Missed', fg: '#A93226', bg: '#F8E8E5' }
+      : { txt: 'Submit now', fg: '#8A5D14', bg: '#F8EFDC' }
+  }
 
   const nextSubmission = useMemo(() => {
     const upcoming = assignments
@@ -205,6 +238,15 @@ export default function CourseDashboardPage() {
                 <Chip bg={b.bg} fg={b.fg}>{b.txt}</Chip>
                 {a.peer_review_enabled && <Chip bg='#E8EFF6' fg='#1F4E79'>Peer Review</Chip>}
                 {a.self_assessment_enabled && <Chip bg='#E5F0ED' fg='#256B5D'>Self-Assessment</Chip>}
+                {user?.isStudent &&
+                  (() => {
+                    const st = studentStatus(a)
+                    return (
+                      <Chip bg={st.bg} fg={st.fg}>
+                        {st.txt}
+                      </Chip>
+                    )
+                  })()}
               </button>
             )
           })

@@ -139,8 +139,11 @@ def get_upload_url(request, filename: str, type: Literal["submission", "instruct
                 "permanent_url": None
             }
 
-        # Generate unique filename
-        unique_filename = f"{type}/{uuid.uuid4()}.{file_extension}"
+        # Keep the original filename as the key's basename (under a unique
+        # folder) so it can be shown back to the student after upload, while
+        # staying collision-free. Strip path separators to prevent traversal.
+        safe_name = filename.replace('/', '_').replace('\\', '_').strip() or f"file.{file_extension}"
+        unique_filename = f"{type}/{uuid.uuid4()}/{safe_name}"
         
         storage = StorageService()
         
