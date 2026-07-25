@@ -2,15 +2,13 @@
 
 /**
  * Student assignment detail (prototype "Assignment Detail"): the assignment
- * brief, DEADLINE / YOUR GROUP / STATUS meta boxes, and the actions available
- * for this assignment, driven by its configuration and the student's own status.
+ * brief, a 2-up grid of "facet" cards (deadline / your group / self-assessment)
+ * and a results card, driven by the assignment configuration and the student's
+ * own status.
  */
 
 import React from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import {
@@ -18,15 +16,6 @@ import {
   DefaultService,
   MyAssignmentStatusSchema,
 } from '@/src/api'
-import {
-  CalendarClock,
-  CheckCircle2,
-  ClipboardCheck,
-  FileText,
-  FolderKanban,
-  Upload,
-  Users2,
-} from 'lucide-react'
 
 function formatDate(value?: string | null) {
   if (!value) return '—'
@@ -37,6 +26,48 @@ function formatDate(value?: string | null) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function formatDay(value?: string | null) {
+  if (!value) return '—'
+  return new Date(value).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+type ChipTone = 'success' | 'warning' | 'danger' | 'neutral'
+
+const CHIP: Record<ChipTone, { bg: string; fg: string }> = {
+  success: { bg: '#E9F1EA', fg: '#2F7D4F' },
+  warning: { bg: '#F8EFDC', fg: '#8A5D14' },
+  danger: { bg: '#F8E8E5', fg: '#A93226' },
+  neutral: { bg: '#F2EEE6', fg: '#6D6455' },
+}
+
+type Facet = {
+  key: string
+  kicker: string
+  chip?: { text: string; tone: ChipTone }
+  headline: string
+  detail: string
+  bar?: number
+  footLabel: string
+  footValue: React.ReactNode
+  btn?: { label: string; seg: string; primary?: boolean }
+}
+
+function Chip({ text, tone }: { text: string; tone: ChipTone }) {
+  const c = CHIP[tone]
+  return (
+    <span
+      className='inline-block whitespace-nowrap rounded-[6px] px-[9px] py-0.5 text-[11px] font-semibold'
+      style={{ background: c.bg, color: c.fg }}
+    >
+      {text}
+    </span>
+  )
 }
 
 export default function AssignmentHomePage() {
@@ -65,14 +96,14 @@ export default function AssignmentHomePage() {
 
   if (!assignment) {
     return (
-      <div className='mx-auto w-full max-w-2xl space-y-4 p-6'>
-        <Skeleton className='h-8 w-64' />
-        <div className='grid grid-cols-3 gap-3'>
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className='h-20 rounded-lg' />
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+        <Skeleton className='mb-7 h-16 w-full max-w-[62ch]' />
+        <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-2'>
+          {[0, 1].map((i) => (
+            <Skeleton key={i} className='h-44 rounded-[14px]' />
           ))}
         </div>
-        <Skeleton className='h-40 rounded-lg' />
+        <Skeleton className='mt-3.5 h-24 rounded-[14px]' />
       </div>
     )
   }
@@ -80,113 +111,170 @@ export default function AssignmentHomePage() {
   const isGroup = assignment.assignment_type === 'GROUP'
   const go = (seg: string) => router.push(`/assignments/${id}/${seg}`)
 
-  const statusLabel = !status?.submitted
-    ? 'Not submitted'
-    : status.is_late
-      ? 'Submitted late'
-      : 'Submitted'
+  const now = new Date()
+  const deadline = assignment.deadline ? new Date(assignment.deadline) : null
+  const closed = deadline ? now > deadline : false
+  const daysLeft = deadline
+    ? Math.ceil((deadline.getTime() - now.getTime()) / 86_400_000)
+    : null
 
-  const actions: { label: string; icon: React.ReactNode; seg: string }[] = [
-    { label: 'Submit Work', icon: <Upload className='h-4 w-4' />, seg: 'submit' },
-    ...(isGroup
-      ? [{ label: 'Group Workspace', icon: <FolderKanban className='h-4 w-4' />, seg: 'workspace' }]
-      : []),
-    ...(assignment.self_assessment_enabled
-      ? [{ label: 'Self-Assessment', icon: <ClipboardCheck className='h-4 w-4' />, seg: 'self-assessment' }]
-      : []),
-    // Peer review reviews are per-allocation; the sidebar lists them, so there
-    // is no single route to link to here.
+  let deadlineDetail = 'No deadline set.'
+  if (deadline) {
+    deadlineDetail = closed
+      ? 'The deadline has passed.'
+      : daysLeft !== null && daysLeft <= 0
+        ? 'Due today.'
+        : `${daysLeft} day${daysLeft === 1 ? '' : 's'} remaining.`
+  }
+
+  const submitted = !!status?.submitted
+  const submitChip: { text: string; tone: ChipTone } = submitted
+    ? status?.is_late
+      ? { text: 'Submitted late', tone: 'warning' }
+      : { text: 'Submitted', tone: 'success' }
+    : closed
+      ? { text: 'Missed', tone: 'danger' }
+      : { text: 'Submit now', tone: 'warning' }
+
+  const facets: Facet[] = [
     {
-      label: 'Results',
-      icon: <FileText className='h-4 w-4' />,
-      seg: isGroup ? 'group-result' : 'results',
+      key: 'deadline',
+      kicker: 'Deadline',
+      chip: submitChip,
+      headline: formatDay(assignment.deadline),
+      detail: deadlineDetail,
+      footLabel: 'Your submission',
+      footValue: submitted ? (
+        formatDate(status?.submitted_at)
+      ) : (
+        <span className='font-normal text-[#8A9099]'>Not yet submitted</span>
+      ),
+      btn: { label: submitted ? 'Resubmit' : 'Submit work', seg: 'submit', primary: !submitted },
     },
   ]
 
+  if (isGroup) {
+    const assigned = !!status?.group_name
+    facets.push({
+      key: 'group',
+      kicker: 'Your group',
+      chip: assigned
+        ? { text: 'Assigned', tone: 'success' }
+        : { text: 'Unassigned', tone: 'warning' },
+      headline: status?.group_name ?? 'Not assigned',
+      detail: assigned
+        ? 'Collaborate with your teammates in the shared workspace.'
+        : 'You have not been placed in a group yet.',
+      footLabel: 'Workspace',
+      footValue: assigned ? 'Files, tasks & discussion' : 'Available once assigned',
+      btn: { label: 'Open workspace', seg: 'workspace' },
+    })
+  }
+
+  if (assignment.self_assessment_enabled) {
+    facets.push({
+      key: 'self-assessment',
+      kicker: 'Self-assessment',
+      headline: 'Reflect on your work',
+      detail: 'Grade your own submission against the rubric before results are released.',
+      footLabel: 'Due',
+      footValue: assignment.self_assessment_deadline
+        ? formatDay(assignment.self_assessment_deadline)
+        : 'See assignment',
+      btn: { label: 'Open', seg: 'self-assessment' },
+    })
+  }
+
+  const resultSeg = isGroup ? 'group-result' : 'results'
+
   return (
-    <div className='mx-auto w-full max-w-2xl space-y-4 p-6'>
-      <div className='flex flex-wrap items-center gap-2'>
-        <h1 className='text-2xl font-bold'>{assignment.assignmentTitle}</h1>
-        <Badge variant='secondary'>{isGroup ? 'Group' : 'Individual'}</Badge>
-        {assignment.peer_review_enabled && <Badge variant='outline'>Peer Review</Badge>}
-        {assignment.self_assessment_enabled && <Badge variant='outline'>Self-Assessment</Badge>}
-      </div>
-
-      {/* Meta boxes */}
-      <div className={`grid gap-3 ${isGroup ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
-        <Card>
-          <CardContent className='p-4'>
-            <div className='flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500'>
-              <CalendarClock className='h-3.5 w-3.5' /> Deadline
-            </div>
-            <div className='mt-1 text-sm font-medium'>{formatDate(assignment.deadline)}</div>
-          </CardContent>
-        </Card>
-
-        {isGroup && (
-          <Card>
-            <CardContent className='p-4'>
-              <div className='flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500'>
-                <Users2 className='h-3.5 w-3.5' /> Your Group
-              </div>
-              <div className='mt-1 text-sm font-medium'>
-                {status?.group_name ?? 'Not assigned'}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <CardContent className='p-4'>
-            <div className='flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500'>
-              <CheckCircle2 className='h-3.5 w-3.5' /> Status
-            </div>
-            <div className='mt-1 text-sm font-medium'>{statusLabel}</div>
-            {status?.submitted_at && (
-              <div className='text-xs text-neutral-400'>{formatDate(status.submitted_at)}</div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
+    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
       {/* Brief */}
-      <Card>
-        <CardHeader className='pb-2'>
-          <CardTitle className='text-base font-semibold'>Assignment brief</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className='text-sm leading-relaxed text-neutral-600'>
-            {assignment.assignmentDescription || 'No description provided.'}
-          </p>
-          {!!assignment.assignment_instructions?.length && (
-            <p className='mt-3 text-xs text-neutral-400'>
-              Instruction files are in the sidebar.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <div className='mb-7 max-w-[62ch] text-[15.5px] leading-[1.72] text-[#454C5C]'>
+        {assignment.assignmentDescription || 'No description provided.'}
+      </div>
 
-      {/* Actions */}
-      <Card>
-        <CardHeader className='pb-2'>
-          <CardTitle className='text-base font-semibold'>Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
-            {actions.map((a) => (
-              <Button
-                key={a.seg}
-                variant='outline'
-                className='justify-start'
-                onClick={() => go(a.seg)}
-              >
-                {a.icon}
-                <span className='ml-1.5'>{a.label}</span>
-              </Button>
-            ))}
+      {/* Facet cards */}
+      <div className='mb-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2'>
+        {facets.map((f) => (
+          <div
+            key={f.key}
+            className='flex flex-col rounded-[14px] border border-[#EAE5DB] bg-white px-[22px] py-5'
+          >
+            <div className='mb-3.5 flex items-center gap-2'>
+              <span className='flex-1 text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+                {f.kicker}
+              </span>
+              {f.chip && <Chip text={f.chip.text} tone={f.chip.tone} />}
+            </div>
+            <div className='text-[18px] font-semibold -tracking-[.35px] text-[#131A26]'>
+              {f.headline}
+            </div>
+            <div className='mt-1.5 text-[13px] leading-[1.6] text-[#5A6070]'>
+              {f.detail}
+            </div>
+            {typeof f.bar === 'number' && (
+              <div className='mt-3.5 h-1 overflow-hidden rounded-[99px] bg-[#F0ECE4]'>
+                <div
+                  className='h-full rounded-[99px] bg-[#1F4E79]'
+                  style={{ width: `${Math.max(0, Math.min(100, f.bar))}%` }}
+                />
+              </div>
+            )}
+            <div className='min-h-[18px] flex-1' />
+            <div className='flex items-center gap-2.5 border-t border-[#F0ECE4] pt-[15px]'>
+              <span className='min-w-0 flex-1'>
+                <span className='block text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+                  {f.footLabel}
+                </span>
+                <span className='mt-0.5 block text-[12.5px] font-semibold text-[#2C3444]'>
+                  {f.footValue}
+                </span>
+              </span>
+              {f.btn && (
+                <button
+                  onClick={() => go(f.btn!.seg)}
+                  className={
+                    f.btn.primary
+                      ? 'flex-none cursor-pointer rounded-[9px] border-none bg-[#131A26] px-3.5 py-2 text-[12.5px] font-semibold text-white hover:bg-[#243247]'
+                      : 'flex-none cursor-pointer rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-2 text-[12.5px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+                  }
+                >
+                  {f.btn.label}
+                </button>
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+      </div>
+
+      {/* Results card */}
+      <div className='flex items-center gap-[22px] rounded-[14px] border border-[#EAE5DB] bg-white px-[22px] py-5'>
+        <span className='min-w-[104px] flex-none'>
+          <span className='block text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+            Results
+          </span>
+          <span className='mt-1 block text-[24px] font-semibold -tracking-[.6px] text-[#131A26]'>
+            {submitted ? 'View' : '—'}
+          </span>
+        </span>
+        <span className='min-w-0 flex-1 border-l border-[#F0ECE4] pl-[22px]'>
+          <span className='block text-[13px] leading-[1.6] text-[#5A6070]'>
+            {submitted
+              ? 'Your mark and marker feedback will appear here once marking is complete.'
+              : 'Results become available after you submit and marking is complete.'}
+          </span>
+          <span className='mt-1 block text-[11.5px] text-[#8A9099]'>
+            {isGroup ? 'Includes your group score and contribution adjustment.' : 'Individual feedback.'}
+          </span>
+        </span>
+        <button
+          onClick={() => go(resultSeg)}
+          className='flex-none cursor-pointer rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-2 text-[12.5px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+        >
+          View results
+        </button>
+      </div>
     </div>
   )
 }

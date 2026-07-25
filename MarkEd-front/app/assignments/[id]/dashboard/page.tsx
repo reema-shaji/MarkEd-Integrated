@@ -2,19 +2,16 @@
 
 import * as React from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import {
   AssignmentSchema,
   DefaultService,
   PeerMatch,
   PeerReviewSchemaWithStudent,
 } from '@/src/api'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Users, CheckCircle2, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { StatusDot } from '@/components/status-dot'
 import { CountdownCard, calculateTimeLeft } from '@/components/countdown-card'
-import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUser } from '@/src/contexts/user-context'
 
@@ -117,21 +114,21 @@ export default function DashboardPage() {
 
   if (!assignment || !stats) {
     return (
-      <div className='mx-auto w-full max-w-3xl space-y-5 p-6'>
-        <Skeleton className='h-8 w-56' />
-        <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+        <Skeleton className='mb-5 h-7 w-48' />
+        <div className='mb-5 grid grid-cols-2 gap-4 md:grid-cols-4'>
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className='p-4'>
-                <Skeleton className='h-3 w-24' />
-                <Skeleton className='mt-3 h-7 w-16' />
-                <Skeleton className='mt-3 h-3 w-28' />
-              </CardContent>
-            </Card>
+            <div
+              key={i}
+              className='rounded-[14px] border border-[#EAE5DB] bg-white p-5'
+            >
+              <Skeleton className='h-3 w-24' />
+              <Skeleton className='mt-3 h-7 w-16' />
+            </div>
           ))}
         </div>
-        <Skeleton className='h-40 w-full rounded-lg' />
-        <Skeleton className='h-64 w-full rounded-lg' />
+        <Skeleton className='mb-5 h-40 w-full rounded-[14px]' />
+        <Skeleton className='h-64 w-full rounded-[14px]' />
       </div>
     )
   }
@@ -140,284 +137,293 @@ export default function DashboardPage() {
   if (!isAcademic) {
     const marked = allocations.filter((a) => a.status === 'COMPLETED').length
     const pending = allocations.length - marked
+    const strip = [
+      { label: 'My allocation', value: String(allocations.length) },
+      { label: 'Marked', value: String(marked) },
+      { label: 'Pending', value: String(pending) },
+    ]
     return (
-      <div className='mx-auto w-full max-w-3xl space-y-5 p-6'>
-        <h1 className='text-2xl font-bold'>Marker Dashboard</h1>
-        <p className='-mt-3 text-sm text-neutral-500'>{assignment.assignmentTitle}</p>
-
-        <div className='grid grid-cols-2 gap-4 md:grid-cols-3'>
-          <Card>
-            <CardContent className='p-4'>
-              <div className='text-xs font-medium text-neutral-500'>My Marking Allocation</div>
-              <div className='mt-1 text-2xl font-bold'>{allocations.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className='p-4'>
-              <div className='text-xs font-medium text-neutral-500'>Marked</div>
-              <div className='mt-1 text-2xl font-bold'>
-                {marked}
-                <span className='ml-1 text-sm font-medium text-neutral-400'>
-                  /{allocations.length}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className='p-4'>
-              <div className='text-xs font-medium text-neutral-500'>Pending</div>
-              <div className='mt-1 text-2xl font-bold'>{pending}</div>
-            </CardContent>
-          </Card>
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+        <div className='mb-5 text-[23px] font-semibold tracking-[-.5px] text-[#131A26]'>
+          Marker Dashboard
         </div>
 
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-base font-semibold'>Marking Queue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {allocations.length === 0 ? (
-              <p className='py-8 text-center text-sm text-neutral-400'>
-                Nothing allocated to you yet. Once submissions are matched to
-                markers, they appear here.
-              </p>
-            ) : (
-              <div className='divide-y divide-neutral-100'>
-                {allocations.map((a) => (
-                  <div key={a.id} className='flex items-center justify-between py-2.5'>
-                    <div className='flex items-center gap-2.5'>
-                      <StatusDot
-                        status={
-                          a.status as 'COMPLETED' | 'IN_PROGRESS' | 'PENDING'
-                        }
-                      />
-                      <span className='text-sm font-medium'>{a.student_name}</span>
-                      <span className='font-mono text-xs text-neutral-400'>
-                        {a.student_number}
-                      </span>
-                    </div>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      onClick={() =>
-                        router.push(
-                          `/assignments/${params.id}/mark/${a.submission_id}`
-                        )
-                      }
-                    >
-                      {a.status === 'COMPLETED' ? 'Review' : 'Mark'}
-                    </Button>
-                  </div>
-                ))}
+        <div className='mb-5 grid grid-cols-3 divide-x divide-[#F0ECE4] overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+          {strip.map((s) => (
+            <div key={s.label} className='px-5 py-[18px]'>
+              <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+                {s.label}
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
+                {s.value}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+          <div className='border-b border-[#F0ECE4] px-5 py-4 text-[15px] font-semibold tracking-[-.1px] text-[#131A26]'>
+            My Marking Queue
+          </div>
+          {allocations.length === 0 ? (
+            <p className='px-5 py-10 text-center text-sm text-[#8A9099]'>
+              Nothing allocated to you yet. Once submissions are matched to
+              markers, they appear here.
+            </p>
+          ) : (
+            allocations.map((a) => {
+              const badge =
+                a.status === 'COMPLETED'
+                  ? { label: 'Marked', cls: 'bg-[#E9F1EA] text-[#2F7D4F]' }
+                  : a.status === 'IN_PROGRESS'
+                    ? { label: 'In Progress', cls: 'bg-[#F8EFDC] text-[#8A5D14]' }
+                    : { label: 'Unmarked', cls: 'bg-[#F2EEE6] text-[#6D6455]' }
+              const isReview = a.status === 'COMPLETED'
+              const isPrimary = a.status === 'IN_PROGRESS'
+              return (
+                <div
+                  key={a.id}
+                  className='flex items-center gap-3 border-b border-[#F0ECE4] px-5 py-[13px] last:border-b-0'
+                >
+                  <span className='flex-1'>
+                    <span className='block text-[13.5px] font-semibold text-[#131A26]'>
+                      {a.student_name}
+                    </span>
+                    <span className='mt-px block font-mono text-xs text-[#5A6070]'>
+                      {a.student_number}
+                    </span>
+                  </span>
+                  <span
+                    className={`inline-block whitespace-nowrap rounded-[6px] px-2.5 py-0.5 text-[11px] font-medium ${badge.cls}`}
+                  >
+                    {badge.label}
+                  </span>
+                  <button
+                    onClick={() =>
+                      router.push(
+                        `/assignments/${params.id}/mark/${a.submission_id}`
+                      )
+                    }
+                    className={
+                      isPrimary
+                        ? 'rounded-[9px] bg-[#131A26] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#243247]'
+                        : 'rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+                    }
+                  >
+                    {isReview ? 'Review' : 'Mark'}
+                  </button>
+                </div>
+              )
+            })
+          )}
+        </div>
       </div>
     )
   }
 
+  // --- Academic dashboard --------------------------------------------------
+  const submissionRows = [
+    { label: 'On time', value: stats.submission_on_time, color: '#2F7D4F' },
+    { label: 'Late', value: stats.submission_late, color: '#C9862A' },
+    { label: 'Missing', value: stats.submission_missing, color: '#B4483C' },
+  ]
+  const submissionTotal = stats.expected_submissions || 1
+  const gradeBands = ['0-39', '40-49', '50-59', '60-69', '70+']
+  const gradeCounts = gradeBands.map((b) => stats.grade_distribution?.[b] ?? 0)
+  const gradeMax = Math.max(1, ...gradeCounts)
+  const graded = gradeCounts.reduce((a, b) => a + b, 0)
+
   return (
-    <div className='mx-auto w-full max-w-3xl space-y-5 p-6'>
-      <h1 className='text-2xl font-bold'>Staff Dashboard</h1>
-
-      {/* Statistics Cards */}
-      <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
-        <Card>
-          <CardContent className='p-4'>
-            <div className='text-xs font-medium text-neutral-500'>
-              Total Submissions
-            </div>
-            <div className='mt-1 text-2xl font-bold'>
-              {stats.total_submissions}
-              <span className='ml-1 text-sm font-medium text-neutral-400'>
-                · {stats.unique_submitters} students
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className='p-4'>
-            <div className='text-xs font-medium text-neutral-500'>
-              Active Users
-            </div>
-            <div className='mt-1 text-2xl font-bold'>
-              {stats.active_users_24h}
-              <span className='ml-1 text-sm font-medium text-neutral-400'>
-                · last 24h
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className='p-4'>
-            <div className='text-xs font-medium text-neutral-500'>
-              Review Progress
-            </div>
-            <div className='mt-1 text-2xl font-bold'>
-              {stats.completion_rate}%
-            </div>
-            <Progress value={stats.completion_rate} className='mt-2 h-2' />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className='p-4'>
-            {stats.self_assessment_enabled ? (
-              <>
-                <div className='text-xs font-medium text-neutral-500'>
-                  SA Submitted
-                </div>
-                <div className='mt-1 text-2xl font-bold'>
-                  {stats.self_assessment_submitted}
-                  <span className='ml-1 text-sm font-medium text-neutral-400'>
-                    /{stats.enrolled_students}
-                  </span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className='text-xs font-medium text-neutral-500'>
-                  Reviews Per Student
-                </div>
-                <div className='mt-1 text-2xl font-bold'>
-                  {stats.average_reviews_per_student}
-                  <span className='ml-1 text-sm font-medium text-neutral-400'>
-                    · avg
-                  </span>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mb-5 text-[23px] font-semibold tracking-[-.5px] text-[#131A26]'>
+        Staff Dashboard
       </div>
 
-      {/* Submission statistics + grade distribution (prototype Academic Dashboard) */}
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-base font-semibold'>
-              Submission Statistics
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {(() => {
-              const total = stats.expected_submissions || 1
-              const rows = [
-                { label: 'On time', value: stats.submission_on_time, cls: 'bg-green-500' },
-                { label: 'Late', value: stats.submission_late, cls: 'bg-amber-500' },
-                { label: 'Missing', value: stats.submission_missing, cls: 'bg-neutral-300' },
-              ]
-              return (
-                <div className='space-y-3'>
-                  {rows.map((r) => (
-                    <div key={r.label}>
-                      <div className='mb-1 flex items-center justify-between text-sm'>
-                        <span className='text-neutral-600'>{r.label}</span>
-                        <span className='font-medium tabular-nums'>{r.value}</span>
-                      </div>
-                      <div className='h-2 overflow-hidden rounded-full bg-neutral-100'>
-                        <div
-                          className={`h-full ${r.cls}`}
-                          style={{ width: `${(r.value / total) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  <p className='pt-1 text-xs text-neutral-400'>
-                    Out of {stats.expected_submissions}{' '}
-                    {assignment.assignment_type === 'GROUP' ? 'groups' : 'students'}.
-                  </p>
-                </div>
-              )
-            })()}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-base font-semibold'>
-              Grade Distribution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {(() => {
-              const bands = ['0-39', '40-49', '50-59', '60-69', '70+']
-              const counts = bands.map((b) => stats.grade_distribution?.[b] ?? 0)
-              const max = Math.max(1, ...counts)
-              const graded = counts.reduce((a, b) => a + b, 0)
-              return graded === 0 ? (
-                <p className='py-8 text-center text-sm text-neutral-400'>
-                  No marks yet — the histogram fills in as work is graded.
-                </p>
-              ) : (
-                <div className='flex h-40 items-end justify-between gap-2'>
-                  {bands.map((b, i) => (
-                    <div key={b} className='flex flex-1 flex-col items-center gap-1'>
-                      <div className='text-xs font-medium tabular-nums'>{counts[i]}</div>
-                      <div
-                        className='w-full rounded-t bg-neutral-800'
-                        style={{ height: `${(counts[i] / max) * 100}%`, minHeight: counts[i] ? 4 : 0 }}
-                      />
-                      <div className='text-[11px] text-neutral-500'>{b}</div>
-                    </div>
-                  ))}
-                </div>
-              )
-            })()}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Assignment overview */}
-      <Card className='w-full'>
-        <CardHeader>
-          <CardTitle className='text-base font-semibold'>
-            {assignment.assignmentTitle}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className='space-y-4'>
-            <p className='text-sm text-neutral-500'>
-              {assignment.assignmentDescription}
-            </p>
-
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <CountdownCard
-                title='Submission Deadline'
-                deadline={new Date(assignment.deadline)}
-                startDate={assignment.release_date ? new Date(assignment.release_date) : undefined}
-                showTimeZone={false}
-              />
-
-              {assignment.peer_review_enabled &&
-                assignment.review_deadline && (
-                  <CountdownCard
-                    title='Peer Reviewing Period'
-                    deadline={new Date(assignment.review_deadline)}
-                    startDate={new Date(assignment.deadline)}
-                    showTimeZone={false}
-                    isActive={
-                      !calculateTimeLeft(new Date(assignment.deadline)) &&
-                      assignment.is_peer_review_matching_complete
-                    }
-                  />
-                )}
-            </div>
+      {/* 4-up stat strip */}
+      <div className='mb-5 grid grid-cols-2 divide-x divide-y divide-[#F0ECE4] overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white md:grid-cols-4 md:divide-y-0'>
+        <div className='px-5 py-[18px]'>
+          <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+            Submissions
           </div>
-        </CardContent>
-      </Card>
+          <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
+            {stats.total_submissions}
+            <span className='text-[15px] font-medium text-[#A29A8C]'>
+              {' '}
+              · {stats.unique_submitters} students
+            </span>
+          </div>
+        </div>
 
-      <Card>
-        <CardHeader className='flex flex-row items-center justify-between gap-4'>
-          <CardTitle className='text-base font-semibold'>
+        <div className='px-5 py-[18px]'>
+          <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+            Active Users
+          </div>
+          <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
+            {stats.active_users_24h}
+          </div>
+          <div className='mt-0.5 text-[11.5px] text-[#8A9099]'>last 24h</div>
+        </div>
+
+        <div className='px-5 py-[18px]'>
+          <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+            Review progress
+          </div>
+          <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
+            {stats.completion_rate}%
+          </div>
+          <div className='mt-[9px] h-1 overflow-hidden rounded-full bg-[#F0ECE4]'>
+            <div
+              className='h-full rounded-full bg-[#2F7D4F]'
+              style={{ width: `${stats.completion_rate}%` }}
+            />
+          </div>
+        </div>
+
+        <div className='px-5 py-[18px]'>
+          {stats.self_assessment_enabled ? (
+            <>
+              <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+                Self-assessments
+              </div>
+              <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
+                {stats.self_assessment_submitted}
+                <span className='text-[15px] font-medium text-[#A29A8C]'>
+                  {' '}
+                  / {stats.enrolled_students}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+                Reviews / student
+              </div>
+              <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
+                {stats.average_reviews_per_student}
+                <span className='text-[15px] font-medium text-[#A29A8C]'>
+                  {' '}
+                  avg
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Overview */}
+      <div className='mb-5 rounded-[14px] border border-[#EAE5DB] bg-white p-6'>
+        <div className='mb-2 text-[15px] font-semibold tracking-[-.1px] text-[#131A26]'>
+          Overview
+        </div>
+        <p className='mb-4 text-sm text-[#5A6070]'>
+          {assignment.assignmentDescription}
+        </p>
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+          <CountdownCard
+            title='Submission Deadline'
+            deadline={new Date(assignment.deadline)}
+            startDate={
+              assignment.release_date
+                ? new Date(assignment.release_date)
+                : undefined
+            }
+            showTimeZone={false}
+          />
+
+          {assignment.peer_review_enabled && assignment.review_deadline && (
+            <CountdownCard
+              title='Peer Reviewing Period'
+              deadline={new Date(assignment.review_deadline)}
+              startDate={new Date(assignment.deadline)}
+              showTimeZone={false}
+              isActive={
+                !calculateTimeLeft(new Date(assignment.deadline)) &&
+                assignment.is_peer_review_matching_complete
+              }
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Submission statistics + grade distribution */}
+      <div className='mb-5 grid grid-cols-1 gap-4 md:grid-cols-2'>
+        <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-5'>
+          <div className='text-sm font-semibold tracking-[-.05px] text-[#131A26]'>
+            Submission Statistics
+          </div>
+          <div className='mb-3.5 mt-0.5 text-xs text-[#8A9099]'>
+            Out of {stats.expected_submissions}{' '}
+            {assignment.assignment_type === 'GROUP' ? 'groups' : 'students'}
+          </div>
+          <div className='flex flex-col gap-2.5'>
+            {submissionRows.map((r) => (
+              <div key={r.label}>
+                <div className='mb-1 flex justify-between text-xs'>
+                  <span className='text-[#454C5C]'>{r.label}</span>
+                  <span className='font-semibold tabular-nums text-[#131A26]'>
+                    {r.value}
+                  </span>
+                </div>
+                <div className='h-2 overflow-hidden rounded-full bg-[#F0ECE4]'>
+                  <div
+                    className='h-full rounded-full'
+                    style={{
+                      width: `${(r.value / submissionTotal) * 100}%`,
+                      background: r.color,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-5'>
+          <div className='text-sm font-semibold tracking-[-.05px] text-[#131A26]'>
+            Grade Distribution
+          </div>
+          <div className='mb-3.5 mt-0.5 text-xs text-[#8A9099]'>
+            Marked submissions
+          </div>
+          {graded === 0 ? (
+            <p className='py-8 text-center text-sm text-[#8A9099]'>
+              No marks yet — the histogram fills in as work is graded.
+            </p>
+          ) : (
+            <div className='flex h-[110px] items-end gap-2'>
+              {gradeBands.map((b, i) => (
+                <div
+                  key={b}
+                  className='flex h-full flex-1 flex-col items-center justify-end gap-1'
+                >
+                  <span className='text-[10px] text-[#8A9099]'>
+                    {gradeCounts[i]}
+                  </span>
+                  <div
+                    className='w-full rounded-t-[3px] bg-[#131A26]'
+                    style={{
+                      height: `${(gradeCounts[i] / gradeMax) * 100}%`,
+                      minHeight: gradeCounts[i] ? 4 : 0,
+                    }}
+                  />
+                  <span className='text-[10px] text-[#8A9099]'>{b}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Peer Review Matches */}
+      <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-6'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
+          <div className='text-[15px] font-semibold tracking-[-.1px] text-[#131A26]'>
             Peer Review Matches — {assignment.assignmentTitle}
-          </CardTitle>
-          <Button
+          </div>
+          <button
             onClick={handleMatchPeers}
             disabled={isMatching || assignment.is_peer_review_matching_complete}
+            className='inline-flex items-center rounded-[9px] bg-[#131A26] px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-[#243247] disabled:cursor-not-allowed disabled:opacity-50'
           >
             {isMatching ? (
               <>
@@ -429,120 +435,119 @@ export default function DashboardPage() {
             ) : (
               'Match Peers'
             )}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {matches.length > 0 ? (
-            <div className='space-y-4'>
-              <div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
-                <div className='flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3'>
-                  <CheckCircle2 className='h-5 w-5 shrink-0 text-green-600' />
-                  <div>
-                    <span className='block text-xs font-medium text-green-800'>
-                      Completed
-                    </span>
-                    <span className='block text-xl font-bold text-green-900'>
-                      {stats.peer_review_stats.COMPLETED || 0}
-                    </span>
-                  </div>
-                </div>
-                <div className='flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3'>
-                  <Clock className='h-5 w-5 shrink-0 text-yellow-600' />
-                  <div>
-                    <span className='block text-xs font-medium text-yellow-800'>
-                      In Progress
-                    </span>
-                    <span className='block text-xl font-bold text-yellow-900'>
-                      {stats.peer_review_stats.IN_PROGRESS || 0}
-                    </span>
-                  </div>
-                </div>
-                <div className='flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3'>
-                  <Clock className='h-5 w-5 shrink-0 text-neutral-400' />
-                  <div>
-                    <span className='block text-xs font-medium text-neutral-600'>
-                      Not Started
-                    </span>
-                    <span className='block text-xl font-bold text-neutral-800'>
-                      {stats.peer_review_stats.PENDING || 0}
-                    </span>
-                  </div>
-                </div>
+          </button>
+        </div>
+
+        {matches.length > 0 ? (
+          <div className='mt-4 space-y-4'>
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
+              <div className='flex items-center gap-3 rounded-[12px] border border-[#CBE3D3] bg-[#EFF6F1] p-3'>
+                <CheckCircle2 className='h-5 w-5 shrink-0 text-[#22c55e]' />
+                <span>
+                  <span className='block text-[13px] font-medium text-[#2A6B43]'>
+                    Completed
+                  </span>
+                  <span className='block text-[20px] font-bold text-[#14532d]'>
+                    {stats.peer_review_stats.COMPLETED || 0}
+                  </span>
+                </span>
               </div>
-              {Array.from(
-                matches.reduce((acc, match) => {
-                  const key = `${match.reviewer_name}-${match.reviewer_userNumber}`
-                  if (!acc.has(key)) {
-                    acc.set(key, {
-                      reviewer: {
-                        name: match.reviewer_name,
-                        userNumber: match.reviewer_userNumber,
-                        email: match.reviewer_email,
-                      },
-                      reviewing: [],
-                    })
-                  }
-                  acc.get(key)!.reviewing.push({
-                    name: match.submission_owner_name,
-                    userNumber: match.submission_owner_userNumber,
-                    email: match.submission_owner_email,
-                    status: match.status as
-                      | 'COMPLETED'
-                      | 'IN_PROGRESS'
-                      | 'PENDING',
+              <div className='flex items-center gap-3 rounded-[12px] border border-[#EBD9AE] bg-[#FBF4E3] p-3'>
+                <Clock className='h-5 w-5 shrink-0 text-[#eab308]' />
+                <span>
+                  <span className='block text-[13px] font-medium text-[#8A5D14]'>
+                    In Progress
+                  </span>
+                  <span className='block text-[20px] font-bold text-[#6E4A10]'>
+                    {stats.peer_review_stats.IN_PROGRESS || 0}
+                  </span>
+                </span>
+              </div>
+              <div className='flex items-center gap-3 rounded-[12px] border border-[#E3DFD5] bg-[#F2EEE6] p-3'>
+                <Clock className='h-5 w-5 shrink-0 text-[#8A9099]' />
+                <span>
+                  <span className='block text-[13px] font-medium text-[#454C5C]'>
+                    Not Started
+                  </span>
+                  <span className='block text-[20px] font-bold text-[#131A26]'>
+                    {stats.peer_review_stats.PENDING || 0}
+                  </span>
+                </span>
+              </div>
+            </div>
+            {Array.from(
+              matches.reduce((acc, match) => {
+                const key = `${match.reviewer_name}-${match.reviewer_userNumber}`
+                if (!acc.has(key)) {
+                  acc.set(key, {
+                    reviewer: {
+                      name: match.reviewer_name,
+                      userNumber: match.reviewer_userNumber,
+                      email: match.reviewer_email,
+                    },
+                    reviewing: [],
                   })
-                  return acc
-                }, new Map<string, ReviewerGroup>())
-              ).map(([key, data]) => (
-                <Card key={key} className='border shadow-sm'>
-                  <CardContent className='p-4'>
-                    <div className='flex items-start justify-between'>
-                      <div className='w-1/3'>
-                        <div className='text-lg font-medium'>
-                          {data.reviewer.name}
-                          <span className='block text-sm text-muted-foreground'>
-                            {data.reviewer.userNumber}
+                }
+                acc.get(key)!.reviewing.push({
+                  name: match.submission_owner_name,
+                  userNumber: match.submission_owner_userNumber,
+                  email: match.submission_owner_email,
+                  status: match.status as
+                    | 'COMPLETED'
+                    | 'IN_PROGRESS'
+                    | 'PENDING',
+                })
+                return acc
+              }, new Map<string, ReviewerGroup>())
+            ).map(([key, data]) => (
+              <div
+                key={key}
+                className='rounded-[11px] border border-[#EAE5DB] bg-[#FAF8F4] p-4'
+              >
+                <div className='flex items-start justify-between gap-4'>
+                  <div className='w-1/3'>
+                    <div className='text-[15px] font-semibold text-[#131A26]'>
+                      {data.reviewer.name}
+                      <span className='mt-px block font-mono text-xs text-[#8A9099]'>
+                        {data.reviewer.userNumber}
+                      </span>
+                    </div>
+                  </div>
+                  <div className='w-2/3 space-y-2'>
+                    <div className='mb-2 text-[12px] text-[#8A9099]'>
+                      is reviewing:
+                    </div>
+                    {data.reviewing.map((reviewee, idx) => (
+                      <div key={idx} className='flex items-center gap-3'>
+                        <StatusDot status={reviewee.status} />
+                        <div className='text-[13px] text-[#131A26]'>
+                          {reviewee.name}
+                          <span className='ml-2 font-mono text-xs text-[#8A9099]'>
+                            {reviewee.userNumber}
                           </span>
                         </div>
                       </div>
-                      <div className='w-2/3 space-y-2'>
-                        <div className='mb-2 text-sm text-muted-foreground'>
-                          is reviewing:
-                        </div>
-                        {data.reviewing.map((reviewee, idx) => (
-                          <div
-                            key={idx}
-                            className='flex items-center space-x-3'
-                          >
-                            <StatusDot status={reviewee.status} />
-                            <div>
-                              {reviewee.name}
-                              <span className='ml-2 text-sm text-muted-foreground'>
-                                {reviewee.userNumber}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className='flex flex-col items-center justify-center space-y-4 py-12 text-center'>
-              <Users className='h-12 w-12 text-muted-foreground' />
-              <div className='max-w-md'>
-                <h3 className='text-lg font-semibold'>No Peer Matches Yet</h3>
-                <p className='text-sm text-muted-foreground'>
-                  Use the &apos;Match Peers&apos; button above to automatically
-                  assign peer reviews to students who have submitted their work.
-                </p>
+                    ))}
+                  </div>
+                </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          <div className='flex flex-col items-center justify-center gap-4 py-12 text-center'>
+            <Users className='h-12 w-12 text-[#8A9099]' />
+            <div className='max-w-md'>
+              <h3 className='text-[15px] font-semibold text-[#131A26]'>
+                No Peer Matches Yet
+              </h3>
+              <p className='mt-1 text-sm text-[#5A6070]'>
+                Use the &apos;Match Peers&apos; button above to automatically
+                assign peer reviews to students who have submitted their work.
+              </p>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

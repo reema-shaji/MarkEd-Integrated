@@ -1,21 +1,20 @@
 import type { Metadata } from 'next'
-import localFont from 'next/font/local'
+import { Instrument_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { AppShell } from '@/components/app-shell'
-// import Script from 'next/script'
 
-
-// https://marked-bucket.s3.amazonaws.com/submission/b730a164-484e-4593-b946-c1139a39aa7c.pdf
-
-const geistSans = localFont({
-  src: './fonts/GeistVF.woff',
-  variable: '--font-geist-sans',
-  weight: '100 900',
+// Prototype typography: Instrument Sans for UI, JetBrains Mono for codes/IDs.
+// next/font self-hosts these at build time, so there is no runtime request to
+// Google — same look as the prototype, no external dependency at runtime.
+const instrumentSans = Instrument_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-sans',
 })
-const geistMono = localFont({
-  src: './fonts/GeistMonoVF.woff',
-  variable: '--font-geist-mono',
-  weight: '100 900',
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-mono',
 })
 
 export const metadata: Metadata = {
@@ -39,7 +38,7 @@ export default function RootLayout({
       </head> */}
 
       <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-neutral-100 antialiased`}
+        className={`${instrumentSans.variable} ${jetbrainsMono.variable} bg-paper font-sans text-ink antialiased`}
       >
         <div className='visible absolute left-1/2 top-1/2 w-fit -translate-x-1/2 -translate-y-1/2 transform rounded-lg bg-white p-4 shadow-md md:invisible'>
           <h1 className='text-xl font-bold'>Oops!</h1>

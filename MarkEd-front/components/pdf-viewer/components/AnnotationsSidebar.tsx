@@ -78,9 +78,11 @@ function DraftAnnotationCard({
   const showLimit = currentLength >= maxCharacterLimit * warningThreshold
 
   return (
-    <div className='rounded-lg border border-yellow-500 bg-yellow-50 p-4 shadow-sm'>
-      <blockquote className='mb-4 border-l-2 border-muted-foreground/30 pl-2'>
-        <p className='text-sm italic'>{draftAnnotation.selectedText}</p>
+    <div className='rounded-[12px] border-2 border-[#C9A24A] bg-[#FBF4E3] p-[14px] shadow-sm'>
+      <blockquote className='mb-4 border-l-2 border-[#C9A24A] pl-2.5'>
+        <p className='text-[12px] italic leading-[1.5] text-muted2'>
+          {draftAnnotation.selectedText}
+        </p>
       </blockquote>
       <div className='relative'>
         <textarea
@@ -460,7 +462,7 @@ function AnnotationCard({
       key={annotation.id}
       data-annotation-id={annotation.id}
       className={cn(
-        'group relative mb-3 overflow-hidden rounded-lg border transition-all duration-200',
+        'group relative mb-3 overflow-hidden rounded-[12px] border transition-all duration-200',
         isSelected
           ? 'border-primary bg-primary/5 shadow-sm'
           : 'border-border bg-card',
@@ -499,8 +501,8 @@ function AnnotationCard({
         </div>
 
         <div>
-          <blockquote className='border-l-2 border-muted-foreground/30 pl-2'>
-            <p className='text-sm italic text-muted-foreground'>
+          <blockquote className='border-l-2 border-muted-foreground/40 pl-2.5'>
+            <p className='text-[12px] italic leading-[1.5] text-muted2'>
               {annotation.selectedText}
             </p>
           </blockquote>
@@ -765,9 +767,9 @@ export function AnnotationsSidebar({
       ))}
 
       {sortedAnnotations.length === 0 && draftAnnotation === null && (
-        <div className='bg-foreground/2 flex h-full flex-col items-center justify-center rounded-lg p-4 text-center'>
-          <SquarePen className='mb-2 h-8 w-8' />
-          <h1 className='text-lg font-semibold'>
+        <div className='flex h-full flex-col items-center justify-center rounded-[12px] bg-warm-50 p-4 text-center'>
+          <SquarePen className='mb-2 h-8 w-8 text-faint' />
+          <h1 className='text-lg font-semibold text-ink'>
             {isMarkerView && visibleReviewers.size === 0
               ? 'No reviewers selected'
               : isReadOnly

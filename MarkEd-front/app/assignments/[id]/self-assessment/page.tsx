@@ -17,11 +17,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { DefaultService, SelfAssessmentFormSchema } from '@/src/api'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 
 /** A plain numbered section card, faithful to the prototype's "1 · Checklist" heads. */
@@ -37,17 +33,15 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <Card>
-      <CardHeader className='pb-3'>
-        <CardTitle className='text-base'>
-          {index} · {title}
-        </CardTitle>
-        <p className='text-[13px] font-normal leading-relaxed text-neutral-500'>
-          {subtitle}
-        </p>
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
+    <div className='mb-4 rounded-[14px] border border-[#EAE5DB] bg-white p-6'>
+      <div className='text-[15px] font-semibold tracking-[-.1px] text-[#131A26]'>
+        {index} · {title}
+      </div>
+      <div className='mb-3.5 mt-1 text-[13px] leading-relaxed text-[#5A6070]'>
+        {subtitle}
+      </div>
+      {children}
+    </div>
   )
 }
 
@@ -107,11 +101,11 @@ export default function SelfAssessmentPage() {
 
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-3xl p-6'>
-        <Skeleton className='h-9 w-72' />
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+        <Skeleton className='h-8 w-72' />
         <div className='mt-6 grid gap-4'>
-          <Skeleton className='h-48' />
-          <Skeleton className='h-48' />
+          <Skeleton className='h-48 rounded-[14px]' />
+          <Skeleton className='h-48 rounded-[14px]' />
         </div>
       </div>
     )
@@ -119,12 +113,10 @@ export default function SelfAssessmentPage() {
 
   if (unavailable || !form) {
     return (
-      <div className='mx-auto w-full max-w-3xl p-6'>
-        <Card>
-          <CardContent className='py-14 text-center text-sm text-muted-foreground'>
-            {unavailable}
-          </CardContent>
-        </Card>
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+        <div className='rounded-[14px] border border-[#EAE5DB] bg-white py-14 text-center text-sm text-[#5A6070]'>
+          {unavailable}
+        </div>
       </div>
     )
   }
@@ -133,15 +125,13 @@ export default function SelfAssessmentPage() {
   let sectionIndex = 0
 
   return (
-    <div className='mx-auto w-full max-w-3xl p-6'>
-      {/* Breadcrumb + title, per the prototype header. */}
-      <div className='mb-1.5 text-[13px] text-neutral-400'>
-        Home / Self-Assessment
+    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
+        Self-Assessment
       </div>
-      <h1 className='text-2xl font-bold'>Self-Assessment</h1>
       {/* b-4: deadline labelled in full and shown on the header line. */}
       {form.deadline && (
-        <div className='mt-1 text-sm text-neutral-500'>
+        <div className='mb-2 mt-1 text-sm text-[#5A6070]'>
           Self-Assessment Deadline:{' '}
           {new Date(form.deadline).toLocaleString(undefined, {
             day: 'numeric',
@@ -151,7 +141,7 @@ export default function SelfAssessmentPage() {
             minute: '2-digit',
           })}
           {form.is_late && (
-            <span className='text-amber-600'>
+            <span className='text-[#8A5D14]'>
               {' '}
               · past deadline, submissions recorded as late
             </span>
@@ -159,196 +149,210 @@ export default function SelfAssessmentPage() {
         </div>
       )}
       {/* b-8: students confused self-assessment with marker feedback. */}
-      <p className='mt-2 text-xs leading-relaxed text-neutral-400'>
+      <div className='mb-4 text-xs leading-relaxed text-[#8A9099]'>
         Your <b>self-assessment</b> is your own evaluation of your work. After
         you submit it, your instructor may leave <b>feedback</b> — their
         comments on your self-assessment, shown at the top of this page.
-      </p>
+      </div>
 
       {/* b-14 / feedback: the instructor's response, when they have left one. */}
       {form.feedback_text && (
-        <div className='mt-5 rounded-lg border border-blue-200 bg-blue-50 px-[18px] py-3.5'>
-          <div className='mb-1 text-[13px] font-semibold text-blue-800'>
-            Instructor Feedback on Your Self-Assessment
+        <div className='mb-5 rounded-[12px] border border-[#C9DCEA] bg-[#EDF3F8] px-[18px] py-3.5'>
+          <div className='mb-1 text-[13px] font-semibold text-[#1F4E79]'>
+            Instructor feedback on your self-assessment
           </div>
-          <div className='text-[13px] leading-relaxed text-blue-900'>
+          <div className='text-[13px] leading-relaxed text-[#20456B]'>
             {form.feedback_text}
           </div>
         </div>
       )}
 
-      <div className='mt-5 grid gap-4'>
-        {/* 1. Checklist */}
-        {form.use_checklist && form.checklist_items.length > 0 && (
-          <Section
-            index={++sectionIndex}
-            title='Checklist'
-            /* b-6: says plainly how this differs from the rubric below. */
-            subtitle={
-              <>
-                <b>What &amp; why:</b> confirm you have addressed the key
-                requirements. <b>How:</b> tick each item you believe you have
-                completed.
-              </>
-            }
-          >
-            <div className='flex flex-col gap-2.5'>
-              {form.checklist_items.map((item) => {
-                const on = Boolean(checklist[String(item.id)])
-                return (
-                  <label
-                    key={item.id}
-                    className='flex cursor-pointer items-start gap-2.5 rounded-lg border border-neutral-100 px-3 py-2.5 transition-colors hover:border-neutral-200 hover:bg-neutral-50'
-                  >
-                    <input
-                      type='checkbox'
-                      checked={on}
-                      onChange={(e) =>
-                        setChecklist({ ...checklist, [String(item.id)]: e.target.checked })
-                      }
-                      className='mt-0.5 h-[15px] w-[15px] shrink-0 accent-neutral-900'
-                    />
-                    <span>
-                      <span className='block text-[13px] font-semibold'>
-                        {item.name}
-                      </span>
-                      {item.description && (
-                        <span className='mt-0.5 block text-xs leading-relaxed text-neutral-500'>
-                          {item.description}
-                        </span>
-                      )}
-                    </span>
-                  </label>
-                )
+      {/* Submitted indicator, styled to the prototype's status panel. */}
+      {form.submitted_at && (
+        <div className='mb-5 flex items-center gap-3 rounded-[12px] border border-[#EAE5DB] bg-[#FAF8F4] px-[18px] py-3.5'>
+          <span className='flex-1'>
+            <span className='block text-[13px] font-semibold text-[#2C3444]'>
+              Self-assessment submitted
+            </span>
+            <span className='mt-0.5 block text-[12.5px] leading-relaxed text-[#5A6070]'>
+              You submitted on{' '}
+              {new Date(form.submitted_at).toLocaleString(undefined, {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
               })}
-            </div>
-          </Section>
-        )}
-
-        {/* 2. Rubric self-grading */}
-        {form.use_rubric && form.rubric_items.length > 0 && (
-          <Section
-            index={++sectionIndex}
-            title='Rubric-Based Self-Grading'
-            /* b-15: her students did not know why they were grading themselves. */
-            subtitle={
-              <>
-                <b>What &amp; why:</b> grade yourself against the same rubric
-                your marker uses. <b>How:</b> select the level that best
-                describes your work.
-              </>
-            }
-          >
-            <div className='flex flex-col gap-4'>
-              {form.rubric_items.map((criterion) => (
-                <div key={criterion.criteria_id}>
-                  <div className='mb-2 text-sm font-semibold'>
-                    {criterion.name}
-                  </div>
-                  <div className='flex flex-col gap-[7px]'>
-                    {criterion.levels.map((level) => {
-                      const selected = rubric[String(criterion.criteria_id)] === level.id
-                      return (
-                        <button
-                          key={level.id}
-                          type='button'
-                          onClick={() =>
-                            setRubric({
-                              ...rubric,
-                              [String(criterion.criteria_id)]: level.id,
-                            })
-                          }
-                          className={`flex items-start gap-2.5 rounded-lg border p-3 text-left transition-colors ${
-                            selected
-                              ? 'border-[1.5px] border-neutral-900 bg-neutral-50'
-                              : 'border-neutral-200 hover:border-neutral-400'
-                          }`}
-                        >
-                          {/* Radio indicator, matching the prototype's filled dot. */}
-                          <span
-                            className={`mt-0.5 h-3.5 w-3.5 shrink-0 rounded-full bg-white ${
-                              selected
-                                ? 'border-[4.5px] border-neutral-900'
-                                : 'border-[1.5px] border-neutral-300'
-                            }`}
-                          />
-                          <span>
-                            <span className='block text-[13px] font-semibold'>
-                              {level.name}{' '}
-                              <span className='font-normal text-neutral-500'>
-                                ({level.marks} pts)
-                              </span>
-                            </span>
-                            {level.description && (
-                              <span className='mt-0.5 block text-xs leading-relaxed text-neutral-500'>
-                                {level.description}
-                              </span>
-                            )}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {/* 3. Guided reflection */}
-        {form.use_reflection && form.reflection_prompts.length > 0 && (
-          <Section
-            index={++sectionIndex}
-            title='Guided Reflection'
-            /* b-12: an instruction line, since the purpose was unclear. */
-            subtitle={
-              <>
-                <b>What &amp; why:</b> reflect on your learning using the Gibbs
-                Reflective Cycle. <b>How:</b> write a short response for each
-                stage.
-              </>
-            }
-          >
-            <div className='flex flex-col gap-3.5'>
-              {form.reflection_prompts.map((prompt) => (
-                <div key={prompt.stage}>
-                  <Label
-                    htmlFor={`reflect-${prompt.stage}`}
-                    className='mb-1.5 block text-[13px] font-normal'
-                  >
-                    <b>{prompt.label}:</b>{' '}
-                    <span className='text-neutral-500'>{prompt.prompt_text}</span>
-                  </Label>
-                  <Textarea
-                    id={`reflect-${prompt.stage}`}
-                    rows={2}
-                    value={reflection[prompt.stage] ?? ''}
-                    onChange={(e) =>
-                      setReflection({ ...reflection, [prompt.stage]: e.target.value })
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          </Section>
-        )}
-      </div>
-
-      <div className='mt-5 flex items-center justify-end gap-2 pb-8'>
-        {form.submitted_at && (
-          <span className='mr-auto text-xs text-neutral-500'>
-            Last submitted{' '}
-            {new Date(form.submitted_at).toLocaleString(undefined, {
-              day: 'numeric',
-              month: 'short',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
+              . You can still update your answers and resubmit.
+            </span>
           </span>
-        )}
-        <Button onClick={submit} disabled={saving}>
+        </div>
+      )}
+
+      {/* 1. Checklist */}
+      {form.use_checklist && form.checklist_items.length > 0 && (
+        <Section
+          index={++sectionIndex}
+          title='Checklist'
+          /* b-6: says plainly how this differs from the rubric below. */
+          subtitle={
+            <>
+              <b>What &amp; why:</b> confirm you have addressed the key
+              requirements. <b>How:</b> tick each item you believe you have
+              completed.
+            </>
+          }
+        >
+          <div className='flex flex-col gap-2.5'>
+            {form.checklist_items.map((item) => {
+              const on = Boolean(checklist[String(item.id)])
+              return (
+                <label
+                  key={item.id}
+                  className='flex cursor-pointer items-start gap-2.5 rounded-[12px] border border-[#EBE7DD] px-3 py-2.5 transition-colors hover:border-[#E3DFD5] hover:bg-[#FAF8F4]'
+                >
+                  <input
+                    type='checkbox'
+                    checked={on}
+                    onChange={(e) =>
+                      setChecklist({ ...checklist, [String(item.id)]: e.target.checked })
+                    }
+                    className='mt-0.5 h-[15px] w-[15px] shrink-0 accent-[#1F4E79]'
+                  />
+                  <span>
+                    <span className='block text-[13px] font-semibold text-[#131A26]'>
+                      {item.name}
+                    </span>
+                    {item.description && (
+                      <span className='mt-0.5 block text-xs leading-[1.45] text-[#5A6070]'>
+                        {item.description}
+                      </span>
+                    )}
+                  </span>
+                </label>
+              )
+            })}
+          </div>
+        </Section>
+      )}
+
+      {/* 2. Rubric self-grading */}
+      {form.use_rubric && form.rubric_items.length > 0 && (
+        <Section
+          index={++sectionIndex}
+          title='Rubric-Based Self-Grading'
+          /* b-15: her students did not know why they were grading themselves. */
+          subtitle={
+            <>
+              <b>What &amp; why:</b> grade yourself against the same rubric your
+              marker uses. <b>How:</b> select the level that best describes your
+              work.
+            </>
+          }
+        >
+          <div className='flex flex-col gap-4'>
+            {form.rubric_items.map((criterion) => (
+              <div key={criterion.criteria_id}>
+                <div className='mb-2 text-sm font-semibold text-[#131A26]'>
+                  {criterion.name}
+                </div>
+                <div className='flex flex-col gap-[7px]'>
+                  {criterion.levels.map((level) => {
+                    const selected = rubric[String(criterion.criteria_id)] === level.id
+                    return (
+                      <button
+                        key={level.id}
+                        type='button'
+                        onClick={() =>
+                          setRubric({
+                            ...rubric,
+                            [String(criterion.criteria_id)]: level.id,
+                          })
+                        }
+                        className={`flex items-start gap-2.5 border-[1.5px] p-3 text-left transition-colors ${
+                          selected
+                            ? 'rounded-[10px] border-[#131A26] bg-[#FAF6EE]'
+                            : 'rounded-[12px] border-[#EAE5DB] bg-white hover:border-[#C6BFB0]'
+                        }`}
+                      >
+                        {/* Radio indicator, matching the prototype's filled dot. */}
+                        <span
+                          className={`mt-0.5 h-[15px] w-[15px] shrink-0 rounded-full bg-white ${
+                            selected
+                              ? 'border-[4.5px] border-[#1F4E79]'
+                              : 'border-[1.5px] border-[#C6BFB0]'
+                          }`}
+                        />
+                        <span>
+                          <span className='block text-[13px] font-semibold text-[#131A26]'>
+                            {level.name}{' '}
+                            <span className='font-normal text-[#5A6070]'>
+                              ({level.marks} pts)
+                            </span>
+                          </span>
+                          {level.description && (
+                            <span className='mt-0.5 block text-xs leading-[1.45] text-[#5A6070]'>
+                              {level.description}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* 3. Guided reflection */}
+      {form.use_reflection && form.reflection_prompts.length > 0 && (
+        <Section
+          index={++sectionIndex}
+          title='Guided Reflection'
+          /* b-12: an instruction line, since the purpose was unclear. */
+          subtitle={
+            <>
+              <b>What &amp; why:</b> reflect on your learning using the Gibbs
+              Reflective Cycle. <b>How:</b> write a short response for each stage.
+            </>
+          }
+        >
+          <div className='flex flex-col gap-3.5'>
+            {form.reflection_prompts.map((prompt) => (
+              <div key={prompt.stage}>
+                <label
+                  htmlFor={`reflect-${prompt.stage}`}
+                  className='mb-[5px] block text-[13px] text-[#131A26]'
+                >
+                  <b>{prompt.label}:</b>{' '}
+                  <span className='text-[#5A6070]'>{prompt.prompt_text}</span>
+                </label>
+                <textarea
+                  id={`reflect-${prompt.stage}`}
+                  rows={2}
+                  value={reflection[prompt.stage] ?? ''}
+                  onChange={(e) =>
+                    setReflection({ ...reflection, [prompt.stage]: e.target.value })
+                  }
+                  className='w-full resize-y rounded-[9px] border border-[#DED8CA] bg-white px-3 py-2 text-[13px] leading-[1.55] text-[#131A26] outline-none focus:border-[#1F4E79]'
+                />
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      <div className='flex items-center justify-end gap-2 pb-8'>
+        <button
+          type='button'
+          onClick={submit}
+          disabled={saving}
+          className='rounded-[9px] bg-[#131A26] px-[18px] py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#243247] disabled:opacity-60'
+        >
           Submit Self-Assessment
-        </Button>
+        </button>
       </div>
     </div>
   )

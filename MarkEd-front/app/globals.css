@@ -3,12 +3,28 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), -apple-system, 'Segoe UI', sans-serif;
 }
 
 ::selection {
-  background: hsl(var(--marked-purple));
-  color: hsl(var(--primary-foreground));
+  background: #131a26;
+  color: #fff;
+}
+
+/* Prototype scrollbars: thin, warm-grey thumb. */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d5d0c4;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #bdb7a8;
 }
 
 @layer base {

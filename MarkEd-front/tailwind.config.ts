@@ -9,12 +9,37 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
+      },
       animation: {
         'pulse-strong': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'pulse-attention':
           'border-color 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite, background-color 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       colors: {
+        // --- MarkEd prototype palette (warm "paper" theme) ---
+        paper: '#F5F3EF', // page background
+        ink: '#131A26', // primary text / dark buttons / hero base
+        'ink-hover': '#243247', // dark button hover
+        gold: '#B4832F', // logo "Ed" accent
+        royal: '#1F4E79', // links / primary progress
+        'royal-hover': '#123A5C',
+        line: {
+          DEFAULT: '#E3DFD5', // header / strong border
+          card: '#EAE5DB', // card border
+          soft: '#F0ECE4', // inner dividers
+          input: '#DED8CA', // input border
+        },
+        warm: {
+          50: '#FAF8F4', // subtle hover / inset panel
+          100: '#F2EFE8', // hover
+          200: '#EFEBE2', // avatar bg
+        },
+        muted2: '#5A6070', // secondary text
+        faint: '#8A9099', // tertiary text
+        kicker: '#A29A8C', // uppercase labels
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

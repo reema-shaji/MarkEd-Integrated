@@ -22,14 +22,8 @@ import {
   RubricTreeNode,
   SelfAssessmentSettingSchema,
 } from '@/src/api'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Collapsible,
   CollapsibleContent,
@@ -246,40 +240,39 @@ export default function SelfAssessmentConfigurePage() {
 
   if (isLoading || !settings) {
     return (
-      <div className='mx-auto w-full max-w-3xl p-6'>
-        <Skeleton className='h-9 w-80' />
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+        <Skeleton className='h-8 w-80' />
         <div className='mt-6 grid gap-4'>
-          <Skeleton className='h-40' />
-          <Skeleton className='h-40' />
+          <Skeleton className='h-40 rounded-[14px]' />
+          <Skeleton className='h-40 rounded-[14px]' />
         </div>
       </div>
     )
   }
 
   return (
-    <div className='mx-auto w-full max-w-3xl p-6 pb-24'>
-      <div className='mb-1 text-[13px] text-neutral-400'>
-        Assignments / Self-Assessment
-      </div>
-      <h1 className='text-2xl font-bold'>Self-Assessment Settings</h1>
-      <p className='mt-1.5 text-sm text-neutral-500'>
-        Configure the self-assessment components for this assignment. Students
-        complete these sections when submitting their self-assessment.
-      </p>
-      <p className='mt-2 text-xs leading-relaxed text-neutral-400'>
-        <b>Self-assessment</b> = the student&apos;s own evaluation of their work.{' '}
-        <b>Feedback</b> = your optional response to that self-assessment (enable
-        below).
-      </p>
+    <>
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-28 pt-8'>
+        <div className='text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
+          Self-Assessment Settings
+        </div>
+        <div className='mb-2 mt-1.5 text-sm text-[#5A6070]'>
+          Configure the self-assessment components for this assignment. Students
+          complete these sections when submitting their self-assessment.
+        </div>
+        <div className='mb-5 text-xs leading-relaxed text-[#8A9099]'>
+          <b>Self-assessment</b> = the student&apos;s own evaluation of their work.{' '}
+          <b>Feedback</b> = your optional response to that self-assessment (enable
+          below).
+        </div>
 
-      {/* Master enable toggle. */}
-      <Card className='mt-6'>
-        <CardContent className='flex items-center justify-between gap-4 py-4'>
+        {/* Master enable toggle. */}
+        <div className='mb-4 flex items-center justify-between gap-4 rounded-[14px] border border-[#EAE5DB] bg-white px-5 py-4'>
           <div>
-            <Label htmlFor='sa-enabled' className='font-medium'>
+            <label htmlFor='sa-enabled' className='text-sm font-semibold text-[#131A26]'>
               Enable self-assessment for this assignment
-            </Label>
-            <p className='mt-0.5 text-xs text-neutral-500'>
+            </label>
+            <p className='mt-0.5 text-xs text-[#8A9099]'>
               Students see this once you enable it.
             </p>
           </div>
@@ -288,53 +281,58 @@ export default function SelfAssessmentConfigurePage() {
             checked={Boolean(settings.enabled)}
             onCheckedChange={(checked) => patchSettings({ enabled: checked })}
           />
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Deadline + teacher-feedback, side by side per the prototype. */}
-      <div className='mt-4 grid gap-4 md:grid-cols-2'>
-        <Card className='overflow-hidden'>
-          <div className='border-b border-neutral-100 bg-neutral-50 px-5 py-3 text-sm font-semibold'>
-            Deadline
-          </div>
-          <CardContent className='pt-4'>
-            {/* b-4: deadline labelled in full. */}
-            <Label htmlFor='sa-deadline' className='mb-1 block'>
-              Self-Assessment Deadline
-            </Label>
-            <Input
-              id='sa-deadline'
-              type='datetime-local'
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-            />
-          </CardContent>
-        </Card>
-
-        <Card className='overflow-hidden'>
-          <div className='border-b border-neutral-100 bg-neutral-50 px-5 py-3 text-sm font-semibold'>
-            Teacher Feedback on Self-Assessment
-          </div>
-          <CardContent className='pt-4'>
-            <label className='flex cursor-pointer items-center gap-2.5'>
-              <Checkbox
-                checked={Boolean(settings.needs_feedback)}
-                onCheckedChange={(checked) =>
-                  patchSettings({ needs_feedback: checked === true })
-                }
+        {/* Deadline + teacher-feedback, side by side per the prototype. */}
+        <div className='mb-4 grid gap-4 md:grid-cols-2'>
+          <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+            <div className='border-b border-[#F0ECE4] px-[18px] py-3.5 text-sm font-semibold text-[#131A26]'>
+              Deadline
+            </div>
+            <div className='px-[18px] py-4'>
+              {/* b-4: deadline labelled in full. */}
+              <label
+                htmlFor='sa-deadline'
+                className='mb-1.5 block text-[12.5px] font-semibold text-[#5A6070]'
+              >
+                Self-Assessment Deadline
+              </label>
+              <input
+                id='sa-deadline'
+                type='datetime-local'
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className='w-full rounded-[9px] border border-[#DED8CA] bg-white px-3 py-2 text-sm text-[#131A26] outline-none focus:border-[#1F4E79]'
               />
-              <span className='text-[13px] text-neutral-700'>
-                Enable feedback on self-assessment
-              </span>
-            </label>
-            <p className='mt-2 text-xs text-neutral-500'>
-              When on, you can respond to each student&apos;s self-assessment.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          </div>
 
-      <div className='mt-4 grid gap-4'>
+          <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+            <div className='border-b border-[#F0ECE4] px-[18px] py-3.5 text-sm font-semibold text-[#131A26]'>
+              Teacher Feedback on Self-Assessment
+            </div>
+            <div className='px-[18px] py-4'>
+              <label className='flex cursor-pointer items-center gap-2.5'>
+                <input
+                  type='checkbox'
+                  checked={Boolean(settings.needs_feedback)}
+                  onChange={(e) =>
+                    patchSettings({ needs_feedback: e.target.checked })
+                  }
+                  className='h-[15px] w-[15px] accent-[#1F4E79]'
+                />
+                <span className='text-[13px] text-[#2C3444]'>
+                  Enable feedback on self-assessment
+                </span>
+              </label>
+              <p className='mt-2 text-[11.5px] leading-relaxed text-[#8A9099]'>
+                Markers can respond to each student&apos;s self-assessment from the
+                marking screen.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Checklist */}
         <ConfigSection
           title='Checklist'
@@ -343,47 +341,51 @@ export default function SelfAssessmentConfigurePage() {
         >
           <div className='mb-3 flex flex-col gap-2'>
             {checklist.length === 0 && (
-              <p className='text-sm text-neutral-500'>
+              <p className='text-[13px] text-[#5A6070]'>
                 No items yet. Add the things students should confirm they have done.
               </p>
             )}
             {checklist.map((item) => (
               <div
                 key={item.id}
-                className='overflow-hidden rounded-lg border border-neutral-100'
+                className='overflow-hidden rounded-[12px] border border-[#EBE7DD]'
               >
                 <div className='flex items-center justify-between gap-2 bg-white px-3.5 py-2.5'>
-                  <span className='text-[13px] font-semibold'>{item.name}</span>
+                  <span className='text-[13px] font-semibold text-[#131A26]'>
+                    {item.name}
+                  </span>
                   <span className='flex gap-1.5'>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      className='h-7 px-2.5 text-[11px]'
+                    <button
+                      type='button'
                       onClick={() => openEdit(item)}
+                      className='rounded-[9px] border border-[#DED8CA] bg-white px-2.5 py-1 text-[11px] font-medium text-[#2C3444] transition-colors hover:bg-[#F2EFE8]'
                     >
                       Edit
-                    </Button>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      className='h-7 border-red-200 px-2.5 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-600'
+                    </button>
+                    <button
+                      type='button'
                       onClick={() => setModal({ mode: 'delete', item })}
+                      className='rounded-[9px] border border-[#EFCFC9] bg-white px-2.5 py-1 text-[11px] font-medium text-[#dc2626] transition-colors hover:bg-[#FBEEEC]'
                     >
                       Delete
-                    </Button>
+                    </button>
                   </span>
                 </div>
                 {item.description && (
-                  <div className='border-t border-neutral-100 bg-neutral-50 px-3.5 py-2 text-xs text-neutral-500'>
+                  <div className='border-t border-[#EBE7DD] bg-[#FAF8F4] px-3.5 py-2 text-xs text-[#5A6070]'>
                     {item.description}
                   </div>
                 )}
               </div>
             ))}
           </div>
-          <Button variant='outline' size='sm' onClick={openAdd}>
+          <button
+            type='button'
+            onClick={openAdd}
+            className='rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-1.5 text-xs font-medium text-[#2C3444] transition-colors hover:bg-[#F2EFE8]'
+          >
             + Add Item
-          </Button>
+          </button>
         </ConfigSection>
 
         {/* Rubric self-grading — the jsTree replacement */}
@@ -392,12 +394,12 @@ export default function SelfAssessmentConfigurePage() {
           enabled={Boolean(settings.use_rubric)}
           onToggle={(checked) => patchSettings({ use_rubric: checked })}
         >
-          <p className='mb-3 text-[13px] text-neutral-500'>
+          <p className='mb-3 text-[13px] text-[#5A6070]'>
             Select which marking criteria students self-grade against. Levels are
             inherited from the assignment rubric.
           </p>
           {tree.length === 0 ? (
-            <p className='text-sm text-neutral-500'>
+            <p className='text-[13px] text-[#5A6070]'>
               This assignment has no rubric criteria yet.
             </p>
           ) : (
@@ -415,22 +417,24 @@ export default function SelfAssessmentConfigurePage() {
           enabled={Boolean(settings.use_reflection)}
           onToggle={(checked) => patchSettings({ use_reflection: checked })}
         >
-          <p className='mb-3 text-[13px] text-neutral-500'>
+          <p className='mb-3 text-[13px] text-[#5A6070]'>
             Six stages of the Gibbs Reflective Cycle. Prompts are editable.
           </p>
           <div className='flex flex-col gap-3'>
             {prompts.map((prompt, index) => (
-              <div key={prompt.stage} className='grid gap-1.5'>
-                <Label className='text-[13px] font-medium text-neutral-700'>
+              <div key={prompt.stage}>
+                <label className='mb-1.5 block text-[13px] font-semibold text-[#2C3444]'>
                   {prompt.label}
-                </Label>
-                <Input
+                </label>
+                <input
+                  type='text'
                   value={prompt.prompt_text}
                   onChange={(e) => {
                     const next = [...prompts]
                     next[index] = { ...prompt, prompt_text: e.target.value }
                     setPrompts(next)
                   }}
+                  className='w-full rounded-[9px] border border-[#E3DFD5] bg-white px-3 py-1.5 text-xs text-[#454C5C] outline-none focus:border-[#1F4E79]'
                 />
               </div>
             ))}
@@ -439,18 +443,25 @@ export default function SelfAssessmentConfigurePage() {
       </div>
 
       {/* Single sticky save bar with a saved indicator and dirty tracking. */}
-      <div className='fixed inset-x-0 bottom-0 z-40 border-t bg-neutral-100/95 backdrop-blur md:pl-64'>
-        <div className='mx-auto flex max-w-3xl items-center justify-end gap-3 px-6 py-3'>
+      <div className='fixed inset-x-0 bottom-0 z-40 border-t border-[#EAE5DB] bg-[#F5F3EF]'>
+        <div className='mx-auto flex w-full max-w-[880px] items-center gap-3 px-7 py-3.5'>
           {dirty ? (
-            <span className='text-xs font-medium text-amber-600'>Unsaved changes</span>
+            <span className='flex-1 text-[12.5px] font-medium text-[#8A5D14]'>
+              Unsaved changes · they apply to every student on this assignment.
+            </span>
           ) : (
-            <span className='inline-flex items-center gap-1 text-xs font-medium text-green-600'>
+            <span className='flex-1 inline-flex items-center gap-1 text-[12.5px] font-medium text-[#2F7D4F]'>
               <Check className='h-3.5 w-3.5' /> All changes saved
             </span>
           )}
-          <Button onClick={saveAll} disabled={!dirty || saving}>
-            Save configuration
-          </Button>
+          <button
+            type='button'
+            onClick={saveAll}
+            disabled={!dirty || saving}
+            className='rounded-[9px] bg-[#131A26] px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#243247] disabled:opacity-60'
+          >
+            Save settings
+          </button>
         </div>
       </div>
 
@@ -461,81 +472,87 @@ export default function SelfAssessmentConfigurePage() {
           onClick={() => !busy && setModal(null)}
         >
           <div
-            className='w-full max-w-[440px] rounded-lg bg-white p-5 shadow-lg'
+            className='w-full max-w-[440px] rounded-[12px] bg-white p-5'
             onClick={(e) => e.stopPropagation()}
           >
             {modal.mode === 'delete' ? (
               <>
-                <div className='mb-2.5 text-base font-semibold text-red-600'>
+                <div className='mb-2.5 text-[15px] font-semibold tracking-[-.1px] text-[#dc2626]'>
                   Delete Checklist Item
                 </div>
-                <p className='mb-4 text-sm leading-relaxed text-neutral-600'>
-                  Are you sure you want to delete{' '}
-                  <b>{modal.item.name}</b>? This action cannot be undone.
+                <p className='mb-4 text-sm leading-relaxed text-[#454C5C]'>
+                  Are you sure you want to delete <b>{modal.item.name}</b>? This
+                  action cannot be undone.
                 </p>
                 <div className='flex justify-end gap-2'>
-                  <Button
-                    variant='outline'
+                  <button
+                    type='button'
                     onClick={() => setModal(null)}
                     disabled={busy}
+                    className='rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#2C3444] transition-colors hover:bg-[#F2EFE8] disabled:opacity-60'
                   >
                     Cancel
-                  </Button>
-                  <Button
-                    className='bg-red-600 text-white hover:bg-red-700'
+                  </button>
+                  <button
+                    type='button'
                     onClick={confirmDelete}
                     disabled={busy}
+                    className='rounded-[9px] bg-[#dc2626] px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[#b91c1c] disabled:opacity-60'
                   >
                     Delete
-                  </Button>
+                  </button>
                 </div>
               </>
             ) : (
               <>
-                <div className='mb-3.5 text-base font-semibold'>
+                <div className='mb-3.5 text-[15px] font-semibold tracking-[-.1px] text-[#131A26]'>
                   {modal.mode === 'add'
                     ? 'Add Checklist Item'
                     : 'Edit Checklist Item'}
                 </div>
-                <Input
+                <input
+                  type='text'
                   autoFocus
                   placeholder='Item name'
                   value={draftName}
                   onChange={(e) => setDraftName(e.target.value)}
-                  className='mb-2.5'
+                  className='mb-2.5 w-full rounded-[9px] border border-[#D3CDBF] bg-white px-3 py-2.5 text-sm text-[#131A26] outline-none focus:border-[#1F4E79]'
                 />
-                <Textarea
+                <textarea
                   rows={3}
                   placeholder='Description'
                   value={draftDesc}
                   onChange={(e) => setDraftDesc(e.target.value)}
-                  className='mb-3.5'
+                  className='mb-3.5 w-full resize-y rounded-[9px] border border-[#D3CDBF] bg-white px-3 py-2 text-[13px] text-[#131A26] outline-none focus:border-[#1F4E79]'
                 />
                 <div className='flex justify-end gap-2'>
-                  <Button
-                    variant='outline'
+                  <button
+                    type='button'
                     onClick={() => setModal(null)}
                     disabled={busy}
+                    className='rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#2C3444] transition-colors hover:bg-[#F2EFE8] disabled:opacity-60'
                   >
                     Cancel
-                  </Button>
-                  <Button
+                  </button>
+                  <button
+                    type='button'
                     onClick={modal.mode === 'add' ? confirmAdd : confirmEdit}
                     disabled={busy || !draftName.trim()}
+                    className='rounded-[9px] bg-[#131A26] px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-[#243247] disabled:opacity-60'
                   >
                     {modal.mode === 'add' ? 'Add' : 'Save Changes'}
-                  </Button>
+                  </button>
                 </div>
               </>
             )}
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
 
-/** Collapsible component card with an enable toggle in its grey header. */
+/** Collapsible component card with an enable toggle in its warm header. */
 function ConfigSection({
   title,
   enabled,
@@ -548,20 +565,20 @@ function ConfigSection({
   children: React.ReactNode
 }) {
   return (
-    <Collapsible defaultOpen className='group/cfg'>
-      <Card className='overflow-hidden'>
-        <div className='flex items-center gap-3 border-b border-neutral-100 bg-neutral-50 px-5 py-3'>
-          <CollapsibleTrigger className='flex flex-1 items-center gap-2 text-left text-sm font-semibold'>
-            <ChevronDown className='h-4 w-4 text-neutral-400 transition-transform group-data-[state=closed]/cfg:-rotate-90' />
+    <Collapsible defaultOpen className='group/cfg mb-4'>
+      <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+        <div className='flex items-center gap-3 border-b border-[#F0ECE4] bg-[#FAF8F4] px-[18px] py-3'>
+          <CollapsibleTrigger className='flex flex-1 items-center gap-2 text-left text-sm font-semibold text-[#131A26]'>
+            <ChevronDown className='h-4 w-4 text-[#8A9099] transition-transform group-data-[state=closed]/cfg:-rotate-90' />
             {title}
           </CollapsibleTrigger>
           {/* Untick to hide this section from students. */}
           <Switch checked={enabled} onCheckedChange={onToggle} />
         </div>
         <CollapsibleContent>
-          <CardContent className='pt-4'>{children}</CardContent>
+          <div className='px-[18px] py-4'>{children}</div>
         </CollapsibleContent>
-      </Card>
+      </div>
     </Collapsible>
   )
 }
@@ -582,14 +599,16 @@ function RubricTree({
     <div className='grid gap-2.5' style={{ marginLeft: depth ? 16 : 0 }}>
       {nodes.map((node) => (
         <div key={node.id} className='grid gap-2.5'>
-          <div className='rounded-lg border border-neutral-100 px-3.5 py-3'>
-            <label className='flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold'>
-              <Checkbox
+          <div className='rounded-[12px] border border-[#EBE7DD] px-3.5 py-3'>
+            <label className='flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold text-[#131A26]'>
+              <input
+                type='checkbox'
                 checked={selected.has(node.id)}
-                onCheckedChange={() => onToggle(node.id)}
+                onChange={() => onToggle(node.id)}
+                className='h-[14px] w-[14px] accent-[#1F4E79]'
               />
               {node.name}
-              <span className='ml-1 text-xs font-normal text-neutral-500'>
+              <span className='ml-1 text-xs font-normal text-[#5A6070]'>
                 {node.marks} marks
               </span>
             </label>

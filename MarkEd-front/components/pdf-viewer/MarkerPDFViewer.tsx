@@ -396,7 +396,7 @@ export default function MarkerPDFViewer({
   )
 
   return (
-    <div className='min-h-screen-5xl bg-muted'>
+    <div className='min-h-screen-5xl bg-paper'>
       <Controls url={url} annotations={annotations} isMarkerView={isMarkerView}>
         {otherControls}
       </Controls>

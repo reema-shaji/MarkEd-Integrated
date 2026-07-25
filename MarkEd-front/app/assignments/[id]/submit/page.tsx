@@ -2,18 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { FileUpload } from '@/components/file-upload'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { DefaultService } from '@/src/api'
-import * as React from 'react'
 import { toast } from 'sonner'
-import { ExternalLink } from 'lucide-react'
+import { ArrowLeft, AlertTriangle } from 'lucide-react'
 import { useAssignment } from '@/src/contexts/assignment-context'
-import { AlertTriangle } from 'lucide-react'
-import { Check } from 'lucide-react'
 
 interface PreviousSubmission {
   filename: string
@@ -25,6 +18,7 @@ interface PreviousSubmission {
 
 export default function SubmitAssignmentPage() {
   const unwrappedParams = useParams()
+  const router = useRouter()
   const { currentAssignment, submissionStatus } = useAssignment()
   const [agreedToHonesty, setAgreedToHonesty] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([])
@@ -134,57 +128,61 @@ export default function SubmitAssignmentPage() {
     }
   }
 
+  const isOpen = submissionStatus.isOpen
+
   return (
-    <div className='mx-auto w-full max-w-2xl px-6 py-8'>
-      <Card className='w-full'>
-        {previousSubmission ? (
-          <CardContent className='pt-6'>
-            <div className='space-y-6 text-center'>
-              <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600'>
-                <Check className='h-6 w-6' />
-              </div>
-              <div className='space-y-2'>
-                <h3 className='text-lg font-semibold'>Assignment Submitted!</h3>
-                <p className='text-sm text-muted-foreground'>
-                  Submitted on {previousSubmission.uploadedAt.toLocaleString()}
-                </p>
-              </div>
-              <div className='flex justify-center gap-3'>
-                <Button
-                  onClick={handleViewSubmission}
-                  className='gap-2'
-                  disabled={previousSubmission?.isLoadingUrl}
-                >
-                  {previousSubmission?.isLoadingUrl ? (
-                    'Loading...'
-                  ) : (
-                    <>
-                      View Submission
-                      <ExternalLink className='h-4 w-4' />
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant='outline'
-                  onClick={() => setPreviousSubmission(null)}
-                  className='gap-2'
-                >
-                  Submit Again
-                </Button>
-              </div>
+    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <button
+        onClick={() => router.push(`/assignments/${unwrappedParams.id}/home`)}
+        className='flex items-center gap-[7px] border-none bg-none pb-3 text-[12.5px] font-medium text-[#5A6070] hover:text-[#131A26]'
+      >
+        <ArrowLeft className='h-[13px] w-[13px]' />
+        Back to assignment
+      </button>
+
+      <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-6'>
+        <div className='mb-1 text-[21px] font-semibold -tracking-[.45px] text-[#131A26]'>
+          Your submission
+        </div>
+        <div className='mb-5 text-[13px] text-[#5A6070]'>
+          {submissionStatus.message}
+        </div>
+
+        {/* Current submission */}
+        {previousSubmission && (
+          <div className='mb-[18px] overflow-hidden rounded-[12px] border border-[#EAE5DB]'>
+            <div className='flex items-center gap-2 border-b border-[#F0ECE4] px-4 py-[11px]'>
+              <span className='flex-1 text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+                Current submission
+              </span>
+              <span className='rounded-[6px] bg-[#E9F1EA] px-[9px] py-0.5 text-[11px] font-semibold text-[#2F7D4F]'>
+                Submitted
+              </span>
             </div>
-          </CardContent>
-        ) : (
+            <div className='flex items-center gap-3 px-4 py-3.5'>
+              <span className='text-[19px]'>📕</span>
+              <span className='min-w-0 flex-1'>
+                <span className='block truncate text-[13.5px] font-semibold text-[#131A26]'>
+                  {previousSubmission.filename}
+                </span>
+                <span className='mt-px block text-[12px] text-[#A29A8C]'>
+                  {previousSubmission.uploadedAt.toLocaleString()}
+                </span>
+              </span>
+              <button
+                onClick={handleViewSubmission}
+                disabled={previousSubmission.isLoadingUrl}
+                className='flex-none cursor-pointer rounded-[9px] border border-[#DED8CA] bg-white px-[13px] py-[7px] text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8] disabled:opacity-60'
+              >
+                {previousSubmission.isLoadingUrl ? 'Loading…' : 'Download'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isOpen ? (
           <>
-            <CardHeader>
-              <CardTitle className='text-2xl font-bold'>
-                Submit Assignment
-              </CardTitle>
-              <p className='text-sm text-neutral-500'>
-                {submissionStatus.message}
-              </p>
-            </CardHeader>
-            <CardContent className='space-y-6'>
+            <div className='mb-5'>
               <FileUpload
                 onUploadComplete={(urls) => setUploadedFiles(urls)}
                 acceptedFileTypes={['application/pdf']}
@@ -192,86 +190,78 @@ export default function SubmitAssignmentPage() {
                 type='submission'
                 maxFiles={1}
               />
+            </div>
 
-              <div className='space-y-4'>
-                <div className='flex items-start space-x-2'>
-                  <Checkbox
-                    id='honesty'
-                    checked={agreedToHonesty}
-                    onCheckedChange={(checked) =>
-                      setAgreedToHonesty(checked as boolean)
-                    }
-                    disabled={!submissionStatus.isOpen}
-                  />
-                  <label
-                    htmlFor='honesty'
-                    className='text-sm leading-relaxed text-neutral-700'
-                  >
-                    I declare that this submission is my own work and that I
-                    have not plagiarised or colluded with others.
-                  </label>
-                </div>
+            <div className='mb-5 flex flex-col gap-3'>
+              <label className='flex cursor-pointer items-start gap-2.5'>
+                <input
+                  type='checkbox'
+                  checked={agreedToHonesty}
+                  onChange={(e) => setAgreedToHonesty(e.target.checked)}
+                  className='mt-0.5 h-[15px] w-[15px] flex-none'
+                  style={{ accentColor: '#1F4E79' }}
+                />
+                <span className='text-[13px] leading-[1.5] text-[#2C3444]'>
+                  I declare that this submission is my own work and that I have
+                  not plagiarised or colluded with others.
+                </span>
+              </label>
+              <label className='flex cursor-pointer items-start gap-2.5'>
+                <input
+                  type='checkbox'
+                  checked={confirmedAnonymous}
+                  onChange={(e) => setConfirmedAnonymous(e.target.checked)}
+                  className='mt-0.5 h-[15px] w-[15px] flex-none'
+                  style={{ accentColor: '#1F4E79' }}
+                />
+                <span className='text-[13px] leading-[1.5] text-[#2C3444]'>
+                  I understand my submission may be anonymised and shared with
+                  peers for review, where the assignment requires it.
+                </span>
+              </label>
+            </div>
 
-                <div className='flex items-start space-x-2'>
-                  <Checkbox
-                    id='anonymous'
-                    checked={confirmedAnonymous}
-                    onCheckedChange={(checked) =>
-                      setConfirmedAnonymous(checked as boolean)
-                    }
-                    disabled={!submissionStatus.isOpen}
-                  />
-                  <label
-                    htmlFor='anonymous'
-                    className='text-sm leading-relaxed text-neutral-700'
-                  >
-                    I understand that my submission will be anonymised and
-                    distributed to peers for review.
-                  </label>
-                </div>
+            {isLateSubmission && (
+              <div className='mb-5 flex gap-2.5 rounded-[9px] border border-[#EFCFC9] bg-[#FBEEEC] p-3.5'>
+                <AlertTriangle className='mt-px h-4 w-4 flex-none text-[#B4483C]' />
+                <span>
+                  <span className='block text-[13px] font-medium text-[#8E2A20]'>
+                    Late Submission Warning
+                  </span>
+                  <span className='mt-0.5 block text-[12px] text-[#A93226]'>
+                    Submissions after the deadline will incur a penalty as per
+                    university policy.
+                  </span>
+                </span>
               </div>
+            )}
 
-              {isLateSubmission && (
-                <Alert
-                  variant='destructive'
-                  className='border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-900/10 dark:text-red-200'
-                >
-                  <AlertTriangle className='h-4 w-4' />
-                  <AlertDescription>
-                    <span className='block font-medium'>
-                      Late Submission Warning
-                    </span>
-                    <span className='mt-0.5 block text-sm'>
-                      Submissions after the deadline will incur a penalty as per
-                      university policy.
-                    </span>
-                  </AlertDescription>
-                </Alert>
-              )}
+            {error && (
+              <div className='mb-5 rounded-[9px] border border-[#EFCFC9] bg-[#FBEEEC] p-3.5 text-[13px] text-[#A93226]'>
+                {error}
+              </div>
+            )}
 
-              {error && (
-                <Alert variant='destructive'>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <Button
-                onClick={handleSubmit}
-                disabled={
-                  !submissionStatus.isOpen ||
-                  !agreedToHonesty ||
-                  !confirmedAnonymous ||
-                  uploadedFiles.length === 0 ||
-                  submitting
-                }
-                className='w-full'
-              >
-                {submitting ? 'Submitting...' : 'Submit Assignment'}
-              </Button>
-            </CardContent>
+            <button
+              onClick={handleSubmit}
+              disabled={
+                !agreedToHonesty ||
+                !confirmedAnonymous ||
+                uploadedFiles.length === 0 ||
+                submitting
+              }
+              className='w-full cursor-pointer rounded-[9px] border-none bg-[#131A26] py-[11px] text-[14px] font-semibold text-white hover:bg-[#243247] disabled:cursor-not-allowed disabled:opacity-50'
+            >
+              {submitting ? 'Submitting…' : 'Submit assignment'}
+            </button>
           </>
+        ) : (
+          <div className='rounded-[10px] bg-[#FAF8F4] px-4 py-3.5 text-[12.5px] leading-[1.6] text-[#5A6070]'>
+            {submissionStatus.message} Your submission is final and can no longer
+            be replaced.
+          </div>
         )}
-      </Card>
+      </div>
     </div>
   )
 }

@@ -12,7 +12,7 @@
  * out the difference.
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
 import {
@@ -22,8 +22,6 @@ import {
   WorkspaceFileSchema,
 } from '@/src/api'
 import { uploadFile } from '@/src/lib/upload'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -37,11 +35,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import {
-  CheckCircle2,
+  Download,
   FileText,
   Loader2,
   MessageSquare,
-  Send,
   Trash2,
   UploadCloud,
 } from 'lucide-react'
@@ -126,11 +123,13 @@ export default function GroupWorkspacePage() {
     [group, assignmentId, load]
   )
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: { 'application/pdf': ['.pdf'] },
     multiple: false,
     disabled: uploading || !group,
+    noClick: true,
+    noKeyboard: true,
   })
 
   const deleteFile = async (fileId: number) => {
@@ -175,9 +174,18 @@ export default function GroupWorkspacePage() {
     }
   }
 
+  // The most recently uploaded workspace file — the candidate for submission.
+  const latestFile = useMemo(() => {
+    if (files.length === 0) return null
+    return [...files].sort(
+      (a, b) =>
+        new Date(b.upload_time).getTime() - new Date(a.upload_time).getTime()
+    )[0]
+  }, [files])
+
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-4xl p-6'>
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
         <Skeleton className='h-9 w-64' />
         <Skeleton className='mt-6 h-40' />
       </div>
@@ -186,47 +194,63 @@ export default function GroupWorkspacePage() {
 
   if (noGroup || !group) {
     return (
-      <div className='mx-auto w-full max-w-4xl p-6'>
-        <Card>
-          <CardContent className='py-14 text-center text-sm text-muted-foreground'>
-            You are not in a group for this assignment yet. Once your tutor
-            assigns you to a team, your shared workspace appears here.
-          </CardContent>
-        </Card>
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+        <div className='rounded-[14px] border border-line-card bg-white py-14 text-center text-sm text-muted2'>
+          You are not in a group for this assignment yet. Once your tutor
+          assigns you to a team, your shared workspace appears here.
+        </div>
       </div>
     )
   }
 
+  const submitted = !!latestSubmission
+
   return (
-    <div className='mx-auto w-full max-w-[900px] p-6'>
-      <div className='mb-1.5 text-[13px] text-neutral-400'>
-        My Groups / {group.name} Workspace
+    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      <div className='mb-1.5 flex items-center gap-2.5'>
+        <span className='text-[21px] font-semibold tracking-[-0.45px] text-ink'>
+          Group Workspace
+        </span>
       </div>
-      <h1 className='text-2xl font-bold'>
-        {assignmentTitle} — Group Workspace
-      </h1>
-      <p className='mt-1.5 mb-3 text-sm text-neutral-500'>
+      <p className='mb-1 text-[13px] text-muted2'>
+        {assignmentTitle} · {group.name}
+      </p>
+      <p className='mb-1 text-[13px] text-faint'>
         {group.members.map((m) => m.userName).join(', ')}
       </p>
 
       {/* Submission status banner — reinforces that uploading is not submitting. */}
-      <div className='mb-5 flex items-start gap-2.5 rounded-lg border border-green-200 bg-green-50 px-4 py-3'>
-        <CheckCircle2 className='mt-0.5 h-4 w-4 shrink-0 text-green-700' />
-        <p className='text-[13px] text-green-800'>
-          {latestSubmission ? (
+      <div
+        className={`my-3 flex items-center gap-2.5 rounded-[12px] border px-4 py-3 ${
+          submitted
+            ? 'border-[#CDE3D2] bg-[#E9F1EA]'
+            : 'border-[#EBD9B4] bg-[#F8EFDC]'
+        }`}
+      >
+        <span
+          className={`h-2 w-2 shrink-0 rounded-full ${
+            submitted ? 'bg-[#2F7D4F]' : 'bg-[#C9862A]'
+          }`}
+        />
+        <p
+          className={`text-[13px] leading-[1.55] ${
+            submitted ? 'text-[#2F7D4F]' : 'text-[#8A5D14]'
+          }`}
+        >
+          {submitted ? (
             <>
-              <b>Status:</b> Submitted v{latestSubmission.submission_version} on{' '}
-              {new Date(latestSubmission.submissionDateTime).toLocaleDateString(
+              <b>Submitted v{latestSubmission!.submission_version}</b> on{' '}
+              {new Date(latestSubmission!.submissionDateTime).toLocaleDateString(
                 undefined,
                 { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }
               )}
-              . Uploading to the workspace does <b>not</b> submit — confirm a
-              submission from a file below.
+              . Uploading to the workspace does not submit — confirm a new
+              submission on the right.
             </>
           ) : (
             <>
-              <b>Status:</b> Not submitted yet. Uploading to the workspace does{' '}
-              <b>not</b> submit — confirm a submission from a file below.
+              <b>Not submitted yet.</b> Uploading to the workspace does not submit
+              — confirm a submission on the right.
             </>
           )}
         </p>
@@ -234,211 +258,221 @@ export default function GroupWorkspacePage() {
 
       <div className='grid gap-4 md:grid-cols-[1.4fr_1fr] md:items-start'>
         {/* Left column — workspace files, upload and per-file discussion. */}
-        <div className='grid gap-4'>
-          <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-base'>Workspace Files</CardTitle>
-              <p className='text-sm text-muted-foreground'>
-                Upload drafts here for your group to review. This is <b>not</b>{' '}
-                your submission — you confirm that from a file below.
-              </p>
-            </CardHeader>
-            <CardContent>
-              {/* Upload area — a shared drafting space, kept distinct from the
-                  submission (Hao's known confusion). */}
-              <div
-                {...getRootProps()}
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
-                  isDragActive
-                    ? 'border-neutral-800 bg-neutral-50'
-                    : 'border-neutral-300'
-                }`}
+        <div className='flex flex-col gap-4'>
+          <div className='overflow-hidden rounded-[14px] border border-line-card bg-white'>
+            <div className='flex items-center justify-between border-b border-line-soft px-[18px] py-3.5'>
+              <span className='text-sm font-semibold tracking-[-0.05px] text-ink'>
+                Workspace Files
+              </span>
+              <button
+                onClick={open}
+                disabled={uploading || !group}
+                className='rounded-[9px] bg-ink px-3 py-[5px] text-[12px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
               >
-                <input {...getInputProps()} />
-                {uploading ? (
-                  <Loader2 className='h-6 w-6 animate-spin text-muted-foreground' />
-                ) : (
-                  <UploadCloud className='h-6 w-6 text-muted-foreground' />
-                )}
-                <p className='mt-2 text-sm text-muted-foreground'>
-                  {uploading
-                    ? 'Uploading…'
-                    : 'Drag a PDF here, or click to choose one'}
-                </p>
+                {uploading ? 'Uploading…' : '↑ Upload File'}
+              </button>
+            </div>
+
+            {/* Upload area — a shared drafting space, kept distinct from the
+                submission (Hao's known confusion). */}
+            <div
+              {...getRootProps()}
+              className={`m-[18px] flex cursor-pointer flex-col items-center justify-center rounded-[10px] border-2 border-dashed p-6 text-center transition-colors ${
+                isDragActive ? 'border-ink bg-warm-50' : 'border-line-input'
+              }`}
+              onClick={open}
+            >
+              <input {...getInputProps()} />
+              {uploading ? (
+                <Loader2 className='h-6 w-6 animate-spin text-faint' />
+              ) : (
+                <UploadCloud className='h-6 w-6 text-faint' />
+              )}
+              <p className='mt-2 text-[12.5px] text-faint'>
+                {uploading
+                  ? 'Uploading…'
+                  : 'Drag a PDF here, or click to choose one'}
+              </p>
+              <p className='mt-1 text-[11.5px] text-kicker'>PDF only.</p>
+            </div>
+
+            {files.length === 0 ? (
+              <div className='px-[18px] pb-6 text-center'>
+                <div className='text-[13px] font-semibold text-[#2C3444]'>
+                  No files yet
+                </div>
+                <div className='mt-1 text-[12.5px] leading-[1.6] text-faint'>
+                  Upload files to share them with your group. Uploading does not
+                  submit your work.
+                </div>
               </div>
-
-              {/* File list with a per-file comment thread. */}
-              <div className='mt-4 grid gap-3'>
-                {files.length === 0 ? (
-                  <p className='py-8 text-center text-sm text-muted-foreground'>
-                    No files yet. Upload a draft to get started.
-                  </p>
-                ) : (
-                  files.map((file) => (
-                    <div
-                      key={file.id}
-                      className='rounded-lg border border-neutral-200 p-3.5'
-                    >
-                      <div className='flex items-start justify-between gap-3'>
-                        <div className='flex min-w-0 items-start gap-2'>
-                          <FileText className='mt-0.5 h-4 w-4 shrink-0 text-muted-foreground' />
-                          <div className='min-w-0'>
-                            <div className='truncate text-sm font-medium'>
-                              {file.file_name}
-                            </div>
-                            <div className='text-xs text-muted-foreground'>
-                              {file.uploaded_by_name} ·{' '}
-                              {new Date(file.upload_time).toLocaleDateString(
-                                undefined,
-                                {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                }
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className='flex shrink-0 items-center gap-1'>
-                          <Button
-                            size='sm'
-                            variant='outline'
-                            onClick={() => setConfirmFile(file)}
+            ) : (
+              <>
+                <div className='grid grid-cols-[1.8fr_1fr_.9fr_auto] border-b border-line-card px-[18px] py-3 text-[10px] font-semibold uppercase tracking-[0.85px] text-kicker'>
+                  <span>File name</span>
+                  <span>Uploaded by</span>
+                  <span>Date</span>
+                  <span />
+                </div>
+                {files.map((file) => (
+                  <div
+                    key={file.id}
+                    className='border-b border-line-soft px-[18px] py-2.5 last:border-b-0'
+                  >
+                    <div className='grid grid-cols-[1.8fr_1fr_.9fr_auto] items-center gap-2'>
+                      <span className='flex min-w-0 items-center gap-2 text-[13px] font-medium text-ink'>
+                        <FileText className='h-4 w-4 shrink-0 text-faint' />
+                        <span className='truncate'>{file.file_name}</span>
+                      </span>
+                      <span className='truncate text-[12px] text-muted2'>
+                        {file.uploaded_by_name}
+                      </span>
+                      <span className='text-[12px] text-muted2'>
+                        {new Date(file.upload_time).toLocaleDateString(undefined, {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </span>
+                      <span className='flex justify-end gap-1'>
+                        {file.file && (
+                          <a
+                            href={file.file}
+                            target='_blank'
+                            rel='noreferrer'
+                            title='Download'
+                            className='flex h-[26px] w-[26px] items-center justify-center rounded-[9px] border border-line bg-white text-muted2 transition-colors hover:bg-warm-100'
                           >
-                            <Send className='mr-1 h-3.5 w-3.5' />
-                            Submit this
-                          </Button>
-                          <Button
-                            size='icon'
-                            variant='ghost'
-                            className='h-8 w-8'
-                            aria-label={`Remove ${file.file_name}`}
-                            onClick={() => deleteFile(file.id)}
-                          >
-                            <Trash2 className='h-3.5 w-3.5' />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Comment thread */}
-                      <div className='mt-3 border-t pt-3'>
-                        {file.comments.length > 0 && (
-                          <div className='mb-3 grid gap-2'>
-                            {file.comments.map((comment) => (
-                              <div key={comment.id} className='text-sm'>
-                                <span className='font-medium'>
-                                  {comment.author_name}
-                                </span>{' '}
-                                <span className='text-xs text-muted-foreground'>
-                                  {new Date(comment.created_at).toLocaleDateString(
-                                    undefined,
-                                    { day: 'numeric', month: 'short' }
-                                  )}
-                                </span>
-                                <p className='text-muted-foreground'>
-                                  {comment.content}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
+                            <Download className='h-3.5 w-3.5' />
+                          </a>
                         )}
-                        <div className='flex gap-2'>
-                          <Input
-                            value={commentDraft[file.id] ?? ''}
-                            onChange={(e) =>
-                              setCommentDraft((prev) => ({
-                                ...prev,
-                                [file.id]: e.target.value,
-                              }))
-                            }
-                            placeholder='Write a comment…'
-                            onKeyDown={(e) =>
-                              e.key === 'Enter' && addComment(file)
-                            }
-                            className='h-9'
-                          />
-                          <Button
-                            size='sm'
-                            variant='outline'
-                            onClick={() => addComment(file)}
-                            disabled={!commentDraft[file.id]?.trim()}
-                          >
-                            <MessageSquare className='h-4 w-4' />
-                          </Button>
+                        <button
+                          title='Delete'
+                          aria-label={`Remove ${file.file_name}`}
+                          onClick={() => deleteFile(file.id)}
+                          className='flex h-[26px] w-[26px] items-center justify-center rounded-[9px] border border-line bg-white text-faint transition-colors hover:border-red-200 hover:text-red-600'
+                        >
+                          <Trash2 className='h-3.5 w-3.5' />
+                        </button>
+                      </span>
+                    </div>
+
+                    {/* Per-file discussion thread. */}
+                    <div className='mt-2.5 border-t border-line-soft pt-2.5'>
+                      {file.comments.length > 0 && (
+                        <div className='mb-2.5 flex flex-col gap-2'>
+                          {file.comments.map((comment) => (
+                            <div key={comment.id} className='text-[13px]'>
+                              <span className='font-medium text-ink'>
+                                {comment.author_name}
+                              </span>{' '}
+                              <span className='text-[11px] text-kicker'>
+                                {new Date(comment.created_at).toLocaleDateString(
+                                  undefined,
+                                  { day: 'numeric', month: 'short' }
+                                )}
+                              </span>
+                              <p className='text-muted2'>{comment.content}</p>
+                            </div>
+                          ))}
                         </div>
+                      )}
+                      <div className='flex gap-2'>
+                        <Input
+                          value={commentDraft[file.id] ?? ''}
+                          onChange={(e) =>
+                            setCommentDraft((prev) => ({
+                              ...prev,
+                              [file.id]: e.target.value,
+                            }))
+                          }
+                          placeholder='Write a comment…'
+                          onKeyDown={(e) => e.key === 'Enter' && addComment(file)}
+                          className='h-9 rounded-[9px] border-line-input text-[13px]'
+                        />
+                        <button
+                          onClick={() => addComment(file)}
+                          disabled={!commentDraft[file.id]?.trim()}
+                          className='flex items-center rounded-[9px] border border-line-input bg-white px-3 text-[12px] font-medium text-[#2C3444] transition-colors hover:bg-warm-100 disabled:opacity-50'
+                        >
+                          <MessageSquare className='h-4 w-4' />
+                        </button>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Right column — how submission works, and the version history. */}
-        <div className='grid gap-4'>
-          <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-base'>Submit Assignment</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className='text-sm text-muted-foreground'>
-                Submitting records a new immutable version from a workspace file.
-                Use <b>Submit this</b> on any file to submit it as the group&apos;s
-                work — every submission is kept.
-              </p>
-            </CardContent>
-          </Card>
+        <div className='flex flex-col gap-4'>
+          <div className='rounded-[14px] border border-line-card bg-white p-5'>
+            <div className='mb-3 text-sm font-semibold tracking-[-0.05px] text-ink'>
+              Submit for the group
+            </div>
+            <p className='mb-2.5 text-[12.5px] leading-[1.6] text-muted2'>
+              Submitting records a new immutable version from the current
+              workspace files. Every submission is kept.
+            </p>
+            <p className='mb-3 text-[11.5px] leading-[1.5] text-kicker'>
+              PDF only · latest workspace file is submitted.
+            </p>
+            <button
+              onClick={() => latestFile && setConfirmFile(latestFile)}
+              disabled={!latestFile}
+              className='w-full rounded-[9px] bg-ink py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
+            >
+              Submit as Group Submission
+            </button>
+          </div>
 
-          <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-base'>Submission History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {submissions.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>
-                  No submissions yet.
-                </p>
-              ) : (
-                <div className='grid gap-2.5'>
-                  {submissions.map((submission, index) => (
-                    <div
-                      key={submission.id}
-                      className={`rounded-lg border p-3 ${
-                        index === 0
-                          ? 'border-neutral-200 bg-neutral-50'
-                          : 'border-neutral-100'
-                      }`}
-                    >
-                      <div className='flex items-center justify-between gap-2'>
-                        <span className='text-[13px] font-semibold'>
-                          Submission #{submission.submission_version}
+          <div className='rounded-[14px] border border-line-card bg-white p-5'>
+            <div className='mb-3 text-sm font-semibold tracking-[-0.05px] text-ink'>
+              Submission history
+            </div>
+            {submissions.length === 0 ? (
+              <p className='text-[12.5px] leading-[1.6] text-faint'>
+                No submissions yet. When a submission is confirmed it is recorded
+                here as an immutable version.
+              </p>
+            ) : (
+              <div className='flex flex-col gap-2.5'>
+                {submissions.map((submission, index) => (
+                  <div
+                    key={submission.id}
+                    className={`rounded-[12px] border border-line-soft p-3 ${
+                      index === 0 ? 'bg-warm-50' : 'bg-white'
+                    }`}
+                  >
+                    <div className='flex items-center justify-between gap-2'>
+                      <span className='text-[13px] font-semibold text-ink'>
+                        Submission #{submission.submission_version}
+                      </span>
+                      {index === 0 && (
+                        <span className='shrink-0 whitespace-nowrap rounded-[6px] bg-[#E9F1EA] px-2 py-px text-[11px] font-semibold text-[#2F7D4F]'>
+                          Latest
                         </span>
-                        {index === 0 && (
-                          <span className='shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700'>
-                            Latest
-                          </span>
-                        )}
-                      </div>
-                      <div className='mt-1 text-[11px] text-neutral-500'>
-                        {new Date(
-                          submission.submissionDateTime
-                        ).toLocaleDateString(undefined, {
+                      )}
+                    </div>
+                    <div className='mt-1 text-[11.5px] text-muted2'>
+                      {new Date(submission.submissionDateTime).toLocaleDateString(
+                        undefined,
+                        {
                           day: 'numeric',
                           month: 'short',
                           hour: '2-digit',
                           minute: '2-digit',
-                        })}{' '}
-                        · by {submission.submitted_by_name}
-                        {submission.filename ? ` · ${submission.filename}` : ''}
-                      </div>
+                        }
+                      )}{' '}
+                      · by {submission.submitted_by_name}
+                      {submission.filename ? ` · ${submission.filename}` : ''}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

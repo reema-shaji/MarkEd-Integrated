@@ -12,7 +12,6 @@ import { useRouter } from 'next/navigation'
 import { DefaultService, GroupSetSchema } from '@/src/api'
 import { useCourse } from '@/src/contexts/course-context'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -25,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Plus, Users2 } from 'lucide-react'
+import { Users2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 const BLANK = {
@@ -117,7 +116,7 @@ export default function GroupSetsPage() {
 
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-3xl p-6'>
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
         <Skeleton className='h-9 w-64' />
         <Skeleton className='mt-6 h-52' />
       </div>
@@ -125,28 +124,30 @@ export default function GroupSetsPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-3xl p-6'>
+    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
       <div className='mb-5 flex items-center justify-between gap-4'>
-        <h1 className='text-2xl font-bold'>Group Categories</h1>
-        <Button onClick={openCreate}>
-          <Plus className='mr-1 h-4 w-4' />
-          Create Group Category
-        </Button>
+        <h1 className='text-[23px] font-semibold tracking-[-0.5px] text-ink'>
+          Group Categories
+        </h1>
+        <button
+          onClick={openCreate}
+          className='rounded-[9px] bg-ink px-3.5 py-[7px] text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover'
+        >
+          + Create Group Category
+        </button>
       </div>
 
       {sets.length === 0 ? (
-        <Card>
-          <CardContent className='py-14 text-center'>
-            <Users2 className='mx-auto mb-3 h-10 w-10 text-neutral-400' />
-            <p className='text-sm text-neutral-500'>
-              No group categories yet. Create one to start forming teams.
-            </p>
-          </CardContent>
-        </Card>
+        <div className='rounded-[14px] border border-line-card bg-white py-14 text-center'>
+          <Users2 className='mx-auto mb-3 h-10 w-10 text-faint' />
+          <p className='text-sm text-muted2'>
+            No group categories yet. Create one to start forming teams.
+          </p>
+        </div>
       ) : (
-        <div className='overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm'>
+        <div className='overflow-x-auto rounded-[14px] border border-line-card bg-white'>
           <div className='min-w-[640px]'>
-            <div className='grid grid-cols-[1.6fr_1fr_1fr_1fr_1.4fr] gap-4 bg-neutral-50 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400'>
+            <div className='grid grid-cols-[1.6fr_1fr_1fr_1fr_1.4fr] border-b border-line-card px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.85px] text-kicker'>
               <span>Name</span>
               <span>Size</span>
               <span>Students</span>
@@ -156,42 +157,49 @@ export default function GroupSetsPage() {
             {sets.map((gs) => (
               <div
                 key={gs.id}
-                className='grid grid-cols-[1.6fr_1fr_1fr_1fr_1.4fr] items-center gap-4 border-t border-neutral-100 px-5 py-3.5 hover:bg-neutral-50'
+                className='grid grid-cols-[1.6fr_1fr_1fr_1fr_1.4fr] items-center border-t border-line-soft px-5 py-3.5 transition-colors hover:bg-warm-50'
               >
                 <div className='min-w-0'>
-                  <div className='truncate text-sm font-medium'>{gs.name}</div>
+                  <div className='truncate text-sm font-medium text-ink'>
+                    {gs.name}
+                  </div>
                   {gs.description && (
-                    <div className='truncate text-xs text-neutral-500'>
+                    <div className='truncate text-xs text-muted2'>
                       {gs.description}
                     </div>
                   )}
                 </div>
-                <span className='text-[13px] text-neutral-500'>
+                <span className='text-[13px] text-muted2'>
                   {gs.min_group_size}–{gs.max_group_size}
                 </span>
-                <span className='text-[13px] text-neutral-500'>
+                <span className='text-[13px] text-muted2'>
                   {gs.students_count} students · {gs.groups_count} groups
                 </span>
                 <span>
-                  <span className='inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600'>
+                  <span
+                    className={`inline-block whitespace-nowrap rounded-[6px] px-2 py-0.5 text-[11px] font-medium ${
+                      gs.allow_student_self_assignment
+                        ? 'bg-[#E9F1EA] text-[#2F7D4F]'
+                        : 'bg-[#F5F3EF] text-[#525252]'
+                    }`}
+                  >
                     {gs.allow_student_self_assignment ? 'Enabled' : 'Disabled'}
                   </span>
                 </span>
                 <span className='flex justify-end gap-1.5'>
-                  <Button
-                    size='sm'
+                  <button
                     onClick={() => router.push(`/groupsets/${gs.id}`)}
+                    className='rounded-[9px] bg-ink px-3 py-[5px] text-[12px] font-semibold text-white transition-colors hover:bg-ink-hover'
                   >
                     Manage Groups
-                  </Button>
-                  <Button
-                    size='sm'
-                    variant='outline'
+                  </button>
+                  <button
                     aria-label={`Edit ${gs.name}`}
                     onClick={() => openEdit(gs)}
+                    className='rounded-[9px] border border-line-input bg-white px-3 py-[6px] text-[12px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100'
                   >
                     Edit
-                  </Button>
+                  </button>
                 </span>
               </div>
             ))}
@@ -199,7 +207,7 @@ export default function GroupSetsPage() {
         </div>
       )}
 
-      <p className='mt-3 text-xs leading-relaxed text-neutral-400'>
+      <p className='mt-3 text-xs leading-relaxed text-faint'>
         {currentCourse
           ? `A group category defines the group structure for ${currentCourse.courseCode} assignments. `
           : 'A group category defines the group structure for one or more assignments. '}

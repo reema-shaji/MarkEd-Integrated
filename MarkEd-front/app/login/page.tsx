@@ -15,24 +15,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { DefaultService } from '@/src/api'
 import { initializeApi, setToken } from '@/src/api/config'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 
 initializeApi()
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
 
 // Demo quick-access is shown unless explicitly disabled. The password comes
 // from NEXT_PUBLIC_DEMO_PASSWORD (defaults to the local seed password); on a
@@ -45,7 +32,7 @@ const DEMO_ACCOUNTS = [
   {
     role: 'Academic',
     name: 'Dr Alan Whitfield',
-    subtitle: 'Course organiser · INF2-SEPP',
+    subtitle: 'Academic',
     initials: 'AW',
     userNumber: 'acad001',
   },
@@ -105,37 +92,46 @@ export default function LoginPage() {
   }
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-neutral-100 p-6'>
-      <Card className='w-full max-w-[400px]'>
-        <CardHeader className='items-center text-center'>
-          <Image
-            src={`${basePath}/logo.png`}
-            alt='MarkEd'
-            width={40}
-            height={40}
-            className='mb-2'
-          />
-          <CardTitle className='text-2xl font-bold text-neutral-900'>
-            Welcome to MarkEd
-          </CardTitle>
-          <CardDescription>Sign in to access your assignments</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={submit} className='grid gap-4'>
-            <div className='grid gap-1.5'>
-              <Label htmlFor='userNumber'>User Number</Label>
-              <Input
+    <div className='flex min-h-screen items-center justify-center bg-[#F5F3EF] p-8'>
+      <div className='w-full max-w-[396px]'>
+        <div className='mb-6 text-center'>
+          <div className='text-[26px] font-bold tracking-[-0.6px] text-[#131A26]'>
+            Mark<span className='text-[#B4832F]'>Ed</span>
+          </div>
+        </div>
+
+        <div className='rounded-[14px] border border-[#E3DFD5] bg-white p-[30px] shadow-[0_1px_2px_rgba(19,26,38,.05),0_20px_50px_-30px_rgba(19,26,38,.28)]'>
+          <div className='mb-[22px] text-[19px] font-semibold tracking-[-0.3px] text-[#131A26]'>
+            Sign in
+          </div>
+          <form onSubmit={submit} className='flex flex-col gap-4'>
+            <div>
+              <label
+                htmlFor='userNumber'
+                className='mb-1.5 block text-[12.5px] font-semibold tracking-[0.1px] text-[#2C3444]'
+              >
+                User number
+              </label>
+              <input
                 id='userNumber'
                 value={userNumber}
                 onChange={(e) => setUserNumber(e.target.value)}
                 placeholder='e.g. B293734'
                 autoComplete='username'
                 required
+                className='w-full rounded-[9px] border border-[#D3CDBF] bg-white px-[13px] py-[11px] text-[14px] text-[#131A26] outline-none focus:border-[#131A26]'
               />
             </div>
-            <div className='grid gap-1.5'>
-              <Label htmlFor='password'>Password</Label>
-              <Input
+            <div>
+              <div className='mb-1.5 flex items-baseline justify-between'>
+                <span className='text-[12.5px] font-semibold tracking-[0.1px] text-[#2C3444]'>
+                  Password
+                </span>
+                <a href='#' className='text-[12px] text-[#5A6070] hover:text-[#131A26]'>
+                  Forgot?
+                </a>
+              </div>
+              <input
                 id='password'
                 type='password'
                 value={password}
@@ -143,58 +139,55 @@ export default function LoginPage() {
                 placeholder='Enter your password'
                 autoComplete='current-password'
                 required
+                className='w-full rounded-[9px] border border-[#D3CDBF] bg-white px-[13px] py-[11px] text-[14px] text-[#131A26] outline-none focus:border-[#131A26]'
               />
             </div>
-            {error && <p className='text-sm text-red-600'>{error}</p>}
-            <Button type='submit' disabled={submitting || !userNumber || !password}>
-              {submitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-              Log In
-            </Button>
+            {error && <p className='text-[13px] text-[#A93226]'>{error}</p>}
+            <button
+              type='submit'
+              disabled={submitting || !userNumber || !password}
+              className='mt-0.5 flex w-full items-center justify-center gap-2 rounded-[9px] bg-[#131A26] py-3 text-[14px] font-semibold text-white hover:bg-[#243247] disabled:opacity-60'
+            >
+              {submitting && <Loader2 className='h-4 w-4 animate-spin' />}
+              Log in
+            </button>
           </form>
+        </div>
 
-          {SHOW_DEMO && (
-            <div className='mt-5'>
-              <div className='mb-3 flex items-center gap-2.5'>
-                <div className='h-px flex-1 bg-neutral-200' />
-                <span className='text-[11px] font-semibold uppercase tracking-wider text-neutral-400'>
-                  Prototype quick access
-                </span>
-                <div className='h-px flex-1 bg-neutral-200' />
-              </div>
-              <div className='grid gap-1.5'>
-                {DEMO_ACCOUNTS.map((account) => (
-                  <Button
-                    key={account.userNumber}
-                    type='button'
-                    variant='outline'
-                    disabled={submitting}
-                    onClick={() => doLogin(account.userNumber, DEMO_PASSWORD)}
-                    className='h-auto justify-start gap-2.5 px-3 py-2.5 text-left'
-                  >
-                    <span className='flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-neutral-200 text-[11px] font-semibold text-neutral-600'>
-                      {account.initials}
-                    </span>
-                    <span className='flex-1'>
-                      <span className='block text-[13px] font-semibold text-neutral-900'>
-                        {account.name}
-                      </span>
-                      <span className='block text-[11px] font-normal text-neutral-500'>
-                        {account.subtitle}
-                      </span>
-                    </span>
-                    <span className='rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600'>
-                      {account.role}
-                    </span>
-                  </Button>
-                ))}
-              </div>
-              <p className='mt-4 text-center text-xs text-neutral-400'>
-                MarkEd v4.0 · Unified
-              </p>
+        {SHOW_DEMO && (
+          <div className='mt-[18px] rounded-[12px] border border-dashed border-[#D3CDBF] bg-[#FAF8F4] px-4 py-3.5'>
+            <div className='mb-[3px] text-[10px] font-semibold uppercase tracking-[0.85px] text-[#A29A8C]'>
+              Prototype only — not part of the product
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className='mb-2.5 text-[11.5px] leading-[1.5] text-[#8A9099]'>
+              Sign in directly as a test persona to explore each role.
+            </div>
+            <div className='flex flex-col gap-1.5'>
+              {DEMO_ACCOUNTS.map((account) => (
+                <button
+                  key={account.userNumber}
+                  type='button'
+                  disabled={submitting}
+                  onClick={() => doLogin(account.userNumber, DEMO_PASSWORD)}
+                  className='flex items-center gap-2.5 rounded-[9px] border border-[#EBE7DD] bg-white px-2.5 py-2 text-left hover:border-[#C6BFB0] hover:bg-[#FAF8F4] disabled:opacity-60'
+                >
+                  <span className='flex h-[27px] w-[27px] flex-none items-center justify-center rounded-full bg-[#EFEBE2] text-[10.5px] font-bold text-[#5A6070]'>
+                    {account.initials}
+                  </span>
+                  <span className='min-w-0 flex-1'>
+                    <span className='block text-[12.5px] font-semibold text-[#131A26]'>
+                      {account.name}
+                    </span>
+                    <span className='block text-[11px] text-[#8A9099]'>
+                      {account.subtitle}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

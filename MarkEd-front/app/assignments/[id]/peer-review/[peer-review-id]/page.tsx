@@ -106,12 +106,12 @@ const PeerReviewPage = () => {
       </Dialog>
 
       {!peerReviewSubmission?.pre_signed_file_url ? (
-        <div className='flex h-screen flex-col items-center justify-center gap-2 duration-1000 animate-in fade-in'>
-          <Telescope className='h-10 w-10' />
-          <h1 className='text-2xl font-semibold'>No thing to see here</h1>
-          <p className='text-sm text-gray-500'>
+        <div className='flex h-screen flex-col items-center justify-center gap-2 bg-paper duration-1000 animate-in fade-in'>
+          <Telescope className='h-10 w-10 text-faint' />
+          <h1 className='text-2xl font-semibold text-ink'>No thing to see here</h1>
+          <p className='text-sm text-muted2'>
             No submission found. Please reach out to{' '}
-            <Link href='/support' className='underline'>
+            <Link href='/support' className='text-royal underline hover:text-royal-hover'>
               support
             </Link>
           </p>

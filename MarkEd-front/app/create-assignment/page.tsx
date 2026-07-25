@@ -3,8 +3,8 @@
 /**
  * Create Assignment — the unified create form (Design PRD §6.1).
  *
- * Matches the prototype "Create Assignment" screen: Basic Information, then an
- * Assignment Type section where Individual/Group is a choice and peer review
+ * Matches the prototype "Create Assignment" screen: Basic information, then a
+ * Submission type section where Individual/Group is a choice and peer review
  * and self-assessment are independent toggles (not separate types). Posts to
  * the unified /assignments/create/{course_id} endpoint.
  */
@@ -13,23 +13,23 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { DefaultService, GroupSetSchema } from '@/src/api'
 import { useCourse } from '@/src/contexts/course-context'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 type AType = 'INDIVIDUAL' | 'GROUP'
+
+const INPUT_CLS =
+  'w-full rounded-[9px] border border-[#DED8CA] bg-white px-[13px] py-2.5 text-sm text-[#131A26] outline-none focus:border-[#B8B0A0]'
+const FIELD_LABEL_CLS =
+  'mb-[5px] block text-[12.5px] font-semibold tracking-[.1px] text-[#2C3444]'
+
+function RequiredTag() {
+  return (
+    <span className='ml-1.5 rounded-[4px] bg-[#F8EFDC] px-1.5 py-px align-[1px] text-[10px] font-bold tracking-[.5px] text-[#8A5D14]'>
+      REQUIRED
+    </span>
+  )
+}
 
 export default function CreateAssignmentPage() {
   const router = useRouter()
@@ -117,194 +117,340 @@ export default function CreateAssignmentPage() {
   ]
 
   return (
-    <div className='mx-auto w-full max-w-2xl p-6'>
-      {/* Breadcrumb */}
-      <div className='mb-1.5 text-[13px] text-neutral-400'>
-        <button onClick={() => router.push('/assignments')} className='hover:text-neutral-600'>
-          Assignments
-        </button>{' '}
-        / New
-      </div>
-      <h1 className='mb-5 text-2xl font-bold'>Create Assignment</h1>
+    <div className='mx-auto flex min-h-full w-full flex-col'>
+      <div className='mx-auto w-full max-w-[880px] px-7 pt-8'>
+        {/* Breadcrumb */}
+        <div className='mb-[5px] text-[12.5px] text-[#8A9099]'>
+          <button
+            onClick={() => router.push('/assignments')}
+            className='text-[#8A9099] hover:text-[#5A6070]'
+          >
+            Assignments
+          </button>{' '}
+          <span className='text-[#C6BFB0]'>/</span> New
+        </div>
+        <div className='mb-[22px]'>
+          <div className='text-[23px] font-semibold tracking-[-0.5px] text-[#131A26]'>
+            Create Assignment
+          </div>
+          <div className='mt-[3px] text-[13.5px] text-[#5A6070]'>
+            Peer review and self-assessment are optional and can be changed later.
+          </div>
+        </div>
 
-      {/* Basic Information */}
-      <Card className='mb-4'>
-        <CardContent className='pt-6'>
-          <div className='mb-4 text-[15px] font-semibold'>Basic Information</div>
-          <div className='grid gap-3.5'>
-            <div className='grid gap-1'>
-              <Label className='text-[13px] font-medium text-neutral-700'>Title *</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder='e.g. CW1: Design Report' />
-            </div>
-            <div className='grid gap-1'>
-              <Label className='text-[13px] font-medium text-neutral-700'>Description</Label>
-              <Textarea
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder='What should students produce?'
-              />
-            </div>
-            <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-2'>
-              <div className='grid gap-1'>
-                <Label className='text-[13px] font-medium text-neutral-700'>Deadline *</Label>
-                <Input type='datetime-local' value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+        {/* Basic information */}
+        <section className='mb-3.5 overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+          <div className='border-b border-[#F0ECE4] px-6 pb-[15px] pt-[18px]'>
+            <span className='block text-[14px] font-semibold tracking-[-0.05px] text-[#131A26]'>
+              Basic information
+            </span>
+            <span className='mt-0.5 block text-[12.5px] leading-[1.5] text-[#5A6070]'>
+              What the assignment is called and when it is due.
+            </span>
+          </div>
+          <div className='px-6 pb-[22px] pt-5'>
+            <div className='flex flex-col gap-4'>
+              <div>
+                <div className={FIELD_LABEL_CLS}>
+                  Title
+                  <RequiredTag />
+                </div>
+                <input
+                  type='text'
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder='e.g. Design Report'
+                  className={`${INPUT_CLS} max-w-[460px]`}
+                />
               </div>
-              <div className='grid gap-1'>
-                <Label className='text-[13px] font-medium text-neutral-700'>Assignment website (optional)</Label>
-                <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder='https://…' />
+              <div>
+                <div className={FIELD_LABEL_CLS}>Description</div>
+                <textarea
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder='What should students produce?'
+                  className={`${INPUT_CLS} max-w-[620px] resize-y leading-[1.6]`}
+                />
+                <div className='mt-[5px] text-[11.5px] leading-[1.5] text-[#8A9099]'>
+                  Shown to students on the assignment page as the brief.
+                </div>
+              </div>
+              <div className='grid max-w-[620px] grid-cols-1 gap-4 sm:grid-cols-2'>
+                <div>
+                  <div className={FIELD_LABEL_CLS}>
+                    Submission deadline
+                    <RequiredTag />
+                  </div>
+                  <input
+                    type='datetime-local'
+                    value={deadline}
+                    onChange={(e) => setDeadline(e.target.value)}
+                    className={INPUT_CLS}
+                  />
+                </div>
+                <div>
+                  <div className={FIELD_LABEL_CLS}>
+                    Assignment website{' '}
+                    <span className='font-normal text-[#8A9099]'>optional</span>
+                  </div>
+                  <input
+                    type='text'
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    placeholder='https://'
+                    className={INPUT_CLS}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </section>
 
-      {/* Assignment Type + toggles */}
-      <Card className='mb-4'>
-        <CardContent className='pt-6'>
-          <div className='text-[15px] font-semibold'>Assignment Type</div>
-          <p className='mb-4 mt-1 text-[13px] text-neutral-500'>
-            Individual or Group. Peer review and self-assessment are configuration
-            toggles, not separate types.
-          </p>
-
-          <div className='grid grid-cols-2 gap-2.5'>
-            {typeOptions.map((opt) => {
-              const active = type === opt.value
-              return (
-                <button
-                  key={opt.value}
-                  type='button'
-                  onClick={() => setType(opt.value)}
-                  className={`rounded-lg border-[1.5px] p-3.5 text-left transition-colors ${
-                    active ? 'border-neutral-900 bg-neutral-50' : 'border-neutral-200 hover:border-neutral-300'
-                  }`}
-                >
-                  <span className='mb-[3px] block text-sm font-semibold'>{opt.title}</span>
-                  <span className='block text-xs leading-[1.45] text-neutral-500'>{opt.desc}</span>
-                </button>
-              )
-            })}
+        {/* Submission type */}
+        <section className='mb-3.5 overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+          <div className='border-b border-[#F0ECE4] px-6 pb-[15px] pt-[18px]'>
+            <span className='block text-[14px] font-semibold tracking-[-0.05px] text-[#131A26]'>
+              Submission type
+            </span>
+            <span className='mt-0.5 block text-[12.5px] leading-[1.5] text-[#5A6070]'>
+              Individual or group submission. This cannot be changed after creation.
+            </span>
           </div>
-
-          {/* Group fields */}
-          {type === 'GROUP' && (
-            <div className='mt-4 grid grid-cols-[2fr_1fr_1fr] gap-3 border-t border-neutral-100 pt-4'>
-              <div className='grid gap-1'>
-                <Label className='text-[13px] font-medium text-neutral-700'>Group Category</Label>
-                <Select
-                  value={groupSetId}
-                  onValueChange={(v) =>
-                    v === '__new__' ? router.push('/groupsets') : setGroupSetId(v)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select a group category' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {groupSets.map((gs) => (
-                      <SelectItem key={gs.id} value={String(gs.id)}>
-                        {gs.name} ({gs.groups_count} groups)
-                      </SelectItem>
-                    ))}
-                    <SelectItem value='__new__'>
-                      + Create new group category…
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className='grid gap-1'>
-                <Label className='text-[13px] font-medium text-neutral-700'>Min size</Label>
-                <Input type='number' min={1} value={minSize} onChange={(e) => setMinSize(Number(e.target.value))} />
-              </div>
-              <div className='grid gap-1'>
-                <Label className='text-[13px] font-medium text-neutral-700'>Max size</Label>
-                <Input type='number' min={1} value={maxSize} onChange={(e) => setMaxSize(Number(e.target.value))} />
-              </div>
+          <div className='px-6 pb-[22px] pt-5'>
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+              {typeOptions.map((opt) => {
+                const active = type === opt.value
+                return (
+                  <button
+                    key={opt.value}
+                    type='button'
+                    onClick={() => setType(opt.value)}
+                    className={`flex items-start gap-[11px] rounded-[11px] border-[1.5px] p-[15px] text-left transition-colors ${
+                      active
+                        ? 'border-[#131A26] bg-[#FAF8F4]'
+                        : 'border-[#DED8CA] bg-white hover:border-[#B8B0A0]'
+                    }`}
+                  >
+                    <span
+                      className={`mt-px block h-4 w-4 flex-none rounded-full bg-white ${
+                        active
+                          ? 'border-[5px] border-[#131A26]'
+                          : 'border-2 border-[#C6BFB0]'
+                      }`}
+                    />
+                    <span>
+                      <span className='mb-[3px] block text-[14px] font-semibold text-[#131A26]'>
+                        {opt.title}
+                      </span>
+                      <span className='block text-[12px] leading-[1.5] text-[#5A6070]'>
+                        {opt.desc}
+                      </span>
+                    </span>
+                  </button>
+                )
+              })}
             </div>
-          )}
 
-          {/* Peer review toggle */}
-          <div className='mt-4 border-t border-neutral-100 pt-4'>
-            <label className='flex cursor-pointer items-center gap-2.5'>
-              <input
-                type='checkbox'
-                checked={peerEnabled}
-                onChange={(e) => setPeerEnabled(e.target.checked)}
-                className='h-[15px] w-[15px] accent-neutral-900'
-              />
-              <span className='text-[13px] font-semibold text-neutral-700'>
-                Enable Peer Review
-                <span className='mt-px block text-xs font-normal text-neutral-400'>
-                  Students review each other&apos;s submissions anonymously. Works with
-                  both Individual and Group assignments.
+            {/* Group settings */}
+            {type === 'GROUP' && (
+              <div className='mt-[18px] rounded-[12px] bg-[#FAF8F4] p-4'>
+                <div className='mb-3 text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+                  Group settings
+                </div>
+                <div className='grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_1fr]'>
+                  <div>
+                    <div className={FIELD_LABEL_CLS}>Group category</div>
+                    <div className='flex gap-2'>
+                      <select
+                        value={groupSetId}
+                        onChange={(e) => setGroupSetId(e.target.value)}
+                        className={`${INPUT_CLS} min-w-0 flex-1`}
+                      >
+                        {groupSets.map((gs) => (
+                          <option key={gs.id} value={String(gs.id)}>
+                            {gs.name} ({gs.groups_count} groups)
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type='button'
+                        onClick={() => router.push('/groupsets')}
+                        className='whitespace-nowrap rounded-[9px] border border-[#DED8CA] bg-white px-[13px] py-2.5 text-[12.5px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+                      >
+                        New
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <div className={FIELD_LABEL_CLS}>Min size</div>
+                    <input
+                      type='number'
+                      min={1}
+                      value={minSize}
+                      onChange={(e) => setMinSize(Number(e.target.value))}
+                      className={INPUT_CLS}
+                    />
+                  </div>
+                  <div>
+                    <div className={FIELD_LABEL_CLS}>Max size</div>
+                    <input
+                      type='number'
+                      min={1}
+                      value={maxSize}
+                      onChange={(e) => setMaxSize(Number(e.target.value))}
+                      className={INPUT_CLS}
+                    />
+                  </div>
+                </div>
+                <div className='mt-[5px] text-[11.5px] leading-[1.5] text-[#8A9099]'>
+                  The group leader submits on behalf of the group from the shared
+                  workspace.
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Assessment options */}
+        <section className='mb-3.5 overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+          <div className='border-b border-[#F0ECE4] px-6 pb-[15px] pt-[18px]'>
+            <span className='block text-[14px] font-semibold tracking-[-0.05px] text-[#131A26]'>
+              Assessment options
+            </span>
+            <span className='mt-0.5 block text-[12.5px] leading-[1.5] text-[#5A6070]'>
+              Both are optional and can be turned on later.
+            </span>
+          </div>
+          <div className='px-6 pb-5 pt-1.5'>
+            {/* Peer review toggle */}
+            <div className='flex items-center gap-3.5 border-b border-[#F0ECE4] py-4'>
+              <button
+                type='button'
+                onClick={() => setPeerEnabled((v) => !v)}
+                aria-pressed={peerEnabled}
+                className={`flex h-6 w-[42px] flex-none items-center rounded-[99px] p-0.5 ${
+                  peerEnabled ? 'justify-end bg-[#131A26]' : 'justify-start bg-[#D8D2C6]'
+                }`}
+              >
+                <span className='block h-5 w-5 rounded-full bg-white shadow-[0_1px_2px_rgba(19,26,38,.2)]' />
+              </button>
+              <span className='min-w-0 flex-1'>
+                <span className='block text-[13.5px] font-semibold text-[#2C3444]'>
+                  Peer review
+                </span>
+                <span className='mt-0.5 block text-[12px] leading-[1.5] text-[#5A6070]'>
+                  Students review each other anonymously. On group assignments,
+                  reviewers come only from other groups.
                 </span>
               </span>
-            </label>
+            </div>
+
             {peerEnabled && (
-              <>
-                <div className='mt-3.5 grid grid-cols-2 gap-3'>
-                  <div className='grid gap-1'>
-                    <Label className='text-[13px] font-medium text-neutral-700'>Reviews per student</Label>
-                    <Input
+              <div className='my-3.5 rounded-[12px] bg-[#FAF8F4] p-4'>
+                <div className='mb-3 text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+                  Review settings
+                </div>
+                <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+                  <div>
+                    <div className={FIELD_LABEL_CLS}>Reviews per student</div>
+                    <input
                       type='number'
                       min={1}
                       value={reviewsPerStudent}
-                      onChange={(e) => setReviewsPerStudent(Number(e.target.value))}
+                      onChange={(e) =>
+                        setReviewsPerStudent(Number(e.target.value))
+                      }
+                      className={INPUT_CLS}
+                    />
+                    <div className='mt-[5px] text-[11.5px] leading-[1.5] text-[#8A9099]'>
+                      How many submissions each student must review.
+                    </div>
+                  </div>
+                  <div>
+                    <div className={FIELD_LABEL_CLS}>Review deadline</div>
+                    <input
+                      type='datetime-local'
+                      value={reviewDeadline}
+                      onChange={(e) => setReviewDeadline(e.target.value)}
+                      className={INPUT_CLS}
+                    />
+                    <div className='mt-[5px] text-[11.5px] leading-[1.5] text-[#8A9099]'>
+                      Must be after the submission deadline.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Self-assessment toggle */}
+            <div className='flex items-center gap-3.5 pb-1 pt-4'>
+              <button
+                type='button'
+                onClick={() => setSaEnabled((v) => !v)}
+                aria-pressed={saEnabled}
+                className={`flex h-6 w-[42px] flex-none items-center rounded-[99px] p-0.5 ${
+                  saEnabled ? 'justify-end bg-[#131A26]' : 'justify-start bg-[#D8D2C6]'
+                }`}
+              >
+                <span className='block h-5 w-5 rounded-full bg-white shadow-[0_1px_2px_rgba(19,26,38,.2)]' />
+              </button>
+              <span className='min-w-0 flex-1'>
+                <span className='block text-[13.5px] font-semibold text-[#2C3444]'>
+                  Self-assessment
+                </span>
+                <span className='mt-0.5 block text-[12px] leading-[1.5] text-[#5A6070]'>
+                  Checklist, rubric self-grading and guided reflection, completed
+                  after submitting.
+                </span>
+              </span>
+            </div>
+
+            {saEnabled && (
+              <div className='my-3.5 rounded-[12px] bg-[#FAF8F4] p-4'>
+                <div className='mb-3 text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+                  Self-assessment settings
+                </div>
+                <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+                  <div>
+                    <div className={FIELD_LABEL_CLS}>Self-assessment deadline</div>
+                    <input
+                      type='datetime-local'
+                      value={saDeadline}
+                      onChange={(e) => setSaDeadline(e.target.value)}
+                      className={INPUT_CLS}
                     />
                   </div>
-                  <div className='grid gap-1'>
-                    <Label className='text-[13px] font-medium text-neutral-700'>Review deadline</Label>
-                    <Input type='datetime-local' value={reviewDeadline} onChange={(e) => setReviewDeadline(e.target.value)} />
-                  </div>
                 </div>
-                <div className='mt-3 rounded-md border border-neutral-100 bg-neutral-50 px-3 py-2.5 text-xs leading-normal text-neutral-500'>
-                  Reviewers are anonymised. For <b className='font-semibold'>Group</b>{' '}
-                  assignments with peer review, reviewers are allocated exclusively
-                  from students in other groups.
-                </div>
-              </>
+              </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </section>
+      </div>
 
-      {/* Self-Assessment */}
-      <Card className='mb-5'>
-        <CardContent className='pt-6'>
-          <div className='flex items-center justify-between gap-4'>
-            <span>
-              <span className='block text-[15px] font-semibold'>Self-Assessment</span>
-              <span className='mt-0.5 block text-[13px] text-neutral-500'>
-                Checklist, rubric self-grading and guided reflection
-              </span>
-            </span>
-            <Switch
-              checked={saEnabled}
-              onCheckedChange={setSaEnabled}
-              aria-label='Enable Self-Assessment'
-            />
-          </div>
-          {saEnabled && (
-            <div className='mt-4 grid grid-cols-2 gap-3 border-t border-neutral-100 pt-4'>
-              <div className='grid gap-1'>
-                <Label className='text-[13px] font-medium text-neutral-700'>Self-Assessment Deadline</Label>
-                <Input type='datetime-local' value={saDeadline} onChange={(e) => setSaDeadline(e.target.value)} />
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Footer */}
-      <div className='flex justify-end gap-2 pb-8'>
-        <Button variant='outline' onClick={() => router.push('/assignments')}>
-          Cancel
-        </Button>
-        <Button onClick={create} disabled={submitting}>
-          {submitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-          Create Assignment
-        </Button>
+      {/* Sticky footer */}
+      <div className='sticky bottom-0 z-20 mt-auto border-t border-[#EAE5DB] bg-[#F5F3EF]'>
+        <div className='mx-auto flex w-full max-w-[880px] items-center gap-3 px-7 py-3.5'>
+          <span className='flex-1 text-[12.5px] text-[#8A9099]'>
+            Fields marked required must be completed.
+          </span>
+          <button
+            type='button'
+            onClick={() => router.push('/assignments')}
+            className='rounded-[9px] border border-[#DED8CA] bg-white px-[17px] py-[9px] text-[13px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+          >
+            Cancel
+          </button>
+          <button
+            type='button'
+            onClick={create}
+            disabled={submitting}
+            className='flex items-center rounded-[9px] bg-[#131A26] px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-[#243247] disabled:opacity-60'
+          >
+            {submitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+            Create assignment
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -22,10 +22,7 @@ import {
   GroupSubmissionSchema,
   PersonalAdjustmentSchema,
 } from '@/src/api'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Check, Users2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -110,7 +107,7 @@ export default function GroupMarkingPage() {
 
   if (isLoading) {
     return (
-      <div className='mx-auto w-full max-w-4xl p-6'>
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
         <Skeleton className='h-9 w-64' />
         <Skeleton className='mt-6 h-40' />
       </div>
@@ -120,22 +117,22 @@ export default function GroupMarkingPage() {
   // --- Group submission picker ---
   if (!selected) {
     return (
-      <div className='mx-auto w-full max-w-4xl p-6'>
-        <h1 className='text-2xl font-bold'>Group Marking</h1>
-        <p className='mt-1 text-sm text-neutral-500'>
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+        <h1 className='text-[23px] font-semibold tracking-[-0.5px] text-ink'>
+          Group Marking
+        </h1>
+        <p className='mt-1 text-sm text-muted2'>
           Pick a group to review its mark and set each member&apos;s
           contribution adjustment.
         </p>
-        <div className='mt-6 grid gap-3'>
+        <div className='mt-5 flex flex-col gap-3'>
           {submissions.length === 0 ? (
-            <Card>
-              <CardContent className='py-12 text-center text-sm text-neutral-500'>
-                No group submissions yet.
-              </CardContent>
-            </Card>
+            <div className='rounded-[14px] border border-line-card bg-white py-12 text-center text-sm text-muted2'>
+              No group submissions yet.
+            </div>
           ) : (
             submissions.map((submission) => (
-              <Card
+              <div
                 key={submission.id}
                 role='button'
                 tabIndex={0}
@@ -143,27 +140,24 @@ export default function GroupMarkingPage() {
                 onKeyDown={(e) =>
                   (e.key === 'Enter' || e.key === ' ') && openSubmission(submission)
                 }
-                className='cursor-pointer transition-colors hover:border-neutral-400'
+                className='flex cursor-pointer items-center justify-between gap-3 rounded-[14px] border border-line-card bg-white px-5 py-4 transition-colors hover:bg-warm-50'
               >
-                <CardContent className='flex items-center justify-between py-4'>
-                  <div className='flex items-center gap-2.5'>
-                    <Users2 className='h-4 w-4 text-neutral-400' />
-                    <span className='font-semibold'>{submission.group_name}</span>
-                    <Badge variant='outline' className='text-[10px]'>
-                      v{submission.submission_version}
-                    </Badge>
-                    <Badge
-                      variant='secondary'
-                      className='bg-violet-100 text-[10px] font-medium text-violet-800'
-                    >
-                      Group Submission
-                    </Badge>
-                  </div>
-                  <span className='text-xs text-neutral-500'>
-                    Submitted by {submission.submitted_by_name}
+                <div className='flex items-center gap-2.5'>
+                  <Users2 className='h-4 w-4 text-faint' />
+                  <span className='font-semibold text-ink'>
+                    {submission.group_name}
                   </span>
-                </CardContent>
-              </Card>
+                  <span className='whitespace-nowrap rounded-[6px] bg-warm-100 px-2 py-px font-mono text-[11px] text-muted2'>
+                    v{submission.submission_version}
+                  </span>
+                  <span className='whitespace-nowrap rounded-[6px] bg-[#EDEAF4] px-2.5 py-0.5 text-[11px] font-medium text-[#4C3A82]'>
+                    Group Submission
+                  </span>
+                </div>
+                <span className='text-xs text-muted2'>
+                  Submitted by {submission.submitted_by_name}
+                </span>
+              </div>
             ))
           )}
         </div>
@@ -171,7 +165,7 @@ export default function GroupMarkingPage() {
     )
   }
 
-  // --- Contribution adjustment table for the chosen group ---
+  // --- Group marking + contribution adjustment for the chosen group ---
   const base = rows[0]?.group_score ?? 0
   const total = rows[0]?.group_total ?? 0
 
@@ -180,147 +174,196 @@ export default function GroupMarkingPage() {
     setRows([])
   }
 
+  const scrollToAdjust = () => {
+    document
+      .getElementById('contribution-adjustment')
+      ?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   return (
-    <div className='mx-auto w-full max-w-[900px] p-6 pb-24'>
-      {/* Breadcrumb, per the prototype header. */}
-      <div className='mb-1.5 text-[13px] text-neutral-400'>
+    <div className='w-full px-7 pb-24 pt-8'>
+      {/* Header bar, per the "Group Marking" prototype. */}
+      <div className='mb-4 flex flex-wrap items-center gap-3'>
         <button
-          type='button'
           onClick={goBack}
-          className='text-neutral-400 hover:text-neutral-600'
+          className='rounded-[9px] border border-line-input bg-white px-3 py-1.5 text-[12px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100'
         >
-          Submissions
-        </button>{' '}
-        /{' '}
+          ← Back
+        </button>
+        <span className='text-[15px] font-semibold tracking-[-0.1px] text-ink'>
+          {selected.group_name}
+        </span>
+        <span className='text-[13px] text-muted2'>
+          v{selected.submission_version} · {rows.length} member
+          {rows.length === 1 ? '' : 's'}
+        </span>
+        <span className='whitespace-nowrap rounded-[6px] bg-[#EDEAF4] px-2.5 py-0.5 text-[11px] font-medium text-[#4C3A82]'>
+          Group Submission
+        </span>
+        <div className='flex-1' />
         <button
-          type='button'
-          onClick={goBack}
-          className='text-neutral-400 hover:text-neutral-600'
+          onClick={scrollToAdjust}
+          className='rounded-[9px] border border-line-input bg-white px-3.5 py-1.5 text-[12px] font-medium text-[#2C3444] transition-colors hover:bg-warm-100'
         >
-          Group Marking
-        </button>{' '}
-        / Adjustment
+          Personal Contribution Adjustment →
+        </button>
       </div>
 
-      <h1 className='text-2xl font-bold'>Group Marking</h1>
-      <p className='mt-1.5 text-sm text-neutral-500'>
-        Score the group against the rubric, then adjust individual contributions.{' '}
-        <b>Final = Base + Adjustment (points)</b> — the breakdown is shown to
-        students.
-      </p>
-
-      {/* Summary info bar. */}
-      <div className='mt-5 flex flex-wrap gap-x-6 gap-y-1 rounded-lg border border-neutral-200 bg-white px-5 py-4 text-sm shadow-sm'>
-        <span className='text-neutral-500'>
-          Group: <b className='text-neutral-900'>{selected.group_name}</b>
-        </span>
-        <span className='text-neutral-500'>
-          Version:{' '}
-          <b className='text-neutral-900'>v{selected.submission_version}</b>
-        </span>
-        <span className='text-neutral-500'>
-          Group Score:{' '}
-          <b className='text-base text-neutral-900'>
-            {base} / {total}
-          </b>
-        </span>
-      </div>
-
-      {/* Criteria marking (rubric scoring) */}
-      <CriteriaMarkingSection
-        groupSubmissionId={selected.id}
-        onScored={() => openSubmission(selected)}
-      />
-
-      <h2 className='mt-8 text-lg font-semibold'>Personal Contribution Adjustment</h2>
-      <p className='mb-1 mt-0.5 text-sm text-neutral-500'>
-        Adjust each member&apos;s score relative to the group base above.
-      </p>
-
-      <Card className='mt-4 overflow-hidden'>
-        {loadingRows ? (
-          <CardContent className='py-6'>
-            <Skeleton className='h-40' />
-          </CardContent>
-        ) : (
-          <div className='overflow-x-auto'>
-            <div className='min-w-[720px]'>
-              {/* Column header. */}
-              <div className='grid grid-cols-[1.4fr_.8fr_.8fr_.9fr_.8fr_1.8fr] gap-2 border-b border-neutral-100 bg-neutral-50 px-5 py-2.5 text-[11px] font-semibold tracking-wide text-neutral-400'>
-                <span>STUDENT</span>
-                <span>ID</span>
-                <span>SCORE</span>
-                <span>ADJ ±</span>
-                <span>FINAL</span>
-                <span>REASON</span>
-              </div>
-              {rows.map((row) => {
-                const final = row.group_score + (row.adjustment_score || 0)
-                return (
-                  <div
-                    key={row.student_id}
-                    className='grid grid-cols-[1.4fr_.8fr_.8fr_.9fr_.8fr_1.8fr] items-center gap-2 border-b border-neutral-100 px-5 py-3 last:border-b-0'
-                  >
-                    <span className='text-[13px] font-semibold'>
-                      {row.userName}
-                    </span>
-                    <span className='font-mono text-xs text-neutral-500'>
-                      {row.userNumber}
-                    </span>
-                    <span className='text-[13px] tabular-nums text-neutral-500'>
-                      {row.group_score}
-                    </span>
-                    <Input
-                      type='number'
-                      step='1'
-                      min='-20'
-                      max='20'
-                      value={row.adjustment_score}
-                      onChange={(e) =>
-                        patchRow(row.student_id, {
-                          adjustment_score: Number(e.target.value),
-                        })
-                      }
-                      className='h-8 w-[70px] text-center'
-                      aria-label={`Adjustment for ${row.userName}`}
-                    />
-                    <span className='justify-self-start rounded-md bg-neutral-900 px-2.5 py-1 text-sm font-bold tabular-nums text-white'>
-                      {final}
-                    </span>
-                    <Input
-                      value={row.adjustment_reason ?? ''}
-                      onChange={(e) =>
-                        patchRow(row.student_id, {
-                          adjustment_reason: e.target.value,
-                        })
-                      }
-                      placeholder='Optional reason…'
-                      className='h-8'
-                      aria-label={`Reason for ${row.userName}`}
-                    />
-                  </div>
-                )
-              })}
-            </div>
+      {/* Two columns: submission preview + rubric marking. */}
+      <div className='grid items-start gap-4 lg:grid-cols-2'>
+        <div className='rounded-[14px] border border-line-card bg-white p-5'>
+          <div className='mb-3 text-sm font-semibold text-muted2'>
+            Submission Preview
+            {selected.filename ? ` — ${selected.filename}` : ''}
           </div>
-        )}
-      </Card>
+          <div className='rounded-[10px] bg-warm-50 p-6'>
+            <div className='mb-2 h-3.5 w-[70%] rounded-[2px] bg-[#d4d4d4]' />
+            <div className='mb-5 h-2 w-[45%] rounded-[2px] bg-[#e5e5e5]' />
+            <div className='mb-[7px] h-2 w-[95%] rounded-[2px] bg-[#e5e5e5]' />
+            <div className='mb-[7px] h-2 w-[90%] rounded-[2px] bg-[#e5e5e5]' />
+            <div className='mb-[7px] h-2 w-[96%] rounded-[2px] bg-[#e5e5e5]' />
+            <div className='mb-[18px] h-2 w-[60%] rounded-[2px] bg-[#e5e5e5]' />
+            <div className='mb-2 h-3 w-[35%] rounded-[2px] bg-[#d4d4d4]' />
+            <div className='mb-[7px] h-2 w-[94%] rounded-[2px] bg-[#e5e5e5]' />
+            <div className='mb-[7px] h-2 w-[88%] rounded-[2px] bg-[#e5e5e5]' />
+            <div className='h-2 w-[40%] rounded-[2px] bg-[#e5e5e5]' />
+          </div>
+          <div className='mt-3 text-center text-[12px] text-faint'>
+            {selected.filename ?? 'Group submission'}
+          </div>
+        </div>
 
-      <div className='fixed inset-x-0 bottom-0 z-40 border-t bg-neutral-100/95 backdrop-blur md:pl-64'>
-        <div className='mx-auto flex max-w-[900px] items-center justify-end gap-3 px-6 py-3'>
-          {dirty ? (
-            <span className='text-xs font-medium text-amber-600'>Unsaved changes</span>
+        {/* Criteria marking (rubric scoring) */}
+        <CriteriaMarkingSection
+          groupSubmissionId={selected.id}
+          onScored={() => openSubmission(selected)}
+        />
+      </div>
+
+      {/* --- Personal contribution adjustment --- */}
+      <div id='contribution-adjustment' className='mt-8 scroll-mt-24'>
+        <h2 className='text-[21px] font-semibold tracking-[-0.45px] text-ink'>
+          Personal Contribution Adjustment
+        </h2>
+        <p className='mt-1.5 text-sm text-muted2'>
+          Adjust individual scores based on each student&apos;s contribution.{' '}
+          <b className='text-ink'>Final = Base + Adjustment (points)</b> — the
+          breakdown is shown to students.
+        </p>
+
+        {/* Summary info bar. */}
+        <div className='mt-5 flex flex-wrap gap-x-6 gap-y-1 rounded-[14px] border border-line-card bg-white px-5 py-4 text-sm'>
+          <span className='text-muted2'>
+            Group: <b className='text-ink'>{selected.group_name}</b>
+          </span>
+          <span className='text-muted2'>
+            Version:{' '}
+            <b className='text-ink'>v{selected.submission_version}</b>
+          </span>
+          <span className='text-muted2'>
+            Group Score:{' '}
+            <b className='text-base text-ink'>
+              {base} / {total}
+            </b>
+          </span>
+        </div>
+
+        <div className='mt-4 overflow-hidden rounded-[14px] border border-line-card bg-white'>
+          {loadingRows ? (
+            <div className='p-5'>
+              <Skeleton className='h-40' />
+            </div>
           ) : (
-            <span className='inline-flex items-center gap-1 text-xs font-medium text-green-600'>
+            <div className='overflow-x-auto'>
+              <div className='min-w-[720px]'>
+                {/* Column header. */}
+                <div className='grid grid-cols-[1.4fr_.8fr_.8fr_.9fr_.8fr_1.8fr] gap-2 border-b border-line-card bg-white px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.85px] text-kicker'>
+                  <span>Student</span>
+                  <span>ID</span>
+                  <span>Score</span>
+                  <span>Adj ±</span>
+                  <span>Final</span>
+                  <span>Reason</span>
+                </div>
+                {rows.map((row) => {
+                  const final = row.group_score + (row.adjustment_score || 0)
+                  return (
+                    <div
+                      key={row.student_id}
+                      className='grid grid-cols-[1.4fr_.8fr_.8fr_.9fr_.8fr_1.8fr] items-center gap-2 border-b border-line-soft px-5 py-3 last:border-b-0'
+                    >
+                      <span className='text-[13px] font-semibold text-ink'>
+                        {row.userName}
+                      </span>
+                      <span className='font-mono text-xs text-muted2'>
+                        {row.userNumber}
+                      </span>
+                      <span className='text-[13px] tabular-nums text-muted2'>
+                        {row.group_score}
+                      </span>
+                      <Input
+                        type='number'
+                        step='1'
+                        min='-20'
+                        max='20'
+                        value={row.adjustment_score}
+                        onChange={(e) =>
+                          patchRow(row.student_id, {
+                            adjustment_score: Number(e.target.value),
+                          })
+                        }
+                        className='h-8 w-[70px] rounded-[9px] border-line-input text-center'
+                        aria-label={`Adjustment for ${row.userName}`}
+                      />
+                      <span className='justify-self-start rounded-[9px] bg-ink px-2.5 py-1 text-[15px] font-semibold tabular-nums text-white'>
+                        {final}
+                      </span>
+                      <Input
+                        value={row.adjustment_reason ?? ''}
+                        onChange={(e) =>
+                          patchRow(row.student_id, {
+                            adjustment_reason: e.target.value,
+                          })
+                        }
+                        placeholder='Optional reason…'
+                        className='h-8 rounded-[9px] border-line text-[12px] text-[#454C5C]'
+                        aria-label={`Reason for ${row.userName}`}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sticky save bar — keeps draft/final distinction. */}
+      <div className='fixed inset-x-0 bottom-0 z-40 border-t border-line-card bg-paper/95 backdrop-blur md:pl-64'>
+        <div className='mx-auto flex max-w-[1100px] items-center justify-end gap-3 px-7 py-3'>
+          {dirty ? (
+            <span className='text-xs font-medium text-[#8A5D14]'>
+              Unsaved changes
+            </span>
+          ) : (
+            <span className='inline-flex items-center gap-1 text-xs font-medium text-[#2F7D4F]'>
               <Check className='h-3.5 w-3.5' /> Saved
             </span>
           )}
-          <Button variant='outline' onClick={() => save('draft')} disabled={saving}>
+          <button
+            onClick={() => save('draft')}
+            disabled={saving}
+            className='rounded-[9px] border border-line-input bg-white px-4 py-2 text-[13px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100 disabled:opacity-50'
+          >
             Save draft
-          </Button>
-          <Button onClick={() => save('final')} disabled={saving}>
+          </button>
+          <button
+            onClick={() => save('final')}
+            disabled={saving}
+            className='rounded-[9px] bg-ink px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
+          >
             Save &amp; finalise
-          </Button>
+          </button>
         </div>
       </div>
     </div>
@@ -391,41 +434,35 @@ function CriteriaMarkingSection({
 
   if (!data) {
     return (
-      <Card className='mt-4'>
-        <CardContent className='py-6'>
-          <Skeleton className='h-40' />
-        </CardContent>
-      </Card>
+      <div className='rounded-[14px] border border-line-card bg-white p-5'>
+        <Skeleton className='h-40' />
+      </div>
     )
   }
 
   if (data.criteria.length === 0) {
     return (
-      <Card className='mt-4'>
-        <CardContent className='py-8 text-center text-sm text-neutral-400'>
-          This assignment has no rubric criteria to mark against.
-        </CardContent>
-      </Card>
+      <div className='rounded-[14px] border border-line-card bg-white py-8 text-center text-sm text-faint'>
+        This assignment has no rubric criteria to mark against.
+      </div>
     )
   }
 
   return (
-    <Card className='mt-4'>
-      <CardHeader className='flex-row items-center justify-between pb-2'>
-        <CardTitle className='text-base font-semibold'>Criteria Marking</CardTitle>
-        <span className='text-sm text-neutral-500'>
-          Group base score{' '}
-          <b className='text-neutral-900'>
-            {liveScore} / {data.group_total}
-          </b>
-        </span>
-      </CardHeader>
-      <CardContent className='space-y-5'>
+    <div className='rounded-[14px] border border-line-card bg-white p-5'>
+      <div className='mb-1 text-sm font-semibold tracking-[-0.05px] text-ink'>
+        Marking Criteria
+      </div>
+      <div className='mb-3.5 text-[12px] text-muted2'>
+        Scores apply to the whole group. Set per-member adjustments afterwards.
+      </div>
+
+      <div className='flex flex-col gap-3'>
         {data.criteria.map((c) => (
           <div key={c.criteria_id}>
-            <div className='mb-2 flex items-center justify-between'>
-              <span className='text-sm font-medium'>{c.name}</span>
-              <span className='text-xs text-neutral-400'>{c.marks} marks</span>
+            <div className='mb-1.5 flex items-center justify-between'>
+              <span className='text-[13px] font-semibold text-ink'>{c.name}</span>
+              <span className='text-xs text-faint'>{c.marks} marks</span>
             </div>
             <div className='grid gap-2 sm:grid-cols-2'>
               {c.levels.map((level) => {
@@ -437,20 +474,20 @@ function CriteriaMarkingSection({
                     onClick={() =>
                       setPicks((p) => ({ ...p, [c.criteria_id]: level.id }))
                     }
-                    className={`rounded-md border p-3 text-left text-sm transition-colors ${
+                    className={`rounded-[9px] border p-3 text-left text-sm transition-colors ${
                       on
-                        ? 'border-neutral-800 bg-neutral-50'
-                        : 'border-neutral-200 hover:border-neutral-300'
+                        ? 'border-ink bg-warm-50'
+                        : 'border-line-input hover:border-line'
                     }`}
                   >
                     <div className='flex items-center justify-between gap-2'>
-                      <span className='font-medium'>{level.name}</span>
-                      <span className='shrink-0 text-xs text-neutral-500'>
+                      <span className='font-medium text-ink'>{level.name}</span>
+                      <span className='shrink-0 text-xs text-muted2'>
                         {level.marks} pts
                       </span>
                     </div>
                     {level.description && (
-                      <p className='mt-1 text-xs text-neutral-500'>{level.description}</p>
+                      <p className='mt-1 text-xs text-muted2'>{level.description}</p>
                     )}
                   </button>
                 )
@@ -458,13 +495,28 @@ function CriteriaMarkingSection({
             </div>
           </div>
         ))}
-        <div className='flex items-center justify-end gap-3 border-t border-neutral-100 pt-4'>
-          <Button onClick={save} disabled={saving}>
+
+        {/* Group base score box. */}
+        <div className='flex items-center justify-between rounded-[10px] bg-warm-50 px-4 py-3'>
+          <span className='text-[13px] font-semibold text-ink'>
+            Group Base Score
+          </span>
+          <span className='text-[20px] font-bold tabular-nums text-ink'>
+            {liveScore} / {data.group_total}
+          </span>
+        </div>
+
+        <div className='flex gap-2'>
+          <button
+            onClick={save}
+            disabled={saving}
+            className='inline-flex items-center rounded-[9px] bg-ink px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
+          >
             <Check className='mr-1.5 h-4 w-4' />
             Save Marks
-          </Button>
+          </button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

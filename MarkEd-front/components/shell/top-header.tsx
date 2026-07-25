@@ -1,51 +1,52 @@
 'use client'
 
 /**
- * Top header bar (updated prototype shell). Holds what used to live in the
- * sidebar: the MarkEd logo, the course switcher, notifications, support, and
- * the user menu with logout. The sidebar is now assignment-scoped only.
+ * Top header bar (updated prototype shell). Holds the MarkEd wordmark, the
+ * course switcher (accent chip + code + name), notifications, support, and the
+ * user menu with logout. Assignment/course navigation lives in the dark hero
+ * below (see app-hero.tsx).
  */
 
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
-import { Bell, LifeBuoy, LogOut } from 'lucide-react'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { usePathname, useRouter } from 'next/navigation'
+import { Bell, Check, ChevronDown, HelpCircle, LogOut } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
 import { useUser } from '@/src/contexts/user-context'
 import { useCourse } from '@/src/contexts/course-context'
-import { DefaultService } from '@/src/api'
+import { DefaultService, CourseSchema } from '@/src/api'
 import { clearToken } from '@/src/api/config'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
 
-function initials(name?: string) {
-  if (!name) return '?'
-  return name
-    .split(' ')
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
+// Warm accent chips for courses, keyed by a stable index.
+const ACCENTS = ['#E9B872', '#9FC6B4', '#C6A2C4', '#8FB3D9', '#E0A98F']
+
+function initials(text?: string) {
+  if (!text) return '?'
+  const words = text.replace(/[^a-zA-Z ]/g, ' ').trim().split(/\s+/)
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
+  return text.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase() || '?'
+}
+
+function roleName(
+  user?: { isAcademic?: boolean; isMarker?: boolean; isTA?: boolean } | null
+) {
+  if (user?.isAcademic) return 'Academic'
+  if (user?.isMarker) return 'Marker'
+  if (user?.isTA) return 'TA'
+  return 'Student'
 }
 
 export function TopHeader() {
   const router = useRouter()
+  const pathname = usePathname() || ''
   const { user } = useUser()
-  const { courses, currentCourseId, setCurrentCourseId } = useCourse()
+  const { courses, currentCourse, currentCourseId, setCurrentCourseId } = useCourse()
 
   const logout = async () => {
     try {
@@ -57,39 +58,85 @@ export function TopHeader() {
     window.location.href = `${basePath}/login`
   }
 
+  const accentFor = (c: CourseSchema) =>
+    ACCENTS[Math.max(0, courses.findIndex((x) => x.id === c.id)) % ACCENTS.length]
+
+  const isNotifs = pathname.startsWith('/notifications')
+  const isSupport = pathname.startsWith('/support')
+
   return (
-    <header className='relative z-50 flex h-14 flex-none items-center gap-4 border-b border-neutral-200 bg-white px-5'>
-      {/* Logo */}
+    <header className='relative z-50 flex h-[54px] flex-none items-center gap-3.5 border-b border-line bg-white pl-5 pr-[18px]'>
+      {/* Wordmark */}
       <button
         onClick={() => router.push('/assignments')}
-        className='flex flex-none items-center gap-2'
+        className='flex flex-none items-baseline gap-px'
       >
-        <span className='flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-neutral-200'>
-          <Image src={`${basePath}/logo.png`} alt='MarkEd' width={18} height={18} />
-        </span>
-        <span className='text-sm font-semibold'>MarkEd</span>
+        <span className='text-[19px] font-bold tracking-[-.5px] text-ink'>Mark</span>
+        <span className='text-[19px] font-bold tracking-[-.5px] text-gold'>Ed</span>
       </button>
 
+      <div className='h-[22px] w-px flex-none bg-line' />
+
       {/* Course switcher */}
-      {courses.length > 0 && (
-        <Select
-          value={currentCourseId ? String(currentCourseId) : undefined}
-          onValueChange={(value) => {
-            setCurrentCourseId(Number(value))
-            router.push('/assignments')
-          }}
-        >
-          <SelectTrigger className='h-9 max-w-[280px] text-[13px]' aria-label='Select course'>
-            <SelectValue placeholder='Select a course' />
-          </SelectTrigger>
-          <SelectContent>
+      {currentCourse && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className='flex flex-none items-center gap-2.5 rounded-[9px] border border-line bg-warm-50 px-2.5 py-1.5 text-left hover:border-[#C6BFB0] hover:bg-warm-100'>
+              <span
+                className='flex h-6 w-6 flex-none items-center justify-center rounded-[7px] text-[9px] font-bold text-ink'
+                style={{ background: accentFor(currentCourse) }}
+              >
+                {initials(currentCourse.courseName)}
+              </span>
+              <span className='min-w-0'>
+                <span className='block font-mono text-[9.5px] leading-tight text-faint'>
+                  {currentCourse.courseCode}
+                </span>
+                <span className='block max-w-[190px] truncate text-[12.5px] font-semibold leading-tight text-ink'>
+                  {currentCourse.courseName}
+                </span>
+              </span>
+              <ChevronDown className='h-3 w-3 flex-none text-faint' />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='start' className='w-80 rounded-[13px] p-1.5'>
+            <div className='px-2.5 pb-1.5 pt-2 text-[9.5px] font-bold tracking-[.8px] text-faint'>
+              SWITCH COURSE
+            </div>
             {courses.map((c) => (
-              <SelectItem key={c.id} value={String(c.id)}>
-                {c.courseCode} — {c.courseName}
-              </SelectItem>
+              <button
+                key={c.id}
+                onClick={() => {
+                  setCurrentCourseId(c.id)
+                  router.push('/assignments')
+                }}
+                className={`flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2.5 text-left hover:bg-paper ${
+                  c.id === currentCourseId ? 'bg-paper' : ''
+                }`}
+              >
+                <span
+                  className='flex h-7 w-7 flex-none items-center justify-center rounded-[8px] text-[10px] font-bold text-ink'
+                  style={{ background: accentFor(c) }}
+                >
+                  {initials(c.courseName)}
+                </span>
+                <span className='min-w-0 flex-1'>
+                  <span className='block font-mono text-[10px] text-faint'>{c.courseCode}</span>
+                  <span
+                    className={`block text-[13px] text-ink ${
+                      c.id === currentCourseId ? 'font-semibold' : 'font-medium'
+                    }`}
+                  >
+                    {c.courseName}
+                  </span>
+                </span>
+                {c.id === currentCourseId && (
+                  <Check className='h-[15px] w-[15px] flex-none text-royal' strokeWidth={2.5} />
+                )}
+              </button>
             ))}
-          </SelectContent>
-        </Select>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
 
       <div className='flex-1' />
@@ -98,51 +145,64 @@ export function TopHeader() {
       <button
         title='Notifications'
         onClick={() => toast('No new notifications')}
-        className='flex h-[34px] w-[34px] items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+        className={`relative flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[9px] hover:bg-warm-100 ${
+          isNotifs ? 'bg-warm-200 text-ink' : 'text-muted2'
+        }`}
       >
-        <Bell className='h-[18px] w-[18px]' />
+        <Bell className='h-[18px] w-[18px]' strokeWidth={1.8} />
       </button>
 
       {/* Support */}
       <button
         title='Support'
         onClick={() => router.push('/support')}
-        className='flex h-[34px] w-[34px] items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+        className={`flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[9px] hover:bg-warm-100 ${
+          isSupport ? 'bg-warm-200 text-ink' : 'text-muted2'
+        }`}
       >
-        <LifeBuoy className='h-[18px] w-[18px]' />
+        <HelpCircle className='h-[18px] w-[18px]' strokeWidth={1.8} />
       </button>
+
+      <div className='h-[22px] w-px flex-none bg-line' />
 
       {/* User menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className='flex h-[38px] items-center gap-2 rounded-full py-0 pl-1 pr-2 hover:bg-neutral-100'>
-            <span className='flex h-7 w-7 items-center justify-center rounded-full bg-neutral-200 text-[11px] font-medium text-neutral-600'>
+          <button className='flex flex-none items-center gap-2.5 rounded-[9px] py-1.5 pl-[5px] pr-[7px] hover:bg-warm-100'>
+            <span className='flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full bg-warm-200 text-[11px] font-bold text-muted2'>
               {initials(user?.userName)}
             </span>
-            <span className='text-left'>
-              <span className='block text-[13px] font-medium leading-tight'>
+            <span className='min-w-0'>
+              <span className='block max-w-[150px] truncate text-[12.5px] font-semibold leading-tight text-ink'>
                 {user?.userName ?? '…'}
               </span>
-              <span className='block text-[11px] leading-tight text-neutral-400'>
-                {user?.isAcademic
-                  ? 'Academic'
-                  : user?.isMarker
-                    ? 'Marker'
-                    : user?.isTA
-                      ? 'TA'
-                      : 'Student'}
+              <span className='block text-[11px] leading-tight text-faint'>
+                {roleName(user)}
               </span>
             </span>
+            <ChevronDown className='h-3 w-3 flex-none text-faint' />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align='end' className='w-52'>
-          <DropdownMenuLabel className='text-xs font-normal text-neutral-400'>
-            {user?.userNumber}
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout} className='cursor-pointer text-red-600'>
-            <LogOut className='mr-2 h-4 w-4' />
-            Log out
+        <DropdownMenuContent align='end' className='w-[262px] rounded-[13px] p-1.5'>
+          <div className='mb-1 flex items-center gap-2.5 border-b border-line-soft px-2.5 pb-3 pt-2.5'>
+            <span className='flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-warm-200 text-[12px] font-bold text-muted2'>
+              {initials(user?.userName)}
+            </span>
+            <span className='min-w-0'>
+              <span className='block text-[13.5px] font-semibold text-ink'>
+                {user?.userName ?? '…'}
+              </span>
+              <span className='block font-mono text-[11.5px] text-faint'>
+                {user?.userNumber}
+              </span>
+            </span>
+          </div>
+          <DropdownMenuItem
+            onClick={logout}
+            className='cursor-pointer rounded-[9px] px-2.5 py-2.5 text-[13px] font-medium text-[#2C3444] focus:bg-paper'
+          >
+            <LogOut className='mr-2.5 h-4 w-4' />
+            Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

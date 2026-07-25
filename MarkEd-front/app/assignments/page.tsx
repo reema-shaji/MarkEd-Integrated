@@ -15,9 +15,6 @@ import { useRouter } from 'next/navigation'
 import { AssignmentSchema, DefaultService, GroupSetSchema } from '@/src/api'
 import { useUser } from '@/src/contexts/user-context'
 import { useCourse } from '@/src/contexts/course-context'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
@@ -26,13 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  CalendarClock,
-  ClipboardCheck,
-  Plus,
-  Users,
-  Users2,
-} from 'lucide-react'
 import { toast } from 'sonner'
 
 /** Which stage of the peer review lifecycle an assignment is in (Tomas). */
@@ -66,10 +56,13 @@ function deadlineLabel(deadline: string) {
   }
 }
 
+const BADGE_BASE =
+  'text-[11px] font-medium rounded-[6px] px-2.5 py-0.5 whitespace-nowrap inline-block'
+
 export default function AssignmentsPage() {
   const router = useRouter()
   const { user } = useUser()
-  const { currentCourse, currentCourseId, isLoading: coursesLoading } = useCourse()
+  const { currentCourseId, isLoading: coursesLoading } = useCourse()
 
   const [assignments, setAssignments] = useState<AssignmentSchema[]>([])
   const [groupSets, setGroupSets] = useState<GroupSetSchema[]>([])
@@ -145,11 +138,11 @@ export default function AssignmentsPage() {
 
   if (coursesLoading || isLoading) {
     return (
-      <div className='mx-auto w-full max-w-3xl p-6'>
-        <Skeleton className='h-9 w-72' />
-        <div className='mt-6 grid gap-4'>
+      <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+        <Skeleton className='h-9 w-64' />
+        <div className='mt-6 flex flex-col gap-3'>
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className='h-36 w-full' />
+            <Skeleton key={i} className='h-32 w-full rounded-[14px]' />
           ))}
         </div>
       </div>
@@ -157,70 +150,56 @@ export default function AssignmentsPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-3xl p-6'>
-      <div className='mb-5 flex items-start justify-between gap-4'>
-        <div>
-          <h1 className='text-2xl font-bold'>
-            {currentCourse
-              ? `${currentCourse.courseCode} — ${currentCourse.courseName}`
-              : 'Assignments'}
-          </h1>
-          <p className='mt-1 text-sm text-neutral-500'>
-            {user?.isStaff
-              ? 'Select an assignment to manage submissions, marking and configuration.'
-              : 'Your assignments, group work, peer reviews and self-assessments.'}
-          </p>
+    <div className='mx-auto w-full max-w-[880px] px-7 pb-12 pt-8'>
+      {/* Header row */}
+      <div className='mb-5 flex items-center justify-between gap-4'>
+        <div className='text-[23px] font-semibold tracking-[-0.5px] text-[#131A26]'>
+          Assignments
         </div>
         {user?.isAcademic && (
-          <Button
-            className='shrink-0'
+          <button
             onClick={() => router.push('/create-assignment')}
+            className='shrink-0 rounded-[9px] bg-[#131A26] px-3.5 py-[7px] text-[13px] font-semibold text-white hover:bg-[#243247]'
           >
-            <Plus className='mr-1 h-4 w-4' />
-            Create Assignment
-          </Button>
+            + Create Assignment
+          </button>
         )}
       </div>
 
       {/* Group categories — Hao's course-level entry point. "Group Category"
           rather than "GroupSet", which his evaluation found confusing (b-1). */}
       {user?.isStaff && (
-        <Card className='mb-6'>
-          <CardHeader className='pb-3'>
-            <CardTitle className='flex items-center gap-2 text-base'>
-              <Users2 className='h-4 w-4' />
-              Group categories
-            </CardTitle>
-          </CardHeader>
-          <CardContent className='flex flex-wrap items-center gap-2'>
+        <div className='mb-4 rounded-[14px] border border-[#EAE5DB] bg-white p-5'>
+          <div className='mb-3 text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+            Group categories
+          </div>
+          <div className='flex flex-wrap items-center gap-2'>
             {groupSets.length === 0 ? (
-              <p className='text-sm text-neutral-500'>
+              <p className='text-[13px] text-[#5A6070]'>
                 No group categories yet. Create one to organise students into teams.
               </p>
             ) : (
               groupSets.map((gs) => (
-                <Button
+                <button
                   key={gs.id}
-                  variant='outline'
-                  size='sm'
                   onClick={() => router.push(`/groupsets/${gs.id}`)}
+                  className='rounded-[9px] border border-[#DED8CA] bg-white px-3 py-1.5 text-[12.5px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
                 >
                   {gs.name}
-                  <span className='ml-2 text-xs text-neutral-500'>
+                  <span className='ml-2 font-normal text-[#8A9099]'>
                     {gs.groups_count} groups · {gs.students_count} students
                   </span>
-                </Button>
+                </button>
               ))
             )}
-            <Button
-              variant='ghost'
-              size='sm'
+            <button
               onClick={() => router.push('/groupsets')}
+              className='rounded-[9px] px-3 py-1.5 text-[12.5px] font-semibold text-[#1F4E79] hover:text-[#123A5C]'
             >
               Manage
-            </Button>
-          </CardContent>
-        </Card>
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Filters — mirror the prototype's type/status selects, applied
@@ -231,7 +210,7 @@ export default function AssignmentsPage() {
             value={typeFilter}
             onValueChange={(v) => setTypeFilter(v as typeof typeFilter)}
           >
-            <SelectTrigger className='h-9 w-auto min-w-[9rem] text-[13px]'>
+            <SelectTrigger className='h-auto w-auto min-w-[9rem] rounded-[9px] border-[#DED8CA] bg-white px-[11px] py-2 text-[13px] text-[#2C3444]'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -246,7 +225,7 @@ export default function AssignmentsPage() {
             value={statusFilter}
             onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
           >
-            <SelectTrigger className='h-9 w-auto min-w-[9rem] text-[13px]'>
+            <SelectTrigger className='h-auto w-auto min-w-[9rem] rounded-[9px] border-[#DED8CA] bg-white px-[11px] py-2 text-[13px] text-[#2C3444]'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -259,74 +238,63 @@ export default function AssignmentsPage() {
       )}
 
       {sorted.length === 0 ? (
-        <Card>
-          <CardContent className='py-14 text-center text-sm text-neutral-500'>
-            No assignments in this course yet.
-          </CardContent>
-        </Card>
+        <div className='rounded-[14px] border border-[#EAE5DB] bg-white py-14 text-center text-[13px] text-[#8A9099]'>
+          No assignments in this course yet.
+        </div>
       ) : visible.length === 0 ? (
-        <Card>
-          <CardContent className='py-14 text-center text-sm text-neutral-500'>
-            No assignments match these filters.
-          </CardContent>
-        </Card>
+        <div className='rounded-[14px] border border-[#EAE5DB] bg-white py-14 text-center text-[13px] text-[#8A9099]'>
+          No assignments match these filters.
+        </div>
       ) : (
         <div className='flex flex-col gap-3'>
           {visible.map((a) => {
             const phase = peerReviewPhase(a)
             const due = deadlineLabel(a.deadline)
             const landing = user?.isStaff ? 'dashboard' : 'home'
+            const isGroup = a.assignment_type === 'GROUP'
             return (
-              <Card
+              <div
                 key={a.id}
-                role='button'
-                tabIndex={0}
-                onClick={() => router.push(`/assignments/${a.id}/${landing}`)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    router.push(`/assignments/${a.id}/${landing}`)
-                  }
-                }}
-                className='cursor-pointer p-5 transition-colors hover:border-neutral-400'
+                className='rounded-[14px] border border-[#EAE5DB] bg-white p-5'
               >
                 <div className='mb-1.5 flex flex-wrap items-center gap-2.5'>
-                  <span className='text-base font-semibold'>
+                  <span className='text-[15px] font-semibold tracking-[-0.1px] text-[#131A26]'>
                     {a.assignmentTitle}
                   </span>
-                  <Badge variant='secondary' className='rounded-full'>
-                    {a.assignment_type === 'GROUP' ? (
-                      <>
-                        <Users2 className='mr-1 h-3 w-3' />
-                        Group
-                      </>
-                    ) : (
-                      'Individual'
-                    )}
-                  </Badge>
+                  <span
+                    className={BADGE_BASE}
+                    style={
+                      isGroup
+                        ? { color: '#4C3A82', background: '#EDEAF4' }
+                        : { color: '#6D6455', background: '#F2EEE6' }
+                    }
+                  >
+                    {isGroup ? 'Group' : 'Individual'}
+                  </span>
                   {a.peer_review_enabled && (
-                    <Badge variant='outline' className='rounded-full'>
-                      <Users className='mr-1 h-3 w-3' />
+                    <span
+                      className={BADGE_BASE}
+                      style={{ color: '#1F4E79', background: '#E8EFF6' }}
+                    >
                       Peer Review
-                    </Badge>
+                    </span>
                   )}
                   {a.self_assessment_enabled && (
-                    <Badge variant='outline' className='rounded-full'>
-                      <ClipboardCheck className='mr-1 h-3 w-3' />
+                    <span
+                      className={BADGE_BASE}
+                      style={{ color: '#256B5D', background: '#E5F0ED' }}
+                    >
                       Self-Assessment
-                    </Badge>
+                    </span>
                   )}
                 </div>
                 {a.assignmentDescription && (
-                  <p className='mb-2 line-clamp-2 text-sm text-neutral-500'>
+                  <p className='mb-2 line-clamp-2 text-[13px] text-[#5A6070]'>
                     {a.assignmentDescription}
                   </p>
                 )}
-                <div className='flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-500'>
-                  <span className='flex items-center gap-1'>
-                    <CalendarClock className='h-3.5 w-3.5' />
-                    {due.text}
-                  </span>
+                <div className='mb-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-[#5A6070]'>
+                  <span>{due.text}</span>
                   {phase && (
                     <>
                       <span aria-hidden>·</span>
@@ -343,7 +311,17 @@ export default function AssignmentsPage() {
                     </>
                   )}
                 </div>
-              </Card>
+                <div className='flex flex-wrap gap-2'>
+                  <button
+                    onClick={() =>
+                      router.push(`/assignments/${a.id}/${landing}`)
+                    }
+                    className='rounded-[9px] bg-[#131A26] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#243247]'
+                  >
+                    {user?.isStaff ? 'Open dashboard' : 'View assignment'}
+                  </button>
+                </div>
+              </div>
             )
           })}
         </div>

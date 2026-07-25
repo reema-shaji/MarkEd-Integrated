@@ -35,8 +35,8 @@ const MarkingPage = () => {
 
   if (isLoading) {
     return (
-      <div className='flex h-screen items-center justify-center'>
-        <div className='h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-primary'></div>
+      <div className='flex h-screen items-center justify-center bg-paper'>
+        <div className='h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-ink'></div>
       </div>
     )
   }
@@ -44,12 +44,12 @@ const MarkingPage = () => {
   return (
     <>
       {!submission?.pre_signed_file_url ? (
-        <div className='flex h-screen flex-col items-center justify-center gap-2'>
-          <Telescope className='h-10 w-10' />
-          <h1 className='text-2xl font-semibold'>Nothing to see here</h1>
-          <p className='text-sm text-gray-500'>
+        <div className='flex h-screen flex-col items-center justify-center gap-2 bg-paper'>
+          <Telescope className='h-10 w-10 text-faint' />
+          <h1 className='text-2xl font-semibold text-ink'>Nothing to see here</h1>
+          <p className='text-sm text-muted2'>
             No submission found. Please reach out to{' '}
-            <Link href='/support' className='underline'>
+            <Link href='/support' className='text-royal underline hover:text-royal-hover'>
               support
             </Link>
           </p>

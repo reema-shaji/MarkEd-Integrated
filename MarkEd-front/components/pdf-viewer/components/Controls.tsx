@@ -56,16 +56,16 @@ export default function Controls({
   }
 
   return (
-    <div className='sticky top-0 z-10 mb-4 w-full border-b border-border bg-sidebar backdrop-blur supports-[backdrop-filter]:bg-sidebar/60'>
-      <div className='flex h-16 items-center justify-between px-4'>
+    <div className='sticky top-0 z-10 mb-4 w-full border-b border-line bg-white'>
+      <div className='flex h-14 items-center justify-between px-4'>
         <div className='flex items-center gap-6'>
           {/* Statistics */}
           <div className='flex items-center gap-4'>
             {totalAnnotations > 0 && (
               <>
                 <div className='flex items-center gap-2'>
-                  <MessageCircle className='h-4 w-4 text-muted-foreground' />
-                  <span className='text-sm text-muted-foreground'>
+                  <MessageCircle className='h-4 w-4 text-faint' />
+                  <span className='text-[13px] font-medium text-[#454C5C]'>
                     {totalAnnotations} annotation
                     {totalAnnotations !== 1 ? 's' : ''}
                   </span>
@@ -73,11 +73,11 @@ export default function Controls({
 
                 {!isMarkerView && !isReadOnly && llmFeedbackCount > 0 && (
                   <>
-                    <Separator orientation='vertical' className='h-4' />
+                    <Separator orientation='vertical' className='h-4 bg-line' />
 
                     <div className='flex items-center gap-2'>
-                      <Bot className='h-4 w-4 text-muted-foreground' />
-                      <span className='text-sm text-muted-foreground'>
+                      <Bot className='h-4 w-4 text-faint' />
+                      <span className='text-[13px] font-medium text-[#454C5C]'>
                         AI Suggestions
                         {unreadLLMFeedbackCount > 0 && (
                           <span className='ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground'>

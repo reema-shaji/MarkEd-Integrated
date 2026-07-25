@@ -38,9 +38,11 @@ export function DraftAnnotationCard({
   const showLimit = currentLength >= maxCharacterLimit * warningThreshold
 
   return (
-    <div className='mb-4 rounded-lg border border-yellow-500 bg-yellow-50 p-4 shadow-sm'>
-      <blockquote className='mb-4 border-l-2 border-muted-foreground/30 pl-2'>
-        <p className='text-sm italic'>{draftAnnotation.selectedText}</p>
+    <div className='mb-4 rounded-[12px] border-2 border-[#C9A24A] bg-[#FBF4E3] p-[14px] shadow-sm'>
+      <blockquote className='mb-4 border-l-2 border-[#C9A24A] pl-2.5'>
+        <p className='text-[12px] italic leading-[1.5] text-muted2'>
+          {draftAnnotation.selectedText}
+        </p>
       </blockquote>
       <div className='relative'>
         <textarea

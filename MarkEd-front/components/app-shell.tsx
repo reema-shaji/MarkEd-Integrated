@@ -2,10 +2,11 @@
 
 /**
  * App shell (updated prototype layout): a full-width top header, and below it a
- * row of the assignment-scoped sidebar (shown only inside an assignment) and
- * the main content. Auth pages render bare — no header/sidebar or auth-scoped
- * providers, which would otherwise fire authenticated calls on a page whose
- * whole purpose is to sign in.
+ * scrollable main area whose first child is the dark hero + tab bar (the
+ * navigation that replaced the old left sidebar), followed by page content on
+ * the warm "paper" background. Auth pages render bare — no header/hero or
+ * auth-scoped providers, which would otherwise fire authenticated calls on a
+ * page whose whole purpose is to sign in.
  */
 
 import { useEffect, useState } from 'react'
@@ -16,7 +17,7 @@ import { UserProvider } from '@/src/contexts/user-context'
 import { CourseProvider } from '@/src/contexts/course-context'
 import { AssignmentProvider } from '@/src/contexts/assignment-context'
 import { TopHeader } from '@/components/shell/top-header'
-import { AssignmentSidebar } from '@/components/shell/assignment-sidebar'
+import { AppHero } from '@/components/shell/app-hero'
 import { getToken } from '@/src/api/config'
 
 const BARE_ROUTES = ['/login', '/change-password']
@@ -54,8 +55,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return (
-      <div className='flex h-screen items-center justify-center bg-neutral-100'>
-        <Loader2 className='h-5 w-5 animate-spin text-neutral-400' />
+      <div className='flex h-screen items-center justify-center bg-paper'>
+        <Loader2 className='h-5 w-5 animate-spin text-faint' />
       </div>
     )
   }
@@ -66,13 +67,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <AssignmentProvider>
           <div className='flex h-screen flex-col overflow-hidden'>
             <TopHeader />
-            <div className='flex flex-1 overflow-hidden'>
-              {/* Returns null when not inside an assignment, so main is full width. */}
-              <AssignmentSidebar />
-              <main className='flex-1 overflow-y-auto bg-neutral-100'>
-                {children}
-              </main>
-            </div>
+            <main className='flex flex-1 flex-col overflow-y-auto bg-paper'>
+              <AppHero />
+              {children}
+            </main>
           </div>
           <Toaster />
         </AssignmentProvider>

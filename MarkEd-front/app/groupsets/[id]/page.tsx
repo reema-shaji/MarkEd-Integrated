@@ -51,7 +51,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Shuffle, User, UserPlus, X } from 'lucide-react'
+import { GripVertical, Shuffle, UserPlus, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 const UNGROUPED = 'ungrouped'
@@ -209,7 +209,7 @@ export default function GroupManagementPage() {
 
   if (isLoading) {
     return (
-      <div className='w-full p-6'>
+      <div className='w-full px-7 pb-11 pt-8'>
         <Skeleton className='h-9 w-72' />
         <div className='mt-6 flex flex-col gap-4 lg:flex-row'>
           <Skeleton className='h-96 lg:flex-[2]' />
@@ -222,47 +222,60 @@ export default function GroupManagementPage() {
   const maxSize = groupSet?.max_group_size ?? 0
 
   return (
-    <div className='w-full p-6'>
-      <div className='mb-4 flex flex-wrap items-start justify-between gap-3'>
+    <div className='flex w-full flex-col px-7 pb-11 pt-8'>
+      <div className='mb-4 flex flex-none flex-wrap items-center justify-between gap-4'>
         <div>
-          <div className='text-[13px] text-neutral-400'>
+          <div className='text-[13px] text-faint'>
             <button
               type='button'
               onClick={() => router.push('/groupsets')}
-              className='text-neutral-400 hover:text-neutral-600'
+              className='text-faint hover:text-muted2'
             >
               Group Categories
             </button>{' '}
             / {groupSet?.name}
           </div>
-          <h1 className='text-2xl font-bold'>Group Management</h1>
+          <h1 className='text-[21px] font-semibold tracking-[-0.45px] text-ink'>
+            Group Management
+          </h1>
         </div>
         <div className='flex flex-wrap gap-2'>
-          <Button variant='outline' onClick={() => setRandomOpen(true)} disabled={busy}>
-            <Shuffle className='mr-1 h-4 w-4' />
+          <button
+            onClick={() => setRandomOpen(true)}
+            disabled={busy}
+            className='inline-flex items-center gap-1.5 rounded-[9px] border border-line-input bg-white px-3.5 py-2 text-[13px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100 disabled:opacity-50'
+          >
+            <Shuffle className='h-4 w-4' />
             Random Assign
-          </Button>
-          <Button variant='outline' onClick={runAutoAssign} disabled={busy}>
-            <UserPlus className='mr-1 h-4 w-4' />
+          </button>
+          <button
+            onClick={runAutoAssign}
+            disabled={busy}
+            className='inline-flex items-center gap-1.5 rounded-[9px] border border-line-input bg-white px-3.5 py-2 text-[13px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100 disabled:opacity-50'
+          >
+            <UserPlus className='h-4 w-4' />
             Auto-assign Ungrouped
-          </Button>
-          <Button onClick={() => setCreateOpen(true)} disabled={busy}>
-            <Plus className='mr-1 h-4 w-4' />
-            Create Group
-          </Button>
+          </button>
+          <button
+            onClick={() => setCreateOpen(true)}
+            disabled={busy}
+            className='rounded-[9px] bg-ink px-3.5 py-[7px] text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
+          >
+            + Create Group
+          </button>
         </div>
       </div>
 
-      <p className='mb-3.5 text-xs text-neutral-400'>
+      <p className='mb-3.5 flex-none text-xs text-faint'>
         Drag students between groups, or into the Unassigned panel. Changes save
         automatically.
       </p>
 
       <div className='flex flex-col gap-4 lg:flex-row'>
         {/* Group cards — drop targets. */}
-        <div className='grid content-start gap-3.5 sm:grid-cols-2 lg:flex-[2]'>
+        <div className='grid content-start gap-3.5 sm:grid-cols-2 lg:flex-[2] lg:grid-cols-[repeat(auto-fill,minmax(230px,1fr))]'>
           {groups.length === 0 && (
-            <div className='rounded-lg border border-neutral-200 bg-white py-12 text-center text-sm text-neutral-500 shadow-sm sm:col-span-2'>
+            <div className='rounded-[14px] border border-line-card bg-white py-12 text-center text-sm text-muted2 sm:col-span-2'>
               No groups yet. Create one, or use random assign to build them all
               at once.
             </div>
@@ -279,22 +292,20 @@ export default function GroupManagementPage() {
                 }}
                 onDragLeave={() => setDragOver(null)}
                 onDrop={(e) => onDrop(e, String(group.id))}
-                className={`overflow-hidden rounded-lg border bg-white shadow-sm ${
+                className={`overflow-hidden rounded-[14px] border bg-white ${
                   dragOver === String(group.id)
-                    ? 'border-neutral-800'
-                    : 'border-neutral-200'
+                    ? 'border-ink'
+                    : 'border-line-card'
                 }`}
               >
-                <div className='flex items-center justify-between gap-2 border-b border-neutral-100 bg-neutral-50 px-3.5 py-2.5'>
-                  <span className='flex min-w-0 items-center gap-2'>
-                    <span className='truncate text-sm font-semibold'>
+                <div className='flex items-center justify-between gap-2 border-b border-line-soft px-3.5 py-3'>
+                  <span className='flex min-w-0 items-baseline gap-2'>
+                    <span className='truncate text-sm font-semibold text-ink'>
                       {group.name}
                     </span>
                     <span
-                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${
-                        full
-                          ? 'border-neutral-300 bg-neutral-200 text-neutral-700'
-                          : 'border-neutral-200 bg-neutral-100 text-neutral-600'
+                      className={`shrink-0 whitespace-nowrap text-[11px] ${
+                        full ? 'font-semibold text-[#8A5D14]' : 'text-faint'
                       }`}
                     >
                       {group.members.length}/{maxSize}
@@ -305,7 +316,7 @@ export default function GroupManagementPage() {
                     aria-label={`Delete ${group.name}`}
                     onClick={() => deleteGroup(group)}
                     disabled={busy}
-                    className='shrink-0 rounded px-1.5 py-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50'
+                    className='shrink-0 rounded-[4px] px-1.5 py-1 text-xs text-faint transition-colors hover:bg-[#FBEEEC] hover:text-red-600 disabled:opacity-50'
                   >
                     Delete
                   </button>
@@ -314,7 +325,7 @@ export default function GroupManagementPage() {
                 <div className='p-2.5'>
                   <div className='flex min-h-[100px] flex-col gap-1.5'>
                     {group.members.length === 0 ? (
-                      <p className='py-6 text-center text-xs text-neutral-400'>
+                      <p className='py-6 text-center text-xs text-faint'>
                         Drag students here
                       </p>
                     ) : (
@@ -328,14 +339,14 @@ export default function GroupManagementPage() {
                               String(member.student_id)
                             )
                           }
-                          className='group/member flex cursor-grab items-center gap-2.5 rounded-md border-[1.5px] border-neutral-200 bg-white px-3 py-2 hover:border-neutral-400 hover:shadow-sm active:cursor-grabbing'
+                          className='group/member flex cursor-grab items-center gap-2.5 rounded-[9px] border-[1.5px] border-line bg-white px-3 py-2 transition-shadow hover:border-neutral-400 hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] active:cursor-grabbing'
                         >
-                          <User className='h-4 w-4 shrink-0 text-neutral-400' />
+                          <GripVertical className='h-3.5 w-3.5 shrink-0 text-[#CBC4B4]' />
                           <span className='min-w-0 flex-1'>
-                            <span className='block truncate text-[13px] font-semibold text-neutral-700'>
+                            <span className='block truncate text-[13px] font-semibold text-[#2C3444]'>
                               {member.userName}
                             </span>
-                            <span className='block truncate text-[11px] text-neutral-400'>
+                            <span className='block truncate font-mono text-[10.5px] text-faint'>
                               {member.userNumber}
                             </span>
                           </span>
@@ -344,7 +355,7 @@ export default function GroupManagementPage() {
                             aria-label={`Remove ${member.userName} from ${group.name}`}
                             onClick={() => move(member.student_id, null)}
                             disabled={busy}
-                            className='shrink-0 text-neutral-400 opacity-0 transition-opacity hover:text-red-600 group-hover/member:opacity-100 focus:opacity-100'
+                            className='shrink-0 text-faint opacity-0 transition-opacity hover:text-red-600 group-hover/member:opacity-100 focus:opacity-100'
                           >
                             <X className='h-3.5 w-3.5' />
                           </button>
@@ -361,7 +372,7 @@ export default function GroupManagementPage() {
                       onValueChange={(value) => move(Number(value), group.id)}
                     >
                       <SelectTrigger
-                        className='mt-2.5 h-8 text-xs'
+                        className='mt-2.5 h-8 rounded-[9px] border-line-input text-xs'
                         aria-label={`Add a student to ${group.name}`}
                       >
                         <SelectValue placeholder='+ Add student' />
@@ -393,13 +404,15 @@ export default function GroupManagementPage() {
           }}
           onDragLeave={() => setDragOver(null)}
           onDrop={(e) => onDrop(e, UNGROUPED)}
-          className={`flex max-h-[36rem] flex-col overflow-hidden rounded-lg border-2 border-dashed bg-white lg:flex-1 lg:min-w-[250px] ${
-            dragOver === UNGROUPED ? 'border-neutral-800' : 'border-neutral-300'
+          className={`flex max-h-[36rem] flex-col overflow-hidden rounded-[12px] border-2 border-dashed bg-white lg:flex-1 lg:min-w-[250px] ${
+            dragOver === UNGROUPED ? 'border-ink' : 'border-[#CDC6B6]'
           }`}
         >
-          <div className='flex items-center justify-between gap-2 border-b border-neutral-100 bg-neutral-50 px-3.5 py-2.5'>
-            <span className='text-sm font-semibold'>Unassigned Students</span>
-            <span className='shrink-0 rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-600'>
+          <div className='flex items-center justify-between gap-2 border-b border-line-soft px-3.5 py-3'>
+            <span className='text-sm font-semibold text-ink'>
+              Unassigned Students
+            </span>
+            <span className='shrink-0 whitespace-nowrap rounded-[99px] border border-line bg-[#F2EEE6] px-2 py-px text-[11px] text-[#6D6455]'>
               {ungrouped.length}
             </span>
           </div>
@@ -408,12 +421,12 @@ export default function GroupManagementPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder='Search students…'
-              className='h-8 text-xs'
+              className='h-8 rounded-[9px] border-line-input text-xs'
             />
           </div>
           <div className='flex flex-1 flex-col gap-1.5 overflow-y-auto px-2.5 pb-2.5'>
             {filteredUngrouped.length === 0 ? (
-              <p className='py-6 text-center text-xs text-neutral-400'>
+              <p className='py-6 text-center text-xs text-faint'>
                 {ungrouped.length === 0
                   ? 'Everyone has a group.'
                   : 'No students match that search.'}
@@ -426,14 +439,14 @@ export default function GroupManagementPage() {
                   onDragStart={(e) =>
                     e.dataTransfer.setData('text/plain', String(student.student_id))
                   }
-                  className='flex cursor-grab items-center gap-2.5 rounded-md border-[1.5px] border-neutral-200 bg-white px-3 py-2 hover:border-neutral-400 hover:shadow-sm active:cursor-grabbing'
+                  className='flex cursor-grab items-center gap-2.5 rounded-[9px] border-[1.5px] border-line bg-white px-3 py-2 transition-shadow hover:border-neutral-400 hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] active:cursor-grabbing'
                 >
-                  <User className='h-4 w-4 shrink-0 text-neutral-400' />
+                  <GripVertical className='h-3.5 w-3.5 shrink-0 text-[#CBC4B4]' />
                   <span className='min-w-0 flex-1'>
-                    <span className='block truncate text-[13px] font-semibold text-neutral-700'>
+                    <span className='block truncate text-[13px] font-semibold text-[#2C3444]'>
                       {student.userName}
                     </span>
-                    <span className='block truncate text-[11px] text-neutral-400'>
+                    <span className='block truncate font-mono text-[10.5px] text-faint'>
                       {student.userNumber}
                     </span>
                   </span>
