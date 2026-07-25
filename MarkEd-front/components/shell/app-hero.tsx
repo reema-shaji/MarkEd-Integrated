@@ -138,8 +138,10 @@ export function AppHero() {
       }
     } else if (user?.isStudent) {
       t.push(mk('Assignment', 'home', ['home', '']))
-      t.push(mk('Submit Work', 'submit'))
+      // Individual submission only for individual assignments; a group submits
+      // through its shared workspace, so there's no per-student submit there.
       if (isGroup) t.push(mk('Group Workspace', 'workspace'))
+      else t.push(mk('Submit Work', 'submit'))
       if (hasSA) t.push(mk('Self-Assessment', 'self-assessment'))
       if (hasPeer) t.push(mk('Peer Review', 'peer-review'))
       t.push(

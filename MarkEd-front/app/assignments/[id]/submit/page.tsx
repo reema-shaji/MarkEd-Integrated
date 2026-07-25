@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { FileUpload } from '@/components/file-upload'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { DefaultService } from '@/src/api'
 import { toast } from 'sonner'
 import { AlertTriangle } from 'lucide-react'
@@ -24,6 +24,7 @@ function displayName(key: string) {
 
 export default function SubmitAssignmentPage() {
   const unwrappedParams = useParams()
+  const router = useRouter()
   const { currentAssignment, submissionStatus } = useAssignment()
   const [agreedToHonesty, setAgreedToHonesty] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([])
@@ -138,6 +139,32 @@ export default function SubmitAssignmentPage() {
   }
 
   const isOpen = submissionStatus.isOpen
+
+  // Group assignments are submitted by the group from the shared workspace —
+  // there is no per-student submission here. Guard against direct navigation.
+  if (currentAssignment?.assignment_type === 'GROUP') {
+    return (
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
+        <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-6'>
+          <div className='text-[15px] font-semibold text-[#131A26]'>
+            This is a group assignment
+          </div>
+          <div className='mt-1.5 text-[13px] leading-[1.6] text-[#5A6070]'>
+            Submissions are made by your group from the shared Group Workspace,
+            not individually.
+          </div>
+          <button
+            onClick={() =>
+              router.push(`/assignments/${unwrappedParams.id}/workspace`)
+            }
+            className='mt-4 rounded-[9px] bg-[#131A26] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#243247]'
+          >
+            Go to Group Workspace
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
