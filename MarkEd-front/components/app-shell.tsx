@@ -67,7 +67,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <AssignmentProvider>
           <div className='flex h-screen flex-col overflow-hidden'>
             <TopHeader />
-            <main className='flex flex-1 flex-col overflow-y-auto bg-paper'>
+            {/* scrollbar-gutter:stable reserves the (custom 8px) scrollbar space
+                on every page, so the centered content never shifts sideways
+                when navigating between short (no scrollbar) and long (scrollbar)
+                pages. */}
+            <main className='flex flex-1 flex-col overflow-y-auto bg-paper [scrollbar-gutter:stable]'>
               <AppHero />
               {children}
             </main>
