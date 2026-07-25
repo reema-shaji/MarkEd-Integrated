@@ -211,6 +211,14 @@ EMAIL_HOST_PASSWORD = 'generate your own'
 
 IS_PRODUCTION = os.getenv('DJANGO_ENV') == 'production'
 
+# --- File storage backend --------------------------------------------------
+# Locally we store uploads on the filesystem (MEDIA_ROOT) so the submit/upload
+# flow can be tested without AWS S3 credentials. In production S3 is used.
+# Defaults to local when not in production; override with USE_LOCAL_STORAGE.
+USE_LOCAL_STORAGE = os.getenv(
+    'USE_LOCAL_STORAGE', 'false' if IS_PRODUCTION else 'true'
+).lower() in ('1', 'true', 'yes')
+
 # --- CORS (SPA on a different origin, e.g. Vercel) -------------------------
 # Auth is bearer-token, not cookies, so credentials are NOT needed cross-origin;
 # the browser sends the Authorization header, which CORS allows by default.

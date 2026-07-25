@@ -3,12 +3,64 @@ from ninja import Router
 from ..schemas.file import FileAccessResponse, FileUploadResponse
 from ..decorators import require_auth
 from django.conf import settings
+from django.http import FileResponse, HttpResponse
+import os
 import uuid
 from datetime import timedelta
-from ...services.storage import StorageService  
+from ...services.storage import StorageService
 
 
 router = Router()
+
+
+def _safe_media_path(key: str) -> str:
+    """Resolve a storage key to a path inside MEDIA_ROOT, blocking traversal."""
+    key = (key or '').lstrip('/').replace('..', '')
+    root = os.path.realpath(settings.MEDIA_ROOT)
+    path = os.path.realpath(os.path.join(root, key))
+    if not path.startswith(root):
+        raise ValueError('Invalid path')
+    return path
+
+
+@router.post("/local-upload", auth=None, operation_id="localUpload")
+def local_upload(request):
+    """Local-storage upload target (development only). Accepts the same multipart
+    body an S3 presigned POST would (a `key` field + the `file`) and writes it to
+    MEDIA_ROOT so the submit/upload flow works without AWS credentials."""
+    if not getattr(settings, 'USE_LOCAL_STORAGE', False):
+        return HttpResponse('Local storage disabled', status=403)
+    key = request.POST.get('key')
+    upload = request.FILES.get('file')
+    if not key or not upload:
+        return HttpResponse('Missing key or file', status=400)
+    if upload.size > StorageService.MAX_FILE_SIZE_BYTES:
+        return HttpResponse('File too large', status=413)
+    try:
+        path = _safe_media_path(key)
+    except ValueError:
+        return HttpResponse('Invalid key', status=400)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'wb') as out:
+        for chunk in upload.chunks():
+            out.write(chunk)
+    return HttpResponse(status=204)
+
+
+@router.get("/local", auth=None, operation_id="localFile")
+def local_file(request, key: str):
+    """Serve a locally-stored file (development only), inline as a PDF."""
+    if not getattr(settings, 'USE_LOCAL_STORAGE', False):
+        return HttpResponse('Local storage disabled', status=403)
+    try:
+        path = _safe_media_path(key)
+    except ValueError:
+        return HttpResponse('Invalid key', status=400)
+    if not os.path.exists(path):
+        return HttpResponse('Not found', status=404)
+    resp = FileResponse(open(path, 'rb'), content_type='application/pdf')
+    resp['Content-Disposition'] = 'inline'
+    return resp
 
 
 @router.get("/get-submission-file-access-url", response=FileAccessResponse, operation_id="getSubmissionFileAccessUrl")

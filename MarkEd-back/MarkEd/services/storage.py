@@ -9,12 +9,16 @@ class StorageService:
     MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5MB
     
     def __init__(self):
-        self.s3_client = boto3.client(
-            's3',
-            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-            region_name=os.getenv('AWS_REGION', 'eu-west-2')
-        )
+        # Local filesystem mode (development): no S3 client needed. Uploads go to
+        # a local Django endpoint and files are served back from MEDIA_ROOT.
+        self.local = getattr(settings, 'USE_LOCAL_STORAGE', False)
+        if not self.local:
+            self.s3_client = boto3.client(
+                's3',
+                aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+                region_name=os.getenv('AWS_REGION', 'eu-west-2')
+            )
         self.bucket = os.getenv('STORAGE_BUCKET_NAME', 'marked-bucket')
         self.is_production = True
 
@@ -34,6 +38,10 @@ class StorageService:
 
     def get_presigned_url(self, object_name, expires=3600, response_content_type=None, response_content_disposition=None):
         """Generate a presigned URL for downloading"""
+        if self.local:
+            # Served by the local Django endpoint; browser-reachable path.
+            from urllib.parse import quote
+            return f"/api/files/local?key={quote(object_name)}"
         try:
             params = {
                 'Bucket': self.bucket,
@@ -70,10 +78,19 @@ class StorageService:
 
     def get_presigned_put_url(self, object_name, expires=3600, content_type=None):
         """Generate a presigned URL for uploading with content type validation"""
+        if content_type and content_type not in self.ALLOWED_CONTENT_TYPES:
+            raise ValueError(f"Invalid file type. Allowed types: {', '.join(self.ALLOWED_CONTENT_TYPES)}")
+        if self.local:
+            # Same shape as an S3 presigned POST ({url, fields}) so the frontend
+            # upload code is identical: it POSTs the fields + file to `url`.
+            return {
+                "url": "/api/files/local-upload",
+                "fields": {"key": object_name, "content_type": content_type or 'application/pdf'},
+            }
         try:
             if content_type and content_type not in self.ALLOWED_CONTENT_TYPES:
                 raise ValueError(f"Invalid file type. Allowed types: {', '.join(self.ALLOWED_CONTENT_TYPES)}")
-                
+
             url = self.s3_client.generate_presigned_post(
                 Bucket=self.bucket,
                 Key=object_name,
@@ -89,4 +106,6 @@ class StorageService:
     
     def get_permanent_url(self, object_name):
         """Generate a permanent URL for accessing files"""
+        if self.local:
+            return object_name
         return f"https://{self.bucket}.s3.amazonaws.com/{object_name}"
