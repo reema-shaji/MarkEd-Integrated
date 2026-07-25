@@ -157,14 +157,6 @@ export function AppHero() {
   const showSubTabs =
     inAssignment && Boolean(user?.isStudent) && seg === 'peer-review'
 
-  const goPeerTab = () => {
-    if (peerReviews?.length) {
-      router.push(
-        `/assignments/${assignmentId}/peer-review/${peerReviews[0].submission_id}`
-      )
-    }
-  }
-
   return (
     <div className='flex-none bg-[linear-gradient(160deg,#131A26_0%,#1E2B3E_100%)]'>
       {/* Title zone */}
@@ -215,8 +207,7 @@ export function AppHero() {
             key: tab.seg,
             label: tab.label,
             active: tab.active,
-            onClick: () =>
-              tab.seg === 'peer-review' ? goPeerTab() : router.push(tab.href),
+            onClick: () => router.push(tab.href),
           }))}
         />
       ) : (
