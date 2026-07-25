@@ -78,12 +78,15 @@ export default function GroupWorkspacePage() {
 
       const [wf, subs] = await Promise.all([
         DefaultService.listWorkspaceFiles(mine.id, assignmentId),
-        DefaultService.listGroupSubmissions(assignmentId).catch(() => []),
+        // Student-scoped: the group's own submissions. listGroupSubmissions is
+        // staff-only and would 403 here, leaving the state stuck on "not
+        // submitted" even right after submitting.
+        DefaultService.getMyGroupSubmissions(assignmentId).catch(() => []),
       ])
       setFiles(wf)
-      const mySubs = subs
-        .filter((s) => s.group_id === mine.id)
-        .sort((a, b) => b.submission_version - a.submission_version)
+      const mySubs = [...subs].sort(
+        (a, b) => b.submission_version - a.submission_version
+      )
       setSubmissions(mySubs)
       setLatestSubmission(mySubs[0] ?? null)
     } catch {

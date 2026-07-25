@@ -785,6 +785,28 @@ def list_group_submissions(request, assignment_id: int):
     return [_serialize_group_submission(gs) for gs in latest.values()]
 
 
+@groups_router.get(
+    "/my-group-submissions/{assignment_id}",
+    response=List[GroupSubmissionSchema],
+    operation_id="getMyGroupSubmissions",
+)
+@require_auth(roles=['Student'])
+def get_my_group_submissions(request, assignment_id: int):
+    """The current student's group's submissions for an assignment (full version
+    history, newest first). Backs the group workspace so students see their own
+    group's submission state — listGroupSubmissions is staff-only."""
+    assignment = get_object_or_404(Assignment, pk=assignment_id)
+    group = _student_group_for(assignment, request.user_id)
+    if group is None:
+        return []
+    subs = (
+        GroupSubmission.objects.filter(group=group, assignment=assignment, is_active=True)
+        .select_related('group', 'submitted_by')
+        .order_by('-submission_version')
+    )
+    return [_serialize_group_submission(gs) for gs in subs]
+
+
 # =============================================================================
 # Personal contribution adjustment (Hao GM-12, GM-13)
 # =============================================================================

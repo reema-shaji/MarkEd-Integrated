@@ -847,6 +847,38 @@ export class DefaultService {
         });
     }
     /**
+     * Local Upload
+     * Local-storage upload target (development only). Accepts the same multipart
+     * body an S3 presigned POST would (a `key` field + the `file`) and writes it to
+     * MEDIA_ROOT so the submit/upload flow works without AWS credentials.
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static localUpload(): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/files/local-upload',
+        });
+    }
+    /**
+     * Local File
+     * Serve a locally-stored file (development only), inline as a PDF.
+     * @param key
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static localFile(
+        key: string,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/files/local',
+            query: {
+                'key': key,
+            },
+        });
+    }
+    /**
      * Get Submission File Access Url
      * Get the presigned URL for a submission file
      * @param assignmentId
@@ -1344,6 +1376,26 @@ export class DefaultService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/groups/submissions/{assignment_id}',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Get My Group Submissions
+     * The current student's group's submissions for an assignment (full version
+     * history, newest first). Backs the group workspace so students see their own
+     * group's submission state — listGroupSubmissions is staff-only.
+     * @param assignmentId
+     * @returns GroupSubmissionSchema OK
+     * @throws ApiError
+     */
+    public static getMyGroupSubmissions(
+        assignmentId: number,
+    ): CancelablePromise<Array<GroupSubmissionSchema>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/groups/my-group-submissions/{assignment_id}',
             path: {
                 'assignment_id': assignmentId,
             },
