@@ -283,6 +283,8 @@ function TabBar({ items, variant }: { items: BarItem[]; variant: 'hero' | 'sub' 
   const activeKey = items.find((i) => i.active)?.key
   const hero = variant === 'hero'
 
+  const itemsKey = items.map((i) => i.key).join('|')
+
   React.useLayoutEffect(() => {
     const measure = () => {
       const bar = barRef.current
@@ -293,17 +295,27 @@ function TabBar({ items, variant }: { items: BarItem[]; variant: 'hero' | 'sub' 
       }
       const b = bar.getBoundingClientRect()
       const e = btn.getBoundingClientRect()
+      // Width can be 0 before layout settles — a later pass (rAF / observer)
+      // will catch it, so don't commit an invisible 0-width bar.
+      if (e.width === 0) return
       setInd({ left: e.left - b.left + bar.scrollLeft, width: e.width, visible: true })
     }
     measure()
+    const raf = requestAnimationFrame(measure)
+    const t = setTimeout(measure, 150)
     window.addEventListener('resize', measure)
-    // Re-measure once fonts settle so the underline lines up with final widths.
-    const t = setTimeout(measure, 120)
+    const ro =
+      typeof ResizeObserver !== 'undefined' && barRef.current
+        ? new ResizeObserver(measure)
+        : null
+    if (ro && barRef.current) ro.observe(barRef.current)
     return () => {
-      window.removeEventListener('resize', measure)
+      cancelAnimationFrame(raf)
       clearTimeout(t)
+      window.removeEventListener('resize', measure)
+      ro?.disconnect()
     }
-  }, [activeKey, items.length])
+  }, [activeKey, itemsKey])
 
   return (
     <div className='mx-auto w-full max-w-[1200px] px-7'>
