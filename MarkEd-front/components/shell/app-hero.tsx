@@ -23,7 +23,6 @@ import { ArrowLeft } from 'lucide-react'
 import { useUser } from '@/src/contexts/user-context'
 import { useCourse } from '@/src/contexts/course-context'
 import { useAssignment } from '@/src/contexts/assignment-context'
-import { StatusDot } from '@/components/status-dot'
 
 type Tab = { label: string; seg: string; href: string; active: boolean }
 
@@ -242,24 +241,34 @@ export function AppHero() {
           ) : (
             <TabBar
               variant='sub'
-              items={peerReviews.map((review) => ({
-                key: String(review.id),
-                leading: (
-                  <StatusDot
-                    status={
-                      isPeerReviewComplete(review.submission_id)
-                        ? 'COMPLETED'
-                        : (review.status as 'COMPLETED' | 'IN_PROGRESS' | 'PENDING')
-                    }
-                  />
-                ),
-                label: <span className='truncate'>{review.student_name}</span>,
-                active: params['peer-review-id'] === String(review.submission_id),
-                onClick: () =>
-                  router.push(
-                    `/assignments/${assignmentId}/peer-review/${review.submission_id}`
+              items={peerReviews.map((review) => {
+                const status = isPeerReviewComplete(review.submission_id)
+                  ? 'COMPLETED'
+                  : review.status
+                // Plain dot (not StatusDot) — this sits inside a <button>, so it
+                // must never render its own tooltip trigger (another button).
+                return {
+                  key: String(review.id),
+                  leading: (
+                    <span
+                      className={`h-2 w-2 flex-none rounded-full ${
+                        status === 'COMPLETED'
+                          ? 'bg-[#2F7D4F]'
+                          : status === 'IN_PROGRESS'
+                            ? 'bg-[#C9862A]'
+                            : 'bg-[#C6BFB0]'
+                      }`}
+                    />
                   ),
-              }))}
+                  label: <span className='truncate'>{review.student_name}</span>,
+                  active:
+                    params['peer-review-id'] === String(review.submission_id),
+                  onClick: () =>
+                    router.push(
+                      `/assignments/${assignmentId}/peer-review/${review.submission_id}`
+                    ),
+                }
+              })}
             />
           )}
         </div>
