@@ -1,6 +1,11 @@
 import type { Metadata } from 'next'
 import { Instrument_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
+// react-pdf text/annotation layer styles — hoisted to the global bundle so the
+// text layer is always styled (enables text selection) regardless of when the
+// lazily-loaded PDF viewer chunk mounts.
+import 'react-pdf/dist/Page/TextLayer.css'
+import 'react-pdf/dist/Page/AnnotationLayer.css'
 import { AppShell } from '@/components/app-shell'
 
 // Prototype typography: Instrument Sans for UI, JetBrains Mono for codes/IDs.
