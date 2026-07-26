@@ -32,28 +32,22 @@ const ResultsPage = () => {
           Number(params['id'])
         )
 
-        console.log('Last submission response:', response)
-
         if (response?.id) {
-          // Store the correct submission ID
-          console.log('Setting submission ID:', response.id)
           setSubmissionId(response.id)
-
           // Get the pre-signed URL for the submission file
           const fileResponse = await DefaultService.getPeersLastSubmission(
             Number(params['id']),
             response.id
           )
-
-          console.log('File response:', fileResponse)
-
           setSubmission(fileResponse)
-        } else {
-          console.error('No submission ID found in response:', response)
         }
       } catch (error) {
-        console.error('Error fetching submission:', error)
-        toast.error('Failed to load your results')
+        // A 404 simply means the student hasn't submitted yet — that's the
+        // empty state below, not a failure, so don't surface an error for it.
+        const status = (error as { status?: number })?.status
+        if (status !== 404) {
+          toast.error('Failed to load your results')
+        }
       } finally {
         setIsLoading(false)
       }
@@ -61,14 +55,6 @@ const ResultsPage = () => {
 
     fetchSubmission()
   }, [params])
-
-  // Log the current state values
-  useEffect(() => {
-    console.log('Current state:', {
-      submissionId,
-      hasSubmission: !!submission?.pre_signed_file_url,
-    })
-  }, [submissionId, submission])
 
   if (isLoading) {
     return (
