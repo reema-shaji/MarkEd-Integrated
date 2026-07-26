@@ -40,7 +40,7 @@ export default function PDFViewer({
   const [numPages, setNumPages] = useState<number>(0)
   const [initialAnnotations, setInitialAnnotations] = useState<Annotation[]>([])
   const [annotations, setAnnotations] = useState<Annotation[]>([])
-  const { user } = useUser()
+  const { user, isStudent } = useUser()
 
   const [draftAnnotation, setDraftAnnotation] = useState<{
     selectedText: string
@@ -229,6 +229,7 @@ export default function PDFViewer({
                     ...a,
                     llmFeedback: llm_feedback,
                     llmFeedbackDismissed: false,
+                    awaitingLLM: false,
                   }
                 : a
             )
@@ -373,6 +374,10 @@ export default function PDFViewer({
           author: createdAnnotation.author,
           llmFeedback: createdAnnotation.llm_feedback,
           llmFeedbackDismissed: createdAnnotation.llm_feedback_dismissed,
+          // The backend schedules an AI suggestion only for student comments,
+          // and it arrives 20–90s later. Show the pending indicator until then
+          // (unless one somehow came back immediately).
+          awaitingLLM: isStudent && !createdAnnotation.llm_feedback,
         }
 
         setAnnotations((prev) => [...prev, completeAnnotation])

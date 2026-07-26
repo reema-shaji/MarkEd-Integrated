@@ -1,5 +1,12 @@
 import { UserAvatar } from '@/components/user-avatar'
-import { SquarePen, Trash2, Bot, MessageCircle, Pencil } from 'lucide-react'
+import {
+  SquarePen,
+  Trash2,
+  Bot,
+  MessageCircle,
+  Pencil,
+  Loader2,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
@@ -522,6 +529,19 @@ function AnnotationCard({
               isSelected ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
             )}
           >
+            {annotation.awaitingLLM &&
+              !annotation.llmFeedback &&
+              !isMarkerView && (
+                <div className='mt-2 flex items-center gap-2 rounded-md bg-primary/10 px-3 py-2'>
+                  <Bot className='h-4 w-4 flex-shrink-0 text-primary' />
+                  <p className='text-sm font-medium'>AI Suggestions</p>
+                  <span className='ml-auto flex items-center gap-1.5 text-xs text-muted-foreground'>
+                    <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                    Generating…
+                  </span>
+                </div>
+              )}
+
             {annotation.llmFeedback && !isMarkerView && (
               <FeedbackSection
                 title='AI Suggestions'
