@@ -28,7 +28,9 @@ import { StatusDot } from '@/components/status-dot'
 type Tab = { label: string; seg: string; href: string; active: boolean }
 
 export function AppHero() {
-  const pathname = usePathname() || ''
+  // trailingSlash:true means usePathname() can return e.g. "/assignments/".
+  // Normalise the trailing slash off so exact-match active checks (===) work.
+  const pathname = (usePathname() || '').replace(/\/+$/, '') || '/'
   const router = useRouter()
   const params = useParams()
   const { user } = useUser()
