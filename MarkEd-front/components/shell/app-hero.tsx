@@ -114,9 +114,18 @@ export function AppHero() {
     const t: Tab[] = []
     if (user?.isStaff) {
       t.push(mk('Dashboard', 'dashboard', ['dashboard', '']))
-      t.push(mk('Submissions', 'submissions'))
-      t.push(mk('Marking', 'marking-queue', ['marking-queue', 'mark', 'marker-review']))
-      if (isGroup) t.push(mk('Group Marking', 'group-marking'))
+      // One marking path per type: group work is marked per group submission;
+      // individual work is marked from the submissions list. Showing both (plus
+      // a generic "Marking") for every assignment was the confusing part.
+      if (isGroup) {
+        t.push(mk('Group Marking', 'group-marking', ['group-marking', 'mark']))
+      } else {
+        t.push(mk('Submissions', 'submissions', ['submissions', 'mark']))
+      }
+      // Peer-review moderation only exists when peer review is enabled.
+      if (hasPeer) {
+        t.push(mk('Peer Reviews', 'marking-queue', ['marking-queue', 'marker-review']))
+      }
       t.push(mk('Structure', 'structure'))
       t.push(mk('Customization', 'customization'))
       if (user?.isAcademic || user?.isTA) t.push(mk('Jobs', 'jobs'))
