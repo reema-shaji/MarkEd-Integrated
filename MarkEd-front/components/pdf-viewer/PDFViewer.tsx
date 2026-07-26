@@ -240,12 +240,16 @@ export default function PDFViewer({
       }
     }
 
-    socket.onerror = (error) => {
-      console.error('WebSocket error:', error)
+    // This socket only carries optional live AI-suggestion pushes. It relies on
+    // session auth (the SPA is bearer-token based) and on the AI/Celery pipeline
+    // being live, so it will typically fail here — that's harmless: review
+    // comments work over HTTP. Log quietly instead of raising a console error.
+    socket.onerror = () => {
+      console.debug('Live AI-suggestion socket unavailable (optional feature).')
     }
 
     socket.onclose = () => {
-      console.log('WebSocket connection closed')
+      console.debug('Live AI-suggestion socket closed.')
     }
 
     // Clean up on unmount or when dependencies change
