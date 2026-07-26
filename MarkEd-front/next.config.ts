@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
     ? { basePath: process.env.NEXT_PUBLIC_BASE_PATH }
     : {}),
   trailingSlash: true,
+  // react-pdf / pdfjs-dist ship ESM (.mjs) that Next must transpile, otherwise
+  // pdf.mjs fails to initialise ("Object.defineProperty called on non-object").
+  transpilePackages: ['react-pdf', 'pdfjs-dist'],
   webpack: (config) => {
     config.resolve.alias.canvas = false
     config.resolve.alias.encoding = false

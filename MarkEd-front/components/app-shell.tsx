@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { UserProvider } from '@/src/contexts/user-context'
 import { CourseProvider } from '@/src/contexts/course-context'
 import { AssignmentProvider } from '@/src/contexts/assignment-context'
@@ -65,17 +66,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <UserProvider>
       <CourseProvider>
         <AssignmentProvider>
-          <div className='flex h-screen flex-col overflow-hidden'>
-            <TopHeader />
-            {/* scrollbar-gutter:stable reserves the (custom 8px) scrollbar space
-                on every page, so the centered content never shifts sideways
-                when navigating between short (no scrollbar) and long (scrollbar)
-                pages. */}
-            <main className='flex flex-1 flex-col overflow-y-auto bg-paper [scrollbar-gutter:stable]'>
-              <AppHero />
-              {children}
-            </main>
-          </div>
+          <TooltipProvider delayDuration={200}>
+            <div className='flex h-screen flex-col overflow-hidden'>
+              <TopHeader />
+              {/* scrollbar-gutter:stable reserves the (custom 8px) scrollbar space
+                  on every page, so the centered content never shifts sideways
+                  when navigating between short (no scrollbar) and long (scrollbar)
+                  pages. */}
+              <main className='flex flex-1 flex-col overflow-y-auto bg-paper [scrollbar-gutter:stable]'>
+                <AppHero />
+                {children}
+              </main>
+            </div>
+          </TooltipProvider>
           <Toaster />
         </AssignmentProvider>
       </CourseProvider>
