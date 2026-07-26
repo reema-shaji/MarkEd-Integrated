@@ -750,6 +750,13 @@ def submit_group_assignment(request, group_id: int, payload: GroupSubmitRequest)
     if not assignment.is_group_assignment():
         raise HttpError(400, "This is not a group assignment")
 
+    # Enforce the submission deadline, as individual submissions do — group
+    # submissions previously had no deadline check (dropped in unification).
+    if assignment.release_date and timezone.now() < assignment.release_date:
+        raise HttpError(403, "Submissions are not open yet.")
+    if timezone.now() > assignment.deadline:
+        raise HttpError(403, "The submission deadline has passed.")
+
     previous = GroupSubmission.objects.filter(
         group=group, assignment=assignment
     ).order_by('-submission_version').first()
