@@ -311,8 +311,8 @@ export default function GroupWorkspacePage() {
               </div>
             ) : (
               <>
-                <div className='grid grid-cols-[1.8fr_1fr_.9fr_auto] border-b border-line-card px-[18px] py-3 text-[10px] font-semibold uppercase tracking-[0.85px] text-kicker'>
-                  <span>File name</span>
+                <div className='grid grid-cols-[1.8fr_1fr_.9fr_auto] items-center gap-2 border-b border-line-card px-[18px] py-3 text-[10px] font-semibold uppercase tracking-[0.85px] text-kicker'>
+                  <span className='pl-6'>File name</span>
                   <span>Uploaded by</span>
                   <span>Date</span>
                   <span />

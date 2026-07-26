@@ -57,6 +57,9 @@ export default function DashboardPage() {
   const [allocations, setAllocations] = React.useState<
     PeerReviewSchemaWithStudent[]
   >([])
+  const [markQueue, setMarkQueue] = React.useState<
+    { key: string; title: string; meta: string; href: string }[]
+  >([])
   const params = useParams()
   const router = useRouter()
   const { user } = useUser()
@@ -86,6 +89,38 @@ export default function DashboardPage() {
         .catch(() => {})
     }
   }, [params.id])
+
+  // Marker/TA marking queue: the actual submissions to mark for this
+  // assignment (group submissions for a group assignment, individual otherwise)
+  // — not peer-review allocations, which are empty for non-peer marking.
+  React.useEffect(() => {
+    if (!assignment || !user || user.isAcademic) return
+    const id = Number(params.id)
+    const load = async () => {
+      if (assignment.assignment_type === 'GROUP') {
+        const subs = await DefaultService.listGroupSubmissions(id).catch(() => [])
+        setMarkQueue(
+          subs.map((s) => ({
+            key: `g${s.id}`,
+            title: s.group_name,
+            meta: `Submission v${s.submission_version} · by ${s.submitted_by_name}`,
+            href: `/assignments/${id}/group-marking`,
+          }))
+        )
+      } else {
+        const subs = await DefaultService.getAllSubmissions(id).catch(() => [])
+        setMarkQueue(
+          subs.map((s) => ({
+            key: `s${s.id}`,
+            title: s.student_name,
+            meta: s.student_number,
+            href: `/assignments/${id}/mark/${s.id}`,
+          }))
+        )
+      }
+    }
+    load()
+  }, [assignment, user, params.id])
 
   const handleMatchPeers = async () => {
     setIsMatching(true)
@@ -133,88 +168,59 @@ export default function DashboardPage() {
     )
   }
 
-  // --- Marker / TA dashboard: their own marking allocation and queue -------
+  // --- Marker / TA dashboard: the real marking queue for this assignment ---
   if (!isAcademic) {
-    const marked = allocations.filter((a) => a.status === 'COMPLETED').length
-    const pending = allocations.length - marked
-    const strip = [
-      { label: 'My allocation', value: String(allocations.length) },
-      { label: 'Marked', value: String(marked) },
-      { label: 'Pending', value: String(pending) },
-    ]
     return (
       <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
-        <div className='mb-5 text-[23px] font-semibold tracking-[-.5px] text-[#131A26]'>
-          Marker Dashboard
-        </div>
-
-        <div className='mb-5 grid grid-cols-3 divide-x divide-[#F0ECE4] overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
-          {strip.map((s) => (
-            <div key={s.label} className='px-5 py-[18px]'>
-              <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
-                {s.label}
-              </div>
-              <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
-                {s.value}
-              </div>
+        <div className='mb-5 grid grid-cols-2 divide-x divide-[#F0ECE4] overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+          <div className='px-5 py-[18px]'>
+            <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+              To mark
             </div>
-          ))}
+            <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
+              {markQueue.length}
+            </div>
+          </div>
+          <div className='px-5 py-[18px]'>
+            <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+              Peer reviews to moderate
+            </div>
+            <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
+              {allocations.length}
+            </div>
+          </div>
         </div>
 
         <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
           <div className='border-b border-[#F0ECE4] px-5 py-4 text-[15px] font-semibold tracking-[-.1px] text-[#131A26]'>
             My Marking Queue
           </div>
-          {allocations.length === 0 ? (
+          {markQueue.length === 0 ? (
             <p className='px-5 py-10 text-center text-sm text-[#8A9099]'>
-              Nothing allocated to you yet. Once submissions are matched to
-              markers, they appear here.
+              Nothing to mark yet. Submissions appear here as students submit.
             </p>
           ) : (
-            allocations.map((a) => {
-              const badge =
-                a.status === 'COMPLETED'
-                  ? { label: 'Marked', cls: 'bg-[#E9F1EA] text-[#2F7D4F]' }
-                  : a.status === 'IN_PROGRESS'
-                    ? { label: 'In Progress', cls: 'bg-[#F8EFDC] text-[#8A5D14]' }
-                    : { label: 'Unmarked', cls: 'bg-[#F2EEE6] text-[#6D6455]' }
-              const isReview = a.status === 'COMPLETED'
-              const isPrimary = a.status === 'IN_PROGRESS'
-              return (
-                <div
-                  key={a.id}
-                  className='flex items-center gap-3 border-b border-[#F0ECE4] px-5 py-[13px] last:border-b-0'
+            markQueue.map((q) => (
+              <div
+                key={q.key}
+                className='flex items-center gap-3 border-b border-[#F0ECE4] px-5 py-[13px] last:border-b-0'
+              >
+                <span className='flex-1'>
+                  <span className='block text-[13.5px] font-semibold text-[#131A26]'>
+                    {q.title}
+                  </span>
+                  <span className='mt-px block font-mono text-xs text-[#5A6070]'>
+                    {q.meta}
+                  </span>
+                </span>
+                <button
+                  onClick={() => router.push(q.href)}
+                  className='rounded-[9px] bg-[#131A26] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#243247]'
                 >
-                  <span className='flex-1'>
-                    <span className='block text-[13.5px] font-semibold text-[#131A26]'>
-                      {a.student_name}
-                    </span>
-                    <span className='mt-px block font-mono text-xs text-[#5A6070]'>
-                      {a.student_number}
-                    </span>
-                  </span>
-                  <span
-                    className={`inline-block whitespace-nowrap rounded-[6px] px-2.5 py-0.5 text-[11px] font-medium ${badge.cls}`}
-                  >
-                    {badge.label}
-                  </span>
-                  <button
-                    onClick={() =>
-                      router.push(
-                        `/assignments/${params.id}/mark/${a.submission_id}`
-                      )
-                    }
-                    className={
-                      isPrimary
-                        ? 'rounded-[9px] bg-[#131A26] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#243247]'
-                        : 'rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
-                    }
-                  >
-                    {isReview ? 'Review' : 'Mark'}
-                  </button>
-                </div>
-              )
-            })
+                  Mark
+                </button>
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -235,10 +241,6 @@ export default function DashboardPage() {
 
   return (
     <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
-      <div className='mb-5 text-[23px] font-semibold tracking-[-.5px] text-[#131A26]'>
-        Staff Dashboard
-      </div>
-
       {/* 4-up stat strip */}
       <div className='mb-5 grid grid-cols-2 divide-x divide-y divide-[#F0ECE4] overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white md:grid-cols-4 md:divide-y-0'>
         <div className='px-5 py-[18px]'>

@@ -116,14 +116,14 @@ export function AppHero() {
     const t: Tab[] = []
     if (user?.isStaff) {
       t.push(mk('Dashboard', 'dashboard', ['dashboard', '']))
-      // One marking path per type: group work is marked per group submission;
-      // individual work is marked from the submissions list. Showing both (plus
-      // a generic "Marking") for every assignment was the confusing part.
-      if (isGroup) {
-        t.push(mk('Group Marking', 'group-marking', ['group-marking', 'mark']))
-      } else {
-        t.push(mk('Submissions', 'submissions', ['submissions', 'mark']))
-      }
+      // One "Marking" tab whose content depends on the type: group work opens
+      // the group-submission marking, individual work the submissions list.
+      t.push({
+        label: 'Marking',
+        seg: isGroup ? 'group-marking' : 'submissions',
+        href: `${base}/${isGroup ? 'group-marking' : 'submissions'}`,
+        active: ['submissions', 'group-marking', 'mark'].includes(seg),
+      })
       // Peer-review moderation only exists when peer review is enabled.
       if (hasPeer) {
         t.push(mk('Peer Reviews', 'marking-queue', ['marking-queue', 'marker-review']))
@@ -148,10 +148,14 @@ export function AppHero() {
       }
     } else if (user?.isStudent) {
       t.push(mk('Assignment', 'home', ['home', '']))
-      // Individual submission only for individual assignments; a group submits
-      // through its shared workspace, so there's no per-student submit there.
-      if (isGroup) t.push(mk('Group Workspace', 'workspace'))
-      else t.push(mk('Submit Work', 'submit'))
+      // One "Submission" tab: individual work shows the submit form; group work
+      // shows the shared workspace (where the group submits).
+      t.push({
+        label: 'Submission',
+        seg: isGroup ? 'workspace' : 'submit',
+        href: `${base}/${isGroup ? 'workspace' : 'submit'}`,
+        active: ['submit', 'workspace'].includes(seg),
+      })
       if (hasSA) t.push(mk('Self-Assessment', 'self-assessment'))
       if (hasPeer) t.push(mk('Peer Review', 'peer-review'))
       t.push(

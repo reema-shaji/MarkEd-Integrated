@@ -545,12 +545,19 @@ def trigger_peer_review_matching(request, assignment_id: int):
 @check_permissions(IsCourseStaffFromAssignment)
 def get_assignment_statistics(request, assignment_id: int):
     assignment = Assignment.objects.get(id=assignment_id)
-    
-    # Get submission stats
-    submissions = Submission.objects.filter(assignment_id=assignment_id)
-    total_submissions = submissions.count()
-    unique_submitters = submissions.values('student').distinct().count()
-    
+    is_group = assignment.is_group_assignment()
+
+    # Submission totals — count group submissions for group assignments, else
+    # individual submissions. (The "Submissions" tile was always 0 for groups.)
+    if is_group:
+        _gsubs = GroupSubmission.objects.filter(assignment_id=assignment_id, is_active=True)
+        total_submissions = _gsubs.count()
+        unique_submitters = _gsubs.values('group_id').distinct().count()
+    else:
+        submissions = Submission.objects.filter(assignment_id=assignment_id)
+        total_submissions = submissions.count()
+        unique_submitters = submissions.values('student').distinct().count()
+
     # Get active users in last 24h - using Course2Student model directly
     twenty_four_hours_ago = timezone.now() - timedelta(hours=24)
     active_users = Course2Student.objects.filter(
@@ -575,7 +582,6 @@ def get_assignment_statistics(request, assignment_id: int):
     # --- Dashboard breakdowns (prototype Academic Dashboard) ----------------
     enrolled = Course2Student.objects.filter(course=assignment.course).count()
     deadline = assignment.deadline
-    is_group = assignment.is_group_assignment()
 
     # Latest submission per submitter (student, or group for group assignments),
     # and the grade band from its rubric marks.

@@ -149,7 +149,17 @@ export default function AssignmentHomePage() {
       ) : (
         <span className='font-normal text-[#8A9099]'>Not yet submitted</span>
       ),
-      btn: { label: submitted ? 'Resubmit' : 'Submit work', seg: 'submit', primary: !submitted },
+      // Group work is submitted from the shared workspace, not an individual
+      // submit page — route there for group assignments.
+      btn: {
+        label: isGroup
+          ? 'Open workspace'
+          : submitted
+            ? 'Resubmit'
+            : 'Submit work',
+        seg: isGroup ? 'workspace' : 'submit',
+        primary: !submitted,
+      },
     },
   ]
 

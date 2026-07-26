@@ -13,7 +13,9 @@ import { AnnotationsSidebar } from './components/AnnotationsSidebar'
 import { getWebSocketURL } from '@/src/config/websocket'
 import { debounce } from 'lodash'
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+// Serve the worker same-origin from /public (pinned to react-pdf's own pdfjs
+// build) — a cross-origin CDN module worker fails in the browser.
+pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/pdf.worker.min.mjs`
 
 const LoadingPlaceholder = () => (
   <div className='flex w-[760px] flex-col gap-8 duration-300 animate-in fade-in'>
