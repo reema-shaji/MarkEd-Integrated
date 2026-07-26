@@ -403,19 +403,20 @@ export default function MarkerPDFViewer({
         {otherControls}
       </Controls>
 
-      <div
-        className='relative flex justify-center pl-4'
-        onClick={(event) => {
-          if (event.target === event.currentTarget) {
-            setSelectedAnnotation(null)
-          }
-        }}
-      >
+      <div className='flex'>
+        <div
+          className='relative flex flex-1 justify-center overflow-x-auto px-6 py-6'
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setSelectedAnnotation(null)
+            }
+          }}
+        >
         <Document
           file={url}
           onLoadSuccess={onDocumentLoadSuccess}
           loading={<LoadingPlaceholder />}
-          className={`flex w-min flex-col gap-8 rounded-md ${
+          className={`flex h-min w-min flex-col gap-6 ${
             numPages > 0
               ? 'delay-500 duration-300 animate-in fade-in'
               : 'opacity-0'
@@ -426,7 +427,7 @@ export default function MarkerPDFViewer({
               <PDFPage
                 pageNumber={index + 1}
                 width={760}
-                className='overflow-hidden rounded-lg border border-border'
+                className='overflow-hidden rounded-[14px] border border-[#EAE5DB] shadow-[0_1px_4px_rgba(19,26,38,0.06)]'
                 onMouseUp={() => {
                   setCurrentPageNumber(index + 1)
                   debouncedHandleTextSelection()
@@ -437,6 +438,7 @@ export default function MarkerPDFViewer({
             </div>
           ))}
         </Document>
+        </div>
 
         <AnnotationsSidebar
           ref={sidebarRef as React.RefObject<HTMLDivElement>}

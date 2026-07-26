@@ -56,7 +56,10 @@ export default function Controls({
   }
 
   return (
-    <div className='sticky top-0 z-10 mb-4 w-full border-b border-line bg-white'>
+    <div className='sticky top-0 z-10 w-full border-b border-[#E3DFD5] bg-white'>
+      {/* Design "PDF Review" header: full-bleed 56px bar. The left group sits
+          over the page area and the right CTAs over the sidebar, matching the
+          full-width review workspace below. */}
       <div className='flex h-14 items-center justify-between px-4'>
         <div className='flex items-center gap-6'>
           {/* Statistics */}

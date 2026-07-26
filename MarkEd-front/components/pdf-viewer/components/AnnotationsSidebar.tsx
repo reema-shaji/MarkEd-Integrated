@@ -736,7 +736,9 @@ export function AnnotationsSidebar({
     <div
       ref={ref}
       className={cn(
-        'sticky top-20 h-[calc(100vh-5rem)] w-96 min-w-80 space-y-4 overflow-y-auto px-4 pb-6',
+        // Design "PDF Review" sidebar: a distinct white panel with a left
+        // divider (384px), scrolling independently of the page area.
+        'sticky top-20 h-[calc(100vh-5rem)] w-[384px] min-w-[340px] shrink-0 space-y-3.5 overflow-y-auto border-l border-[#E3DFD5] bg-white p-4',
         className
       )}
       onClick={(event) => {
