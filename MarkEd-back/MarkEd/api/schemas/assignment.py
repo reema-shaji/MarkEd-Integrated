@@ -50,6 +50,13 @@ class MyAssignmentStatusSchema(Schema):
     submitted: bool = False
     submitted_at: Optional[datetime] = None
     is_late: bool = False
+    # Individual mark, shown on the dashboard row like the original student home.
+    # Populated only once marking is finished (finished-only gate); group marks
+    # come from the group-result endpoint instead.
+    mark_released: bool = False
+    mark_score: Optional[float] = None
+    mark_total: Optional[float] = None
+    mark_percentage: Optional[float] = None
 
 
 class AssignmentCreateRequest(Schema):

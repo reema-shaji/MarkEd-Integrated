@@ -247,6 +247,14 @@ export default function CourseDashboardPage() {
                       </Chip>
                     )
                   })()}
+                {/* Individual mark, once released — like the original student home. */}
+                {user?.isStudent &&
+                  statusMap[a.id]?.mark_released &&
+                  statusMap[a.id]?.mark_percentage != null && (
+                    <Chip bg='#131A26' fg='#FFFFFF'>
+                      {Math.round(statusMap[a.id].mark_percentage as number)}%
+                    </Chip>
+                  )}
               </button>
             )
           })

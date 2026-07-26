@@ -88,6 +88,22 @@ def get_my_assignment_status(request, assignment_id: int):
             student_id=request.user_id, assignment=assignment
         ).order_by('-submissionDateTime').first())
 
+    # Individual mark for the dashboard row (finished-only gate) — mirrors the
+    # mark students saw on the original student home. Group marks are shown via
+    # the group-result page, so they're intentionally left out here.
+    mark_released = False
+    mark_score = mark_total = mark_percentage = None
+    if submission and not assignment.is_group_assignment():
+        rows = list(
+            SubmissionCriteria.objects.filter(submission=submission)
+            .select_related('criteria')
+        )
+        if rows and all(r.status == 2 for r in rows):
+            mark_score = sum((r.score or 0) for r in rows)
+            mark_total = sum((r.criteria.marks if r.criteria else 0) for r in rows)
+            mark_released = True
+            mark_percentage = (mark_score / mark_total * 100) if mark_total > 0 else 0.0
+
     return {
         "assignment_id": assignment_id,
         "group_id": group.id if group else None,
@@ -95,6 +111,10 @@ def get_my_assignment_status(request, assignment_id: int):
         "submitted": bool(submission),
         "submitted_at": submission.submissionDateTime if submission else None,
         "is_late": bool(submission and submission.submissionDateTime > assignment.deadline),
+        "mark_released": mark_released,
+        "mark_score": mark_score,
+        "mark_total": mark_total,
+        "mark_percentage": mark_percentage,
     }
 
 @router.post("/create/{course_id}", response=PeerAssignmentCreationResponse, operation_id="createAssignment")

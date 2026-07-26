@@ -12,5 +12,9 @@ export type MyAssignmentStatusSchema = {
     submitted?: boolean;
     submitted_at?: (string | null);
     is_late?: boolean;
+    mark_released?: boolean;
+    mark_score?: (number | null);
+    mark_total?: (number | null);
+    mark_percentage?: (number | null);
 };
 
