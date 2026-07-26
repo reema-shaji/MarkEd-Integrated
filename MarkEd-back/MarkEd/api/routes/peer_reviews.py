@@ -69,30 +69,23 @@ def get_peer_reviews(request, assignment_id: int):
     reviews = PeerReviewAllocation.objects.filter(
         assignment_id=assignment_id,
         reviewer_id=request.user_id
-    ).select_related('submission__student', 'group_submission__group')
+    ).select_related('submission__student', 'group_submission__group').order_by('id')
 
+    # Peer review is anonymous: the reviewer never sees whose work they review.
+    # Each allocation is labelled "Submission A/B/C (anon.)" in a stable order —
+    # the author's real name is never sent to the client.
     result = []
-    for review in reviews:
-        if review.group_submission_id:
-            # Group peer review: the reviewed object is a group submission, and
-            # the reviewer only ever sees an anonymised group label (§8.4). The
-            # group submission id is carried in the submission_id field so the
-            # existing frontend routing keeps working unchanged.
-            result.append({
-                "id": review.id,
-                "submission_id": review.group_submission_id,
-                "status": review.status,
-                "student_name": f"Group: {review.group_submission.group.name}",
-            })
-        else:
-            result.append({
-                "id": review.id,
-                "submission_id": review.submission_id,
-                "status": review.status,
-                "student_name": getattr(
-                    getattr(review.submission, 'student', None), 'userName', None
-                ),
-            })
+    for idx, review in enumerate(reviews):
+        letter = chr(ord('A') + idx) if idx < 26 else str(idx + 1)
+        result.append({
+            "id": review.id,
+            "submission_id": (
+                review.group_submission_id if review.group_submission_id
+                else review.submission_id
+            ),
+            "status": review.status,
+            "student_name": f"Submission {letter} (anon.)",
+        })
     return result
 
 @router.post("/{assignment_id}/submit-review", response=CreationResponse)
