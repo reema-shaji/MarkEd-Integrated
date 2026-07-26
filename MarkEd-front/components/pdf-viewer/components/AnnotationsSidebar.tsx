@@ -385,8 +385,17 @@ function FeedbackCount({
     </div>
   )
 }
+
+// Prototype peer-review comment colours: red / blue / green.
+const REVIEW_COLORS = [
+  { borderColor: 'border-[#FCA5A5]', bgColor: 'bg-[#FEF2F2]' },
+  { borderColor: 'border-[#93C5FD]', bgColor: 'bg-[#EFF6FF]' },
+  { borderColor: 'border-[#86EFAC]', bgColor: 'bg-[#F0FDF4]' },
+]
+
 function AnnotationCard({
   annotation,
+  index = 0,
   isSelected,
   isHighlighted,
   onHighlight,
@@ -401,6 +410,7 @@ function AnnotationCard({
   isReadOnly = false,
 }: {
   annotation: Annotation
+  index?: number
   isSelected: boolean
   isHighlighted: boolean
   onHighlight: (id: string | null) => void
@@ -425,32 +435,15 @@ function AnnotationCard({
     [onHighlight]
   )
 
-  const getReviewerColor = (userName: string) => {
-    const colors = [
-      'border-red-300 bg-red-50',
-      'border-blue-300 bg-blue-50',
-      'border-green-300 bg-green-50',
-      'border-yellow-300 bg-yellow-50',
-      'border-purple-300 bg-purple-50',
-      'border-pink-300 bg-pink-50',
-      'border-indigo-300 bg-indigo-50',
-      'border-orange-300 bg-orange-50',
-    ]
-
-    // Simple hash function to get a consistent index
-    const hash = userName.split('').reduce((acc, char) => {
-      return acc + char.charCodeAt(0)
-    }, 0)
-
-    const borderColor = colors[hash % colors.length].split(' ')[0]
-    const bgColor = colors[hash % colors.length].split(' ')[1]
-
-    return { borderColor, bgColor }
-  }
-
-  const { borderColor, bgColor } = getReviewerColor(
-    annotation.author.userName || ''
-  )
+  // Prototype uses three colours (red / blue / green). In the marker view they
+  // distinguish reviewers (by name); in the student's own anonymous view they
+  // just cycle by comment order.
+  const hash = (annotation.author.userName || '')
+    .split('')
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const colorIndex =
+    (isMarkerView ? hash : index) % REVIEW_COLORS.length
+  const { borderColor, bgColor } = REVIEW_COLORS[colorIndex]
 
   // Check if this is a marker's own comment
   const isMarkerComment =
@@ -483,8 +476,10 @@ function AnnotationCard({
           !isSelected && 'cursor-pointer'
         )}
       >
-        <div className='mb-4 flex items-center justify-between'>
-          <UserAvatar user={annotation.author} />
+        <div className='mb-3 flex items-center justify-between'>
+          {/* Peer review is anonymous to students — only show the reviewer's
+              identity in the marker's moderation view. */}
+          {isMarkerView ? <UserAvatar user={annotation.author} /> : <span />}
 
           <div className='flex items-center gap-2'>
             {isSelected && isMarkerComment && !isReadOnly && (
@@ -509,7 +504,7 @@ function AnnotationCard({
           {annotation.feedback && (
             <div className='mt-2'>
               <FeedbackSection
-                title={`${annotation.author.userName}'s feedback`}
+                title={isMarkerView ? `${annotation.author.userName}'s feedback` : 'Feedback'}
                 content={annotation.feedback}
                 icon={<MessageCircle className='h-4 w-4' />}
                 canEdit={user?.id === annotation.author.id && !isMarkerView}
@@ -747,10 +742,11 @@ export function AnnotationsSidebar({
         />
       )}
 
-      {sortedAnnotations.map((annotation) => (
+      {sortedAnnotations.map((annotation, index) => (
         <MemoizedAnnotationCard
           key={annotation.id}
           annotation={annotation}
+          index={index}
           isSelected={selectedAnnotation?.id === annotation.id}
           isHighlighted={highlightedAnnotation === annotation.id}
           onHighlight={onAnnotationHighlight}
