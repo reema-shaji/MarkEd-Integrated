@@ -127,7 +127,6 @@ export function AppHero() {
         t.push(mk('Peer Reviews', 'marking-queue', ['marking-queue', 'marker-review']))
       }
       t.push(mk('Structure', 'structure'))
-      t.push(mk('Customization', 'customization'))
       if (user?.isAcademic || user?.isTA) t.push(mk('Jobs', 'jobs'))
       if (isGroup && currentAssignment.group_set_id) {
         t.push({
