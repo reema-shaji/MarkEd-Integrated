@@ -43,6 +43,7 @@ import type { MessageOut } from '../models/MessageOut';
 import type { MoveMemberRequest } from '../models/MoveMemberRequest';
 import type { MyAssignmentStatusSchema } from '../models/MyAssignmentStatusSchema';
 import type { MyGroupResultSchema } from '../models/MyGroupResultSchema';
+import type { MySubmissionResultSchema } from '../models/MySubmissionResultSchema';
 import type { PeerAssignmentCreationResponse } from '../models/PeerAssignmentCreationResponse';
 import type { PeerAssignmentRequest } from '../models/PeerAssignmentRequest';
 import type { PeerMatch } from '../models/PeerMatch';
@@ -782,6 +783,31 @@ export class DefaultService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/submissions/assignment/{assignment_id}/last',
+            path: {
+                'assignment_id': assignmentId,
+            },
+        });
+    }
+    /**
+     * Get My Submission Result
+     * The student's own mark for an individual assignment.
+     *
+     * Restores the mark students saw on the original student home (Tomas'
+     * student/views.home): score summed across rubric criteria, revealed only once
+     * every criterion is Finished (status 2). Until then the numbers are withheld
+     * (`released=False`) — the same finished-only gate the source used before it
+     * showed a mark instead of "-". The scores never leave the server unless the
+     * requester owns the submission and marking is complete.
+     * @param assignmentId
+     * @returns MySubmissionResultSchema OK
+     * @throws ApiError
+     */
+    public static getMySubmissionResult(
+        assignmentId: number,
+    ): CancelablePromise<MySubmissionResultSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/submissions/assignment/{assignment_id}/my-result',
             path: {
                 'assignment_id': assignmentId,
             },

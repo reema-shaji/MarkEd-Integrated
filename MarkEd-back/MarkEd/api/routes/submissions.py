@@ -1,14 +1,36 @@
+import json
+
 from ninja import Router
 from typing import List
-from ..schemas import SubmissionSchema, SubmissionRequest, SubmissionResponse, PeersLastSubmissionResponse, AllSubmissionSchema
+from ..schemas import SubmissionSchema, SubmissionRequest, SubmissionResponse, PeersLastSubmissionResponse, AllSubmissionSchema, MySubmissionResultSchema
 from ..decorators import require_auth, check_permissions
 from ..permissions import AssignmentSubmissionDeadlineHasNotPassed, CanPerformPeerReview, IsEnrolledStudent, IsCourseStaffFromAssignment
-from ...models import Submission, Assignment, PeerReviewAllocation, Course2Marker, User, GroupSubmission, GroupMember
+from ...models import Submission, Assignment, PeerReviewAllocation, Course2Marker, User, GroupSubmission, GroupMember, SubmissionCriteria
 from datetime import timedelta
 from ...services.storage import StorageService
 from ninja.errors import HttpError
 
 router = Router()
+
+
+def _readable_feedback(raw):
+    """Rubric feedback is stored as a {"start","middle","end"} JSON blob (legacy
+    marking format); flatten it to a single human string, or return the raw text
+    if it isn't that shape. Empty -> None."""
+    if not raw:
+        return None
+    try:
+        parsed = json.loads(raw)
+    except (ValueError, TypeError):
+        parsed = None
+    if isinstance(parsed, dict):
+        text = ' '.join(
+            str(parsed.get(k, '')).strip()
+            for k in ('start', 'middle', 'end')
+            if str(parsed.get(k, '')).strip()
+        )
+        return text or None
+    return raw if str(raw).strip() else None
 
 @router.get("/", response=List[SubmissionSchema], operation_id="listSubmissions")
 @require_auth(roles=['Student', 'Marker'])
@@ -63,8 +85,64 @@ def get_last_submission(request, assignment_id: int):
     
     if not submission:
         raise HttpError(404, "No submission found")
-    
+
     return submission
+
+@router.get("/assignment/{assignment_id}/my-result", response=MySubmissionResultSchema, operation_id="getMySubmissionResult")
+@require_auth(roles=['Student'])
+def get_my_submission_result(request, assignment_id: int):
+    """The student's own mark for an individual assignment.
+
+    Restores the mark students saw on the original student home (Tomas'
+    student/views.home): score summed across rubric criteria, revealed only once
+    every criterion is Finished (status 2). Until then the numbers are withheld
+    (`released=False`) — the same finished-only gate the source used before it
+    showed a mark instead of "-". The scores never leave the server unless the
+    requester owns the submission and marking is complete.
+    """
+    submission = Submission.objects.filter(
+        student_id=request.user_id,
+        assignment_id=assignment_id,
+    ).order_by('-submissionDateTime').first()
+    if not submission:
+        raise HttpError(404, "You have not submitted to this assignment")
+
+    rows = list(
+        SubmissionCriteria.objects.filter(submission=submission)
+        .select_related('criteria')
+    )
+    finished = bool(rows) and all(r.status == 2 for r in rows)
+
+    if not finished:
+        # Marking not complete: withhold the numbers, mirror the original "-".
+        return {
+            "released": False,
+            "status": "Marking" if rows else "Submitted",
+            "score": 0.0,
+            "total": 0.0,
+            "percentage": 0.0,
+            "breakdown": [],
+        }
+
+    score = sum((r.score or 0) for r in rows)
+    total = sum((r.criteria.marks if r.criteria else 0) for r in rows)
+    breakdown = [
+        {
+            "name": r.criteria.name if r.criteria else "Criterion",
+            "score": r.score or 0,
+            "max": r.criteria.marks if r.criteria else 0,
+            "feedback": _readable_feedback(r.feedback),
+        }
+        for r in rows
+    ]
+    return {
+        "released": True,
+        "status": "Finished",
+        "score": score,
+        "total": total,
+        "percentage": (score / total * 100) if total > 0 else 0.0,
+        "breakdown": breakdown,
+    }
 
 @router.get("/assignment/{assignment_id}/peer-review/{submission_id}", response=PeersLastSubmissionResponse, operation_id="getPeersLastSubmission")
 @require_auth()

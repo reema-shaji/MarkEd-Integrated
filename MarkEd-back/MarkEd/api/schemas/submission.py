@@ -23,6 +23,30 @@ class PeersLastSubmissionResponse(Schema):
     pre_signed_file_url: Optional[str] = None
     message: Optional[str] = None 
 
+class CriterionResultEntry(Schema):
+    """One rubric criterion's mark on the student's own submission."""
+    name: str
+    score: float
+    max: float
+    feedback: Optional[str] = None
+
+
+class MySubmissionResultSchema(Schema):
+    """A student's own mark for an individual assignment.
+
+    Mirrors the original student-home mark (Tomas' student/views.home): the mark
+    is only revealed once every criterion is Finished. Until then `released` is
+    False and the numbers are withheld — the same finished-only gate the source
+    used before showing a mark instead of "-".
+    """
+    released: bool
+    status: str  # 'Submitted' | 'Marking' | 'Finished'
+    score: float
+    total: float
+    percentage: float
+    breakdown: List[CriterionResultEntry]
+
+
 class AllSubmissionSchema(Schema):
     id: int
     student_id: int

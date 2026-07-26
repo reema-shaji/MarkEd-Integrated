@@ -3,7 +3,7 @@ from .course import CourseSchema
 from .feedback import FeedbackAnalysisRequest, FeedbackAnalysisResponse
 from .file import FileUploadResponse, FileAccessResponse
 from .peer_review import PeerMatch, PeerReviewSchema, PeerReviewCommentSchema, PeerReviewCommentAction, PeerReviewCompletion, PeerReviewSchemaWithStudent
-from .submission import SubmissionRequest, SubmissionSchema, SubmissionResponse, PeersLastSubmissionResponse, AllSubmissionSchema
+from .submission import SubmissionRequest, SubmissionSchema, SubmissionResponse, PeersLastSubmissionResponse, AllSubmissionSchema, MySubmissionResultSchema, CriterionResultEntry
 from .user import UserSchema
 
 __all__ = [
@@ -39,4 +39,6 @@ __all__ = [
     'SubmissionResponse',
     'PeersLastSubmissionResponse',
     'AllSubmissionSchema',
-] 
+    'MySubmissionResultSchema',
+    'CriterionResultEntry',
+]
