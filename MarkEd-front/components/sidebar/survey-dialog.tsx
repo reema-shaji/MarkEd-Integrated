@@ -51,7 +51,8 @@ export function SurveyDialog({
           <DialogTitle className='flex items-center gap-2 text-xl'>
             🎉 Congratulations!
           </DialogTitle>
-          <DialogDescription className='space-y-4'>
+          <DialogDescription asChild>
+            <div className='space-y-4 text-sm text-muted-foreground'>
             <p className='text-lg font-medium'>
               You&apos;ve completed your assignment! Well done!
             </p>
@@ -92,6 +93,7 @@ export function SurveyDialog({
                 <Copy className='h-3 w-3 align-middle' />
               </span>
             </p>
+            </div>
           </DialogDescription>
         </DialogHeader>
 

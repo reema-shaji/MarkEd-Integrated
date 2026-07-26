@@ -10,7 +10,9 @@ export const StatusDot = ({
 }) => {
   return (
     <Tooltip>
-      <TooltipTrigger>
+      {/* asChild: render the span as the trigger, not a nested <button> — the
+          status dot is often placed inside another button (e.g. a tab). */}
+      <TooltipTrigger asChild>
         <span
           className={`flex items-center ${
             status === 'COMPLETED'

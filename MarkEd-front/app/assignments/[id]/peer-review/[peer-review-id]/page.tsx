@@ -71,7 +71,10 @@ const PeerReviewPage = () => {
               Welcome to Peer Review
             </DialogTitle>
 
-            <DialogDescription className='space-y-4'>
+            {/* asChild so this renders a <div>, not a <p> — it contains block
+                children (<p>, <div>) which cannot nest inside a <p>. */}
+            <DialogDescription asChild>
+              <div className='space-y-4 text-sm text-muted-foreground'>
               <p>
                 To review your peer, add comments to their submissions by
                 selecting text and providing feedback on how to improve their
@@ -96,6 +99,7 @@ const PeerReviewPage = () => {
                   </Link>
                   .
                 </p>
+              </div>
               </div>
             </DialogDescription>
           </DialogHeader>
