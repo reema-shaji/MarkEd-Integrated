@@ -745,9 +745,10 @@ def get_marker_jobs(request, assignment_id: int):
             assignment_id=assignment_id
         ).values('student_id').distinct().count()
 
+    # Only people who actually mark — markers and TAs, not course organisers.
     markers = (
         Course2Marker.objects
-        .filter(course=assignment.course)
+        .filter(course=assignment.course, marker__role__in=['M', 'T'])
         .select_related('marker')
     )
 
