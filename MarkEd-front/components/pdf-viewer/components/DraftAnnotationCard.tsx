@@ -1,12 +1,4 @@
 import { useKeyboardShortcut } from '@/components/keyboard-shortcuts'
-import { ShortcutKeys } from '@/components/keyboard-shortcuts'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { Button } from '@/components/ui/button'
 
 type DraftAnnotation = {
   selectedText: string
@@ -33,78 +25,56 @@ export function DraftAnnotationCard({
   useKeyboardShortcut({ key: 'Escape' }, onDraftCancel)
 
   const maxCharacterLimit = 600
-  const warningThreshold = 0.9
   const currentLength = draftAnnotation.feedback?.length || 0
-  const showLimit = currentLength >= maxCharacterLimit * warningThreshold
+  const canSubmit = !!draftAnnotation.feedback?.trim()
 
   return (
-    <div className='mb-4 rounded-[12px] border-2 border-[#C9A24A] bg-[#FBF4E3] p-[14px] shadow-sm'>
-      <blockquote className='mb-4 border-l-2 border-[#C9A24A] pl-2.5'>
-        <p className='text-[12px] italic leading-[1.5] text-muted2'>
-          {draftAnnotation.selectedText}
-        </p>
-      </blockquote>
-      <div className='relative'>
-        <textarea
-          className='mb-2 min-h-[100px] w-full rounded-md border border-border bg-background p-2 text-foreground'
-          placeholder='Enter your feedback...'
-          onChange={(e) => {
-            const value = e.target.value
-            if (value.length <= maxCharacterLimit) {
-              onDraftChange({ ...draftAnnotation, feedback: value })
-            }
-          }}
-          value={draftAnnotation.feedback || ''}
-          autoFocus
-          style={{ height: 'auto', minHeight: '100px' }}
-          onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement
-            target.style.height = 'auto'
-            target.style.height = `${target.scrollHeight}px`
-          }}
-        />
-        {showLimit && (
-          <div className='absolute bottom-4 right-2 text-xs text-muted-foreground'>
-            {currentLength}/{maxCharacterLimit}
-          </div>
-        )}
-      </div>
-      <div className='flex justify-end gap-2'>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant='outline' size='sm' onClick={onDraftCancel}>
-                Cancel
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <div className='flex items-center gap-1'>
-                <p>Press</p>
-                <ShortcutKeys shortcut={{ key: 'Escape' }} />
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+    <div className='rounded-[12px] border-2 border-[#C9A24A] bg-[#FBF4E3] p-[14px]'>
+      <div className='mb-2 text-[13px] font-semibold text-ink'>Add Comment</div>
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size='sm'
-                onClick={onDraftSubmit}
-                disabled={!draftAnnotation.feedback?.trim()}
-              >
-                Submit
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <div className='flex items-center gap-1'>
-                <p>Press</p>
-                <ShortcutKeys shortcut={{ key: 'Enter', cmd: true }} />
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      {draftAnnotation.selectedText && (
+        <div className='mb-2 rounded-[4px] bg-[#F8EFDC] px-2 py-[5px] text-[11px] italic leading-[1.45] text-[#8A5D14]'>
+          Anchored to: &ldquo;{draftAnnotation.selectedText}&rdquo;
+        </div>
+      )}
+
+      <textarea
+        autoFocus
+        rows={3}
+        value={draftAnnotation.feedback || ''}
+        placeholder='Enter your feedback…'
+        onChange={(e) => {
+          const value = e.target.value
+          if (value.length <= maxCharacterLimit) {
+            onDraftChange({ ...draftAnnotation, feedback: value })
+          }
+        }}
+        className='w-full resize-none rounded-[9px] border border-[#D3CDBF] bg-white p-2.5 text-[13px] leading-[1.5] text-ink placeholder:text-faint focus:border-royal focus:outline-none'
+      />
+
+      <div className='mt-2 flex items-center justify-between'>
+        <span className='font-mono text-[11px] text-faint'>
+          {currentLength}/{maxCharacterLimit}
+        </span>
+        <span className='flex gap-1.5'>
+          <button
+            type='button'
+            onClick={onDraftCancel}
+            title='Esc'
+            className='rounded-[9px] border border-[#DED8CA] bg-white px-3 py-[5px] text-[11px] font-medium text-[#454C5C] hover:bg-warm-100'
+          >
+            Cancel
+          </button>
+          <button
+            type='button'
+            onClick={onDraftSubmit}
+            disabled={!canSubmit}
+            title='⌘ + Enter'
+            className='rounded-[9px] bg-ink px-3 py-[5px] text-[11px] font-medium text-white hover:bg-ink-hover disabled:opacity-50'
+          >
+            Submit
+          </button>
+        </span>
       </div>
     </div>
   )
