@@ -5,5 +5,6 @@
 import type { GroupMarkEntry } from './GroupMarkEntry';
 export type GroupMarkingSaveRequest = {
     marks: Array<GroupMarkEntry>;
+    finalise?: boolean;
 };
 

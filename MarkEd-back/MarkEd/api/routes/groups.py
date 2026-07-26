@@ -980,6 +980,7 @@ def get_group_marking(request, group_submission_id: int):
             ],
             'selected_element_id': selected.id if selected else None,
             'score': row.score if row else None,
+            'finalised': bool(row and row.status == 2),
         })
 
     finalised = GroupSubmissionPersonalAdjustment.objects.filter(
@@ -1002,21 +1003,41 @@ def get_group_marking(request, group_submission_id: int):
 )
 @require_auth(roles=['Academic', 'Marker'])
 def save_group_marking(request, group_submission_id: int, payload: GroupMarkingSaveRequest):
-    """Save the marker's per-criterion level selections for a group submission."""
+    """Save the marker's per-criterion level selections for a group submission.
+
+    Hao's rule (GM branch): once a criterion is finalised it is locked to
+    markers — only a course organiser (Academic) can override it. Saving with
+    ``finalise`` marks the saved criteria as final; a plain save leaves them in
+    the editable "Marking" state.
+    """
     gs = get_object_or_404(GroupSubmission, pk=group_submission_id)
     _require_team_permission(request, gs.assignment.course_id)
+    is_academic = request.user_role == 'Academic'
 
     valid_criteria = set(
         Criteria.objects.filter(assignment=gs.assignment, parent=None).values_list('id', flat=True)
     )
+    existing = {
+        row.criteria_id: row
+        for row in GroupSubmissionCriteria.objects.filter(group_submission=gs)
+    }
+    # STATUS: 0 Submitted, 1 Marking, 2 Finished (finalised)
+    new_status = 2 if payload.finalise else 1
     with transaction.atomic():
         for entry in payload.marks:
             if entry.criteria_id not in valid_criteria:
                 raise HttpError(400, "Criterion does not belong to this assignment")
+            prev = existing.get(entry.criteria_id)
+            if prev and prev.status == 2 and not is_academic:
+                raise HttpError(
+                    403,
+                    "This criterion has been finalised and can only be changed by "
+                    "a course organiser."
+                )
             element = get_object_or_404(Element, pk=entry.element_id, criteria_id=entry.criteria_id)
             row, _ = GroupSubmissionCriteria.objects.update_or_create(
                 group_submission=gs, criteria_id=entry.criteria_id,
-                defaults={'marker_id': request.user_id, 'score': element.marks, 'status': 2},
+                defaults={'marker_id': request.user_id, 'score': element.marks, 'status': new_status},
             )
             row.selected_elements.set([element])
     return get_group_marking(request, group_submission_id)

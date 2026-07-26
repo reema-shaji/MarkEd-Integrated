@@ -225,6 +225,9 @@ class GroupMarkingCriterion(Schema):
     levels: List[GroupMarkingLevel]
     selected_element_id: Optional[int] = None
     score: Optional[float] = None
+    # Hao's marker-lock: a finalised criterion can no longer be changed by a
+    # marker (only a course organiser can override it).
+    finalised: bool = False
 
 
 class GroupMarkingSchema(Schema):
@@ -243,3 +246,6 @@ class GroupMarkEntry(Schema):
 
 class GroupMarkingSaveRequest(Schema):
     marks: List[GroupMarkEntry]
+    # When true, the saved criteria are finalised (locked to markers). Academics
+    # can still override a finalised criterion.
+    finalise: bool = False

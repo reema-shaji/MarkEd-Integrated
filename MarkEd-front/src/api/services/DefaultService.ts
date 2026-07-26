@@ -1503,6 +1503,11 @@ export class DefaultService {
     /**
      * Save Group Marking
      * Save the marker's per-criterion level selections for a group submission.
+     *
+     * Hao's rule (GM branch): once a criterion is finalised it is locked to
+     * markers — only a course organiser (Academic) can override it. Saving with
+     * ``finalise`` marks the saved criteria as final; a plain save leaves them in
+     * the editable "Marking" state.
      * @param groupSubmissionId
      * @param requestBody
      * @returns GroupMarkingSchema OK

@@ -24,8 +24,9 @@ import {
 } from '@/src/api'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Check, Users2 } from 'lucide-react'
+import { Check, Lock, Users2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useUser } from '@/src/contexts/user-context'
 
 type Row = PersonalAdjustmentSchema
 
@@ -382,6 +383,8 @@ function CriteriaMarkingSection({
   groupSubmissionId: number
   onScored: () => void
 }) {
+  const { user } = useUser()
+  const isAcademic = user?.isAcademic ?? false
   const [data, setData] = useState<GroupMarkingSchema | null>(null)
   const [picks, setPicks] = useState<Record<number, number>>({})
   const [saving, setSaving] = useState(false)
@@ -412,21 +415,34 @@ function CriteriaMarkingSection({
     }, 0)
   }, [data, picks])
 
-  const save = async () => {
+  const save = async (finalise: boolean) => {
     if (!data) return
-    const marks = Object.entries(picks).map(([criteria_id, element_id]) => ({
-      criteria_id: Number(criteria_id),
-      element_id,
-    }))
-    if (marks.length === 0) return toast.error('Pick a level for at least one criterion')
+    // A marker can't re-save a finalised criterion; academics can override.
+    const editable = new Set(
+      data.criteria
+        .filter((c) => isAcademic || !c.finalised)
+        .map((c) => c.criteria_id)
+    )
+    const marks = Object.entries(picks)
+      .filter(([cid]) => editable.has(Number(cid)))
+      .map(([criteria_id, element_id]) => ({
+        criteria_id: Number(criteria_id),
+        element_id,
+      }))
+    if (marks.length === 0)
+      return toast.error('Pick a level for at least one editable criterion')
     setSaving(true)
     try {
-      const updated = await DefaultService.saveGroupMarking(groupSubmissionId, { marks })
+      const updated = await DefaultService.saveGroupMarking(groupSubmissionId, {
+        marks,
+        finalise,
+      })
       setData(updated)
-      toast.success('Marks saved')
+      toast.success(finalise ? 'Marks finalised' : 'Marks saved')
       onScored()
-    } catch {
-      toast.error('Could not save the marks')
+    } catch (error) {
+      const msg = (error as { body?: { detail?: string } })?.body?.detail
+      toast.error(msg || 'Could not save the marks')
     } finally {
       setSaving(false)
     }
@@ -458,43 +474,55 @@ function CriteriaMarkingSection({
       </div>
 
       <div className='flex flex-col gap-3'>
-        {data.criteria.map((c) => (
-          <div key={c.criteria_id}>
-            <div className='mb-1.5 flex items-center justify-between'>
-              <span className='text-[13px] font-semibold text-ink'>{c.name}</span>
-              <span className='text-xs text-faint'>{c.marks} marks</span>
+        {data.criteria.map((c) => {
+          const locked = c.finalised && !isAcademic
+          return (
+            <div key={c.criteria_id} className={locked ? 'opacity-70' : ''}>
+              <div className='mb-1.5 flex items-center justify-between gap-2'>
+                <span className='flex items-center gap-2 text-[13px] font-semibold text-ink'>
+                  {c.name}
+                  {c.finalised && (
+                    <span className='inline-flex items-center gap-1 rounded-[6px] bg-[#E9F1EA] px-2 py-0.5 text-[10px] font-semibold text-[#2F7D4F]'>
+                      <Lock className='h-3 w-3' />
+                      Finalised{isAcademic ? ' · you can override' : ''}
+                    </span>
+                  )}
+                </span>
+                <span className='shrink-0 text-xs text-faint'>{c.marks} marks</span>
+              </div>
+              <div className='grid gap-2 sm:grid-cols-2'>
+                {c.levels.map((level) => {
+                  const on = picks[c.criteria_id] === level.id
+                  return (
+                    <button
+                      key={level.id}
+                      type='button'
+                      disabled={locked}
+                      onClick={() =>
+                        setPicks((p) => ({ ...p, [c.criteria_id]: level.id }))
+                      }
+                      className={`rounded-[9px] border p-3 text-left text-sm transition-colors ${
+                        on
+                          ? 'border-ink bg-warm-50'
+                          : 'border-line-input hover:border-line'
+                      } ${locked ? 'cursor-not-allowed' : ''}`}
+                    >
+                      <div className='flex items-center justify-between gap-2'>
+                        <span className='font-medium text-ink'>{level.name}</span>
+                        <span className='shrink-0 text-xs text-muted2'>
+                          {level.marks} pts
+                        </span>
+                      </div>
+                      {level.description && (
+                        <p className='mt-1 text-xs text-muted2'>{level.description}</p>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-            <div className='grid gap-2 sm:grid-cols-2'>
-              {c.levels.map((level) => {
-                const on = picks[c.criteria_id] === level.id
-                return (
-                  <button
-                    key={level.id}
-                    type='button'
-                    onClick={() =>
-                      setPicks((p) => ({ ...p, [c.criteria_id]: level.id }))
-                    }
-                    className={`rounded-[9px] border p-3 text-left text-sm transition-colors ${
-                      on
-                        ? 'border-ink bg-warm-50'
-                        : 'border-line-input hover:border-line'
-                    }`}
-                  >
-                    <div className='flex items-center justify-between gap-2'>
-                      <span className='font-medium text-ink'>{level.name}</span>
-                      <span className='shrink-0 text-xs text-muted2'>
-                        {level.marks} pts
-                      </span>
-                    </div>
-                    {level.description && (
-                      <p className='mt-1 text-xs text-muted2'>{level.description}</p>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        ))}
+          )
+        })}
 
         {/* Group base score box. */}
         <div className='flex items-center justify-between rounded-[10px] bg-warm-50 px-4 py-3'>
@@ -506,15 +534,28 @@ function CriteriaMarkingSection({
           </span>
         </div>
 
-        <div className='flex gap-2'>
+        <div className='flex flex-wrap items-center gap-2'>
           <button
-            onClick={save}
+            onClick={() => save(false)}
+            disabled={saving}
+            className='inline-flex items-center rounded-[9px] border border-line-input bg-white px-4 py-2 text-[13px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100 disabled:opacity-50'
+          >
+            <Check className='mr-1.5 h-4 w-4' />
+            Save marks
+          </button>
+          <button
+            onClick={() => save(true)}
             disabled={saving}
             className='inline-flex items-center rounded-[9px] bg-ink px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
           >
-            <Check className='mr-1.5 h-4 w-4' />
-            Save Marks
+            <Lock className='mr-1.5 h-4 w-4' />
+            Finalise marks
           </button>
+          <span className='text-[11.5px] text-faint'>
+            {isAcademic
+              ? 'Finalised criteria lock out markers; you can still override them.'
+              : 'Finalising locks a criterion — only a course organiser can change it after.'}
+          </span>
         </div>
       </div>
     </div>

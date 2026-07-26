@@ -10,5 +10,6 @@ export type GroupMarkingCriterion = {
     levels: Array<GroupMarkingLevel>;
     selected_element_id?: (number | null);
     score?: (number | null);
+    finalised?: boolean;
 };
 
