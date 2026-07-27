@@ -28,14 +28,27 @@ export default function SubmissionsPage() {
 
   React.useEffect(() => {
     if (!params.id) return
-    DefaultService.getAllSubmissions(Number(params.id))
-      .then((data) => setSubmissions(data))
+    const id = Number(params.id)
+    // Group assignments are marked against the rubric on the group-marking page
+    // (their submissions live in a different model), so this individual queue
+    // would show 0. Send group assignments there instead of a misleading empty
+    // list (report B16).
+    DefaultService.getAssignment(id)
+      .then((a) => {
+        if (a.assignment_type === 'GROUP') {
+          router.replace(`/assignments/${id}/group-marking`)
+          return
+        }
+        return DefaultService.getAllSubmissions(id).then((data) =>
+          setSubmissions(data)
+        )
+      })
       .catch((error) => {
         console.error('Failed to fetch submissions:', error)
         toast.error('Failed to load submissions')
         setSubmissions([])
       })
-  }, [params.id])
+  }, [params.id, router])
 
   // Defensive role guard — the linking tab is already staff-gated.
   if (!userLoading && user && !user.isStaff) {

@@ -140,10 +140,13 @@ class Command(BaseCommand):
         qual = [3, 2, 2, 3, 1, 2, 3, 2, 0, 2, 3, 2, 1, 2, 3, 2, 2, 1]
 
         # ---- TC1: full, marked, peer pending -------------------------------
+        # Scenario state (for testers, NOT shown to students): every student
+        # submitted, marking is complete, peer review is matched but pending.
         tc1 = reset(
             'TC1: Marked · Peer Review Pending',
-            assignmentDescription='Every student submitted, marking is complete '
-            '(by both markers and academics), and peer review is matched but pending.',
+            assignmentDescription='Individual coursework: submit your report as a '
+            'PDF. Your work is assessed against the marking criteria, and you will '
+            'anonymously review two of your peers\' submissions.',
             deadline=now - datetime.timedelta(days=3),
             release_date=now - datetime.timedelta(days=10),
             assignment_type='INDIVIDUAL', peer_review_enabled=True,
