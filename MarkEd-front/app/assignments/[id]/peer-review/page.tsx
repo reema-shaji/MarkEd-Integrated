@@ -103,7 +103,7 @@ export default function PeerReviewListPage() {
                 </span>
                 <span className='min-w-0 flex-1'>
                   <span className='block text-[14px] font-semibold text-[#131A26]'>
-                    Submission {idx + 1} (anon.)
+                    {rv.student_name}
                   </span>
                   <span className='mt-px block text-[12px] text-[#5A6070]'>
                     {done ? 'You have submitted your review' : 'Awaiting your review'}

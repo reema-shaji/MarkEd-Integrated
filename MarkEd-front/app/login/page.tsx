@@ -149,7 +149,7 @@ export default function LoginPage() {
               className='mt-0.5 flex w-full items-center justify-center gap-2 rounded-[9px] bg-[#131A26] py-3 text-[14px] font-semibold text-white hover:bg-[#243247] disabled:opacity-60'
             >
               {submitting && <Loader2 className='h-4 w-4 animate-spin' />}
-              Log in
+              Sign in
             </button>
           </form>
         </div>
