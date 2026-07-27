@@ -69,6 +69,8 @@ import type { SelfAssessmentSubmitRequest } from '../models/SelfAssessmentSubmit
 import type { SelfAssessmentSubmitResponse } from '../models/SelfAssessmentSubmitResponse';
 import type { StructureCriterionSchema } from '../models/StructureCriterionSchema';
 import type { StudentSelfAssessmentSchema } from '../models/StudentSelfAssessmentSchema';
+import type { SubmissionMarkingSaveRequest } from '../models/SubmissionMarkingSaveRequest';
+import type { SubmissionMarkingSchema } from '../models/SubmissionMarkingSchema';
 import type { SubmissionRequest } from '../models/SubmissionRequest';
 import type { SubmissionResponse } from '../models/SubmissionResponse';
 import type { SubmissionSchema } from '../models/SubmissionSchema';
@@ -811,6 +813,59 @@ export class DefaultService {
             path: {
                 'assignment_id': assignmentId,
             },
+        });
+    }
+    /**
+     * Get Submission Marking
+     * Rubric criteria + current per-criterion marks for an individual
+     * submission — restores the scoring form from the original mark.html that the
+     * unified build dropped (individual marking had become annotations-only).
+     * @param assignmentId
+     * @param submissionId
+     * @returns SubmissionMarkingSchema OK
+     * @throws ApiError
+     */
+    public static getSubmissionMarking(
+        assignmentId: number,
+        submissionId: number,
+    ): CancelablePromise<SubmissionMarkingSchema> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/submissions/assignment/{assignment_id}/submission/{submission_id}/marking',
+            path: {
+                'assignment_id': assignmentId,
+                'submission_id': submissionId,
+            },
+        });
+    }
+    /**
+     * Save Submission Marking
+     * Save per-criterion scores + feedback for an individual submission.
+     *
+     * Applies Hao's marker-lock rule (as restored for group marking): a finalised
+     * criterion is locked to markers and only a course organiser (Academic) may
+     * change it. ``finalise`` marks the saved criteria Finished (status 2), which
+     * is also the gate that releases the mark to the student.
+     * @param assignmentId
+     * @param submissionId
+     * @param requestBody
+     * @returns SubmissionMarkingSchema OK
+     * @throws ApiError
+     */
+    public static saveSubmissionMarking(
+        assignmentId: number,
+        submissionId: number,
+        requestBody: SubmissionMarkingSaveRequest,
+    ): CancelablePromise<SubmissionMarkingSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/submissions/assignment/{assignment_id}/submission/{submission_id}/marking',
+            path: {
+                'assignment_id': assignmentId,
+                'submission_id': submissionId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**

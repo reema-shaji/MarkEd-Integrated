@@ -86,6 +86,10 @@ export type { SelfAssessmentSubmitRequest } from './models/SelfAssessmentSubmitR
 export type { SelfAssessmentSubmitResponse } from './models/SelfAssessmentSubmitResponse';
 export type { StructureCriterionSchema } from './models/StructureCriterionSchema';
 export type { StudentSelfAssessmentSchema } from './models/StudentSelfAssessmentSchema';
+export type { SubmissionCriterionMark } from './models/SubmissionCriterionMark';
+export type { SubmissionMarkingSaveRequest } from './models/SubmissionMarkingSaveRequest';
+export type { SubmissionMarkingSchema } from './models/SubmissionMarkingSchema';
+export type { SubmissionMarkSaveEntry } from './models/SubmissionMarkSaveEntry';
 export type { SubmissionRequest } from './models/SubmissionRequest';
 export type { SubmissionResponse } from './models/SubmissionResponse';
 export type { SubmissionSchema } from './models/SubmissionSchema';

@@ -1,11 +1,13 @@
 import json
 
+from django.db import transaction
+from django.shortcuts import get_object_or_404
 from ninja import Router
 from typing import List
-from ..schemas import SubmissionSchema, SubmissionRequest, SubmissionResponse, PeersLastSubmissionResponse, AllSubmissionSchema, MySubmissionResultSchema
+from ..schemas import SubmissionSchema, SubmissionRequest, SubmissionResponse, PeersLastSubmissionResponse, AllSubmissionSchema, MySubmissionResultSchema, SubmissionMarkingSchema, SubmissionMarkingSaveRequest
 from ..decorators import require_auth, check_permissions
 from ..permissions import AssignmentSubmissionDeadlineHasNotPassed, CanPerformPeerReview, IsEnrolledStudent, IsCourseStaffFromAssignment
-from ...models import Submission, Assignment, PeerReviewAllocation, Course2Marker, User, GroupSubmission, GroupMember, SubmissionCriteria
+from ...models import Submission, Assignment, PeerReviewAllocation, Course2Marker, User, GroupSubmission, GroupMember, SubmissionCriteria, Criteria
 from datetime import timedelta
 from ...services.storage import StorageService
 from ninja.errors import HttpError
@@ -144,6 +146,90 @@ def get_my_submission_result(request, assignment_id: int):
         "breakdown": breakdown,
     }
 
+@router.get("/assignment/{assignment_id}/submission/{submission_id}/marking", response=SubmissionMarkingSchema, operation_id="getSubmissionMarking")
+@require_auth(roles=['Academic', 'Marker', 'TA'])
+def get_submission_marking(request, assignment_id: int, submission_id: int):
+    """Rubric criteria + current per-criterion marks for an individual
+    submission — restores the scoring form from the original mark.html that the
+    unified build dropped (individual marking had become annotations-only)."""
+    submission = get_object_or_404(Submission, id=submission_id, assignment_id=assignment_id)
+    existing = {
+        row.criteria_id: row
+        for row in SubmissionCriteria.objects.filter(submission=submission)
+    }
+    criteria_out = []
+    score = 0.0
+    total = 0.0
+    for crit in Criteria.objects.filter(assignment_id=assignment_id, parent=None):
+        total += crit.marks
+        row = existing.get(crit.id)
+        if row and row.score is not None:
+            score += row.score
+        criteria_out.append({
+            "criteria_id": crit.id,
+            "name": crit.name,
+            "marks": crit.marks,
+            "score": row.score if row else None,
+            "feedback": (_readable_feedback(row.feedback) or '') if row else '',
+            "finalised": bool(row and row.status == 2),
+        })
+    return {
+        "submission_id": submission.id,
+        "student_name": submission.student.userName,
+        "criteria": criteria_out,
+        "score": score,
+        "total": total,
+        "finalised": bool(criteria_out) and all(c["finalised"] for c in criteria_out),
+    }
+
+
+@router.post("/assignment/{assignment_id}/submission/{submission_id}/marking", response=SubmissionMarkingSchema, operation_id="saveSubmissionMarking")
+@require_auth(roles=['Academic', 'Marker', 'TA'])
+def save_submission_marking(request, assignment_id: int, submission_id: int, payload: SubmissionMarkingSaveRequest):
+    """Save per-criterion scores + feedback for an individual submission.
+
+    Applies Hao's marker-lock rule (as restored for group marking): a finalised
+    criterion is locked to markers and only a course organiser (Academic) may
+    change it. ``finalise`` marks the saved criteria Finished (status 2), which
+    is also the gate that releases the mark to the student.
+    """
+    submission = get_object_or_404(Submission, id=submission_id, assignment_id=assignment_id)
+    is_academic = request.user_role == 'Academic'
+
+    valid = {
+        c.id: c for c in Criteria.objects.filter(assignment_id=assignment_id, parent=None)
+    }
+    existing = {
+        row.criteria_id: row
+        for row in SubmissionCriteria.objects.filter(submission=submission)
+    }
+    new_status = 2 if payload.finalise else 1
+    with transaction.atomic():
+        for entry in payload.marks:
+            crit = valid.get(entry.criteria_id)
+            if crit is None:
+                raise HttpError(400, "Criterion does not belong to this assignment")
+            if entry.score is None or entry.score < 0 or entry.score > crit.marks:
+                raise HttpError(400, f"Score for '{crit.name}' must be between 0 and {crit.marks}")
+            prev = existing.get(entry.criteria_id)
+            if prev and prev.status == 2 and not is_academic:
+                raise HttpError(
+                    403,
+                    "This criterion has been finalised and can only be changed by "
+                    "a course organiser."
+                )
+            SubmissionCriteria.objects.update_or_create(
+                submission=submission, criteria_id=entry.criteria_id,
+                defaults={
+                    'marker_id': request.user_id,
+                    'score': entry.score,
+                    'status': new_status,
+                    'feedback': entry.feedback or '',
+                },
+            )
+    return get_submission_marking(request, assignment_id, submission_id)
+
+
 @router.get("/assignment/{assignment_id}/peer-review/{submission_id}", response=PeersLastSubmissionResponse, operation_id="getPeersLastSubmission")
 @require_auth()
 def get_peers_last_submission(request, assignment_id: int, submission_id: int):
@@ -234,19 +320,41 @@ def get_all_submissions(request, assignment_id: int):
         key=lambda x: x.submissionDateTime,
         reverse=True
     )
-    
-    return [
-        {
+
+    # Total marks available and the per-submission marking state, so the Marking
+    # tab can show real scores/status instead of hard-coded "Submitted / —".
+    total_marks = sum(
+        Criteria.objects.filter(assignment_id=assignment_id, parent=None)
+        .values_list('marks', flat=True)
+    )
+    criteria_count = Criteria.objects.filter(assignment_id=assignment_id, parent=None).count()
+
+    result = []
+    for submission in submissions_list:
+        rows = list(SubmissionCriteria.objects.filter(submission=submission))
+        scored = [r for r in rows if r.score is not None]
+        if not scored:
+            marking_status = 'Unmarked'
+            score = None
+        elif criteria_count and len(rows) >= criteria_count and all(r.status == 2 for r in rows):
+            marking_status = 'Marked'
+            score = sum(r.score or 0 for r in scored)
+        else:
+            marking_status = 'In progress'
+            score = sum(r.score or 0 for r in scored)
+        result.append({
             "id": submission.id,
             "student_id": submission.student.id,
             "student_number": submission.student.userNumber,
             "student_name": submission.student.userName,
             "assignment_id": submission.assignment_id,
             "submissionFile": submission.submissionFile,
-            "submissionDateTime": submission.submissionDateTime
-        }
-        for submission in submissions_list
-    ]
+            "submissionDateTime": submission.submissionDateTime,
+            "marking_status": marking_status,
+            "score": score,
+            "total": total_marks,
+        })
+    return result
 
 @router.get("/assignment/{assignment_id}/submission/{submission_id}", response=PeersLastSubmissionResponse, operation_id="getSubmissionForMarking")
 @require_auth(roles=['Marker', 'Academic', 'TA'])

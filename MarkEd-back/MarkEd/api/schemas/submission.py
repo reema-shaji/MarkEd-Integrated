@@ -31,6 +31,37 @@ class CriterionResultEntry(Schema):
     feedback: Optional[str] = None
 
 
+# --- Individual marking (restores Hao/Tomas mark.html per-criterion scoring) --
+
+class SubmissionCriterionMark(Schema):
+    criteria_id: int
+    name: str
+    marks: float  # maximum for this criterion
+    score: Optional[float] = None
+    feedback: str = ''
+    finalised: bool = False
+
+
+class SubmissionMarkingSchema(Schema):
+    submission_id: int
+    student_name: str
+    criteria: List[SubmissionCriterionMark]
+    score: float
+    total: float
+    finalised: bool
+
+
+class SubmissionMarkSaveEntry(Schema):
+    criteria_id: int
+    score: float
+    feedback: Optional[str] = ''
+
+
+class SubmissionMarkingSaveRequest(Schema):
+    marks: List[SubmissionMarkSaveEntry]
+    finalise: bool = False
+
+
 class MySubmissionResultSchema(Schema):
     """A student's own mark for an individual assignment.
 
@@ -55,3 +86,7 @@ class AllSubmissionSchema(Schema):
     assignment_id: int
     submissionFile: str
     submissionDateTime: datetime
+    # Marking state for the Marking-tab list (was hard-coded to Submitted/—).
+    marking_status: str = 'Unmarked'  # 'Unmarked' | 'In progress' | 'Marked'
+    score: Optional[float] = None
+    total: float = 0.0

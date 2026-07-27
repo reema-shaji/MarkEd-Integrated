@@ -26,6 +26,13 @@ export default function SubmissionsPage() {
   const [submissions, setSubmissions] = React.useState<
     AllSubmissionSchema[] | null
   >(null)
+  const [statusFilter, setStatusFilter] = React.useState('All statuses')
+
+  const STATUS_STYLES: Record<string, { bg: string; fg: string }> = {
+    Unmarked: { bg: '#F5F3EF', fg: '#8A6D3B' },
+    'In progress': { bg: '#FBF4E3', fg: '#8A5D14' },
+    Marked: { bg: '#E9F1EA', fg: '#2F7D4F' },
+  }
 
   React.useEffect(() => {
     if (!params.id) return
@@ -74,8 +81,13 @@ export default function SubmissionsPage() {
     )
   }
 
-  const countLabel = `${submissions.length} submission${
-    submissions.length === 1 ? '' : 's'
+  const visible =
+    statusFilter === 'All statuses'
+      ? submissions
+      : submissions.filter((s) => s.marking_status === statusFilter)
+
+  const countLabel = `${visible.length} submission${
+    visible.length === 1 ? '' : 's'
   }`
 
   return (
@@ -90,7 +102,11 @@ export default function SubmissionsPage() {
           </div>
         </div>
         <div className='flex gap-2'>
-          <select className='rounded-[9px] border border-[#DED8CA] bg-white px-[11px] py-2 text-[13px] text-[#2C3444]'>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className='rounded-[9px] border border-[#DED8CA] bg-white px-[11px] py-2 text-[13px] text-[#2C3444]'
+          >
             <option>All statuses</option>
             <option>Unmarked</option>
             <option>In progress</option>
@@ -118,41 +134,55 @@ export default function SubmissionsPage() {
             <span>Status</span>
             <span className='text-right'>Score</span>
           </div>
-          {submissions.map((s) => (
-            <div
-              key={s.id}
-              className='grid grid-cols-[1.9fr_1.1fr_.9fr_.8fr_.9fr] items-center border-b border-[#F0ECE4] px-5 py-[13px] last:border-b-0 hover:bg-[#FAF8F4]'
-            >
-              <span className='text-[13px] font-semibold text-[#131A26]'>
-                {s.student_name}{' '}
-                <span className='ml-1 font-mono text-[12px] font-normal text-[#8A9099]'>
-                  {s.student_number}
-                </span>
-              </span>
-              <span className='text-[12px] text-[#5A6070]'>
-                {formatWhen(s.submissionDateTime)}
-              </span>
-              <span className='font-mono text-[12px] text-[#5A6070]'>—</span>
-              <span>
-                <span className='inline-block whitespace-nowrap rounded-[6px] bg-[#E9F1EA] px-2 py-0.5 text-[11px] font-semibold text-[#2F7D4F]'>
-                  Submitted
-                </span>
-              </span>
-              <span className='flex items-center justify-end gap-2.5'>
-                <span className='font-mono text-[13px] font-semibold text-[#131A26]'>
-                  —
-                </span>
-                <button
-                  onClick={() =>
-                    router.push(`/assignments/${params.id}/mark/${s.id}`)
-                  }
-                  className='rounded-[9px] border border-[#DED8CA] bg-white px-[13px] py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
-                >
-                  Mark
-                </button>
-              </span>
+          {visible.length === 0 ? (
+            <div className='px-5 py-8 text-center text-[13px] text-[#8A9099]'>
+              No submissions match this filter.
             </div>
-          ))}
+          ) : (
+            visible.map((s) => {
+              const st =
+                STATUS_STYLES[s.marking_status ?? 'Unmarked'] ??
+                STATUS_STYLES.Unmarked
+              return (
+                <div
+                  key={s.id}
+                  className='grid grid-cols-[1.9fr_1.1fr_.9fr_.8fr_.9fr] items-center border-b border-[#F0ECE4] px-5 py-[13px] last:border-b-0 hover:bg-[#FAF8F4]'
+                >
+                  <span className='text-[13px] font-semibold text-[#131A26]'>
+                    {s.student_name}{' '}
+                    <span className='ml-1 font-mono text-[12px] font-normal text-[#8A9099]'>
+                      {s.student_number}
+                    </span>
+                  </span>
+                  <span className='text-[12px] text-[#5A6070]'>
+                    {formatWhen(s.submissionDateTime)}
+                  </span>
+                  <span className='font-mono text-[12px] text-[#5A6070]'>—</span>
+                  <span>
+                    <span
+                      className='inline-block whitespace-nowrap rounded-[6px] px-2 py-0.5 text-[11px] font-semibold'
+                      style={{ backgroundColor: st.bg, color: st.fg }}
+                    >
+                      {s.marking_status ?? 'Unmarked'}
+                    </span>
+                  </span>
+                  <span className='flex items-center justify-end gap-2.5'>
+                    <span className='font-mono text-[13px] font-semibold text-[#131A26]'>
+                      {s.score != null ? `${s.score}/${s.total}` : '—'}
+                    </span>
+                    <button
+                      onClick={() =>
+                        router.push(`/assignments/${params.id}/mark/${s.id}`)
+                      }
+                      className='rounded-[9px] border border-[#DED8CA] bg-white px-[13px] py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+                    >
+                      Mark
+                    </button>
+                  </span>
+                </div>
+              )
+            })
+          )}
         </div>
       )}
     </div>

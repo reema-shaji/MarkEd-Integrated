@@ -10,5 +10,8 @@ export type AllSubmissionSchema = {
     assignment_id: number;
     submissionFile: string;
     submissionDateTime: string;
+    marking_status?: string;
+    score?: (number | null);
+    total?: number;
 };
 
