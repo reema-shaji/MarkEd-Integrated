@@ -1908,25 +1908,41 @@ export class DefaultService {
     }
     /**
      * List Feedback Bank
-     * The current marker's saved feedback snippets, optionally by category.
+     * The course's shared Feedback Bank, crowd-rated and filterable.
+     *
+     * Scoped to the resolved course (plus any course-less legacy entries) so every
+     * marker on the course sees the same shared pool — restoring the original's
+     * shared corpus rather than a private per-marker list.
+     * @param assignmentId
+     * @param courseId
      * @param category
+     * @param sort
+     * @param favouritesOnly
      * @returns FeedbackBankSchema OK
      * @throws ApiError
      */
     public static listFeedbackBank(
+        assignmentId?: (number | null),
+        courseId?: (number | null),
         category?: (string | null),
+        sort: string = 'recent',
+        favouritesOnly: boolean = false,
     ): CancelablePromise<Array<FeedbackBankSchema>> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/feedback-bank/',
             query: {
+                'assignment_id': assignmentId,
+                'course_id': courseId,
                 'category': category,
+                'sort': sort,
+                'favourites_only': favouritesOnly,
             },
         });
     }
     /**
      * Create Feedback Bank Entry
-     * Save a reusable feedback snippet.
+     * Add a snippet to the course's shared bank.
      * @param requestBody
      * @returns FeedbackBankSchema OK
      * @throws ApiError
@@ -1943,7 +1959,8 @@ export class DefaultService {
     }
     /**
      * Delete Feedback Bank Entry
-     * Delete one of the current marker's snippets.
+     * Delete a snippet. The author can remove their own; an academic can
+     * curate any entry in the shared bank.
      * @param entryId
      * @returns FeedbackBankActionResponse OK
      * @throws ApiError
@@ -1961,7 +1978,7 @@ export class DefaultService {
     }
     /**
      * Mark Feedback Bank Used
-     * Record that a snippet was reused (increments its usage counter).
+     * Record that a snippet was applied while marking (any staff member).
      * @param entryId
      * @returns FeedbackBankSchema OK
      * @throws ApiError
@@ -1979,7 +1996,11 @@ export class DefaultService {
     }
     /**
      * React Feedback Bank Entry
-     * Thumbs up/down a snippet ('up' or 'down').
+     * Toggle this user's like/dislike on a shared entry.
+     *
+     * Restores the original per-user reaction (Hao's update_reaction): one row per
+     * user per entry, switchable like<->dislike, and clicking the active reaction
+     * again clears it. Totals are recomputed from the rows.
      * @param entryId
      * @param reaction
      * @returns FeedbackBankSchema OK
@@ -1997,6 +2018,24 @@ export class DefaultService {
             },
             query: {
                 'reaction': reaction,
+            },
+        });
+    }
+    /**
+     * Toggle Feedback Bank Favourite
+     * Toggle this user's favourite (the original's save/unsave).
+     * @param entryId
+     * @returns FeedbackBankSchema OK
+     * @throws ApiError
+     */
+    public static toggleFeedbackBankFavourite(
+        entryId: number,
+    ): CancelablePromise<FeedbackBankSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/feedback-bank/{entry_id}/favourite',
+            path: {
+                'entry_id': entryId,
             },
         });
     }

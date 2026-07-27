@@ -5,6 +5,7 @@
 export type FeedbackBankCreateRequest = {
     text: string;
     category?: (string | null);
+    assignment_id?: (number | null);
     course_id?: (number | null);
 };
 

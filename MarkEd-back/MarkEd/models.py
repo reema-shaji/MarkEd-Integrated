@@ -874,24 +874,49 @@ class SelfAssessmentRubricSelection(models.Model):
 
 
 class FeedbackBankEntry(models.Model):
-    """A reusable feedback snippet a marker can save and reuse while marking
-    (prototype "Feedback Bank").
+    """A reusable feedback snippet in a course's shared Feedback Bank.
 
-    Distinct from `SavedFeedback`/`Feedback`, which are tied to a specific
-    SubmissionElement being marked; a bank entry is standalone, reusable text
-    with a category and lightweight usage/reaction counters.
+    Restores the original bank (Hao's `Feedback` + `SavedFeedback` + `Reaction`)
+    adapted to the unified schema: entries are shared across the markers of a
+    course, crowd-rated via per-user reactions (`FeedbackBankReaction`) and
+    bookmarked via per-user favourites (`FeedbackBankFavourite`). `used_count`
+    tallies how often the snippet has been applied while marking; the like/
+    dislike totals are derived from the reaction rows, never stored (so they
+    can't drift the way the old up/down columns did).
     """
     owner: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='feedback_bank_entries')
     course: models.ForeignKey = models.ForeignKey('Course', on_delete=models.CASCADE, null=True, blank=True, related_name='feedback_bank_entries')
     text: models.TextField = models.TextField()
     category: models.CharField = models.CharField(max_length=60, blank=True, default='')
     used_count: models.IntegerField = models.IntegerField(default=0)
-    up_count: models.IntegerField = models.IntegerField(default=0)
-    down_count: models.IntegerField = models.IntegerField(default=0)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-used_count', '-created_at']
+        ordering = ['-created_at']
 
     def __str__(self) -> str:
         return f"{self.category or 'General'}: {self.text[:40]}"
+
+
+class FeedbackBankReaction(models.Model):
+    """A marker's like/dislike on a bank entry (one per user per entry).
+
+    Mirrors the original `Reaction` model so the 👍/👎 totals are real,
+    per-user, and switchable — the same crowd-rating the source used.
+    """
+    entry: models.ForeignKey = models.ForeignKey('FeedbackBankEntry', on_delete=models.CASCADE, related_name='reactions')
+    user: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE)
+    REACTION_CHOICES = (('like', 'Like'), ('dislike', 'Dislike'))
+    reaction_type: models.CharField = models.CharField(max_length=10, choices=REACTION_CHOICES)
+
+    class Meta:
+        unique_together = ('entry', 'user')
+
+
+class FeedbackBankFavourite(models.Model):
+    """A marker's bookmark of a bank entry (the original's `SavedFeedback`)."""
+    entry: models.ForeignKey = models.ForeignKey('FeedbackBankEntry', on_delete=models.CASCADE, related_name='favourites')
+    user: models.ForeignKey = models.ForeignKey('User', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('entry', 'user')

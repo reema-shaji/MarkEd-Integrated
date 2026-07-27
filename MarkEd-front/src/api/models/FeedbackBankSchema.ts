@@ -9,6 +9,11 @@ export type FeedbackBankSchema = {
     used_count?: number;
     up_count?: number;
     down_count?: number;
+    my_reaction?: (string | null);
+    is_favourite?: boolean;
+    author_name?: string;
+    is_mine?: boolean;
+    can_delete?: boolean;
     created_at: string;
 };
 

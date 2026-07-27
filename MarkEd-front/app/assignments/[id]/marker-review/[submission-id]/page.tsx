@@ -344,7 +344,11 @@ export default function MarkerReviewPage() {
         </div>
       </div>
 
-      <FeedbackBankDialog open={bankOpen} onOpenChange={setBankOpen} />
+      <FeedbackBankDialog
+        open={bankOpen}
+        onOpenChange={setBankOpen}
+        assignmentId={assignmentId}
+      />
     </div>
   )
 }
