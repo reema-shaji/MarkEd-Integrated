@@ -246,6 +246,27 @@ For each change it records **what was there before**, **what we changed**, and
 
 ---
 
+## 12. Retest gap-closures (28 Jul 2026)
+
+Four issues remained after the post-restart retest and were then closed:
+
+- **`/submission` route — [Fix] (B1/L2):** the student Submission tab shows the
+  submit form (individual) or workspace (group) at `/submit` and `/workspace`;
+  the bare `/submission` URL 404'd. Added an alias route that dispatches to the
+  right one by assignment type.
+- **`/groups` route — [Fix] (B15):** added an assignment-scoped `/groups` alias
+  that resolves the assignment's group set and redirects to the course-level
+  `/groupsets/[id]` page (was a 404).
+- **Group marking queue — [Fix] (B16):** the individual `/submissions` queue
+  returns 0 for a group assignment (group submissions live in `GroupSubmission`,
+  not `Submission`). Group assignments now redirect from `/submissions` to the
+  `group-marking` page — the correct rubric marking queue — instead of showing a
+  misleading empty list. (The group "Marking" tab already routed there.)
+- **Student-visible workflow text — [Fix] (C7):** TC1's *assignment description*
+  was a tester-facing scenario note ("marking is complete (by both markers and
+  academics)…") that showed to students on the Assignment tab. Replaced with a
+  real student-facing brief; the scenario note now lives in a seeder comment.
+
 ## Notes on things deliberately *not* changed
 
 - **Notifications** — intentionally out of scope for this pass.
