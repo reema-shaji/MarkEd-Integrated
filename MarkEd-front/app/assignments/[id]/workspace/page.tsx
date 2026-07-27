@@ -43,6 +43,7 @@ import {
   UploadCloud,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatDate, formatDateTime } from '@/lib/date'
 
 export default function GroupWorkspacePage() {
   const params = useParams()
@@ -243,10 +244,7 @@ export default function GroupWorkspacePage() {
           {submitted ? (
             <>
               <b>Submitted v{latestSubmission!.submission_version}</b> on{' '}
-              {new Date(latestSubmission!.submissionDateTime).toLocaleDateString(
-                undefined,
-                { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }
-              )}
+              {formatDateTime(latestSubmission!.submissionDateTime)}
               . Uploading to the workspace does not submit — confirm a new
               submission on the right.
             </>
@@ -331,10 +329,7 @@ export default function GroupWorkspacePage() {
                         {file.uploaded_by_name}
                       </span>
                       <span className='text-[12px] text-muted2'>
-                        {new Date(file.upload_time).toLocaleDateString(undefined, {
-                          day: 'numeric',
-                          month: 'short',
-                        })}
+                        {formatDate(file.upload_time)}
                       </span>
                       <span className='flex justify-end gap-1'>
                         {file.file && (
@@ -369,10 +364,7 @@ export default function GroupWorkspacePage() {
                                 {comment.author_name}
                               </span>{' '}
                               <span className='text-[11px] text-kicker'>
-                                {new Date(comment.created_at).toLocaleDateString(
-                                  undefined,
-                                  { day: 'numeric', month: 'short' }
-                                )}
+                                {formatDate(comment.created_at)}
                               </span>
                               <p className='text-muted2'>{comment.content}</p>
                             </div>
@@ -459,15 +451,7 @@ export default function GroupWorkspacePage() {
                       )}
                     </div>
                     <div className='mt-1 text-[11.5px] text-muted2'>
-                      {new Date(submission.submissionDateTime).toLocaleDateString(
-                        undefined,
-                        {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        }
-                      )}{' '}
+                      {formatDateTime(submission.submissionDateTime)}{' '}
                       · by {submission.submitted_by_name}
                       {submission.filename ? ` · ${submission.filename}` : ''}
                     </div>

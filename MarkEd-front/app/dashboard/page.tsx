@@ -15,6 +15,7 @@ import { useUser } from '@/src/contexts/user-context'
 import { useCourse } from '@/src/contexts/course-context'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { formatDateTime } from '@/lib/date'
 
 function typeBadge(a: AssignmentSchema) {
   return a.assignment_type === 'GROUP'
@@ -22,15 +23,7 @@ function typeBadge(a: AssignmentSchema) {
     : { txt: 'Individual', bg: '#F2EEE6', fg: '#6D6455' }
 }
 
-function fmtDate(iso?: string | null) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
+const fmtDate = (iso?: string | null) => formatDateTime(iso)
 
 function countdown(iso?: string | null) {
   if (!iso) return null

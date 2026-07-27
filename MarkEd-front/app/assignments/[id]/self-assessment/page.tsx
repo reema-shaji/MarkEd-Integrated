@@ -28,6 +28,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { useUser } from '@/src/contexts/user-context'
+import { formatDateTime } from '@/lib/date'
 
 const containerClass = 'mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'
 
@@ -78,16 +79,6 @@ function Section({
       {children}
     </div>
   )
-}
-
-function formatDateTime(value: string) {
-  return new Date(value).toLocaleString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }
 
 /* ------------------------------------------------------------------ */

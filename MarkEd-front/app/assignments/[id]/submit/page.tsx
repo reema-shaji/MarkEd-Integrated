@@ -7,6 +7,7 @@ import { DefaultService } from '@/src/api'
 import { toast } from 'sonner'
 import { AlertTriangle } from 'lucide-react'
 import { useAssignment } from '@/src/contexts/assignment-context'
+import { formatDateTime } from '@/lib/date'
 
 interface PreviousSubmission {
   filename: string
@@ -195,7 +196,7 @@ export default function SubmitAssignmentPage() {
                   {displayName(previousSubmission.filename)}
                 </span>
                 <span className='mt-px block text-[12px] text-[#A29A8C]'>
-                  {previousSubmission.uploadedAt.toLocaleString()}
+                  {formatDateTime(previousSubmission.uploadedAt)}
                 </span>
               </span>
               <button

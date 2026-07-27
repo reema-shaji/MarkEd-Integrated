@@ -788,18 +788,22 @@ export function AnnotationsSidebar({
         <div className='flex h-full flex-col items-center justify-center rounded-[12px] bg-warm-50 p-4 text-center'>
           <SquarePen className='mb-2 h-8 w-8 text-faint' />
           <h1 className='text-lg font-semibold text-ink'>
-            {isMarkerView && visibleReviewers.size === 0
-              ? 'No reviewers selected'
-              : isReadOnly
-                ? 'No feedback found'
-                : 'Select text to add a comment'}
+            {isMarkerView && uniqueReviewers.length === 0
+              ? 'No peer feedback yet'
+              : isMarkerView && visibleReviewers.size === 0
+                ? 'No reviewers selected'
+                : isReadOnly
+                  ? 'No feedback found'
+                  : 'Select text to add a comment'}
           </h1>
           <p className='px-8 text-sm text-muted-foreground'>
-            {isMarkerView && visibleReviewers.size === 0
-              ? 'Use the filter controls above to select reviewers'
-              : isReadOnly
-                ? 'There are no comments available for this submission yet.'
-                : 'If you are not able to select any text, reach out to support.'}
+            {isMarkerView && uniqueReviewers.length === 0
+              ? 'There are no peer reviews on this submission to display.'
+              : isMarkerView && visibleReviewers.size === 0
+                ? 'Use the filter controls above to select reviewers.'
+                : isReadOnly
+                  ? 'There are no comments available for this submission yet.'
+                  : 'If you are not able to select any text, reach out to support.'}
           </p>
         </div>
       )}
