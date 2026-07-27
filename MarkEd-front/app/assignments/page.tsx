@@ -20,6 +20,7 @@ import { useUser } from '@/src/contexts/user-context'
 import { useCourse } from '@/src/contexts/course-context'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { formatDateTime } from '@/lib/date'
 
 const BADGE =
   'text-[11px] font-medium rounded-[6px] px-2.5 py-0.5 whitespace-nowrap inline-block'
@@ -33,12 +34,7 @@ function isClosed(a: AssignmentSchema) {
 
 function deadlineText(a: AssignmentSchema) {
   if (isClosed(a)) return 'Closed'
-  return `Due ${new Date(a.deadline).toLocaleString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })}`
+  return `Due ${formatDateTime(a.deadline)}`
 }
 
 type Status = { txt: string; fg: string; bg: string }

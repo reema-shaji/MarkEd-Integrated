@@ -1,6 +1,7 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { formatDateTime } from '@/lib/date'
 
 interface TimeLeft {
   days: number
@@ -93,7 +94,7 @@ export function CountdownCard({
             className="h-2"
           />
           <p className="text-xs text-muted-foreground">
-            Due: {deadline.toLocaleString()}
+            Due: {formatDateTime(deadline)}
           </p>
         </div>
       </CardContent>

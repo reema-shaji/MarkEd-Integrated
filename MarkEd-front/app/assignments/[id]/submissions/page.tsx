@@ -7,17 +7,9 @@ import { FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUser } from '@/src/contexts/user-context'
+import { formatDateTime } from '@/lib/date'
 
-function formatWhen(iso: string): string {
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return '—'
-  return d.toLocaleString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
+const formatWhen = (iso: string) => formatDateTime(iso)
 
 export default function SubmissionsPage() {
   const params = useParams()

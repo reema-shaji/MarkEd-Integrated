@@ -17,25 +17,10 @@ import {
   MyAssignmentStatusSchema,
 } from '@/src/api'
 
-function formatDate(value?: string | null) {
-  if (!value) return '—'
-  return new Date(value).toLocaleString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
+import { formatDateTime, formatDate as formatDateOnly } from '@/lib/date'
 
-function formatDay(value?: string | null) {
-  if (!value) return '—'
-  return new Date(value).toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
+const formatDate = (value?: string | null) => formatDateTime(value)
+const formatDay = (value?: string | null) => formatDateOnly(value)
 
 type ChipTone = 'success' | 'warning' | 'danger' | 'neutral'
 
