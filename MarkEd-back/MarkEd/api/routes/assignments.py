@@ -1,6 +1,7 @@
 from ninja import Router
 from typing import List, Set
 from django.db import models
+from django.shortcuts import get_object_or_404
 from ..schemas.assignment import AssignmentSchema, AssignmentCreateRequest, MyAssignmentStatusSchema, PeerAssignmentRequest, PeerAssignmentCreationResponse, AssignmentStatistics, AssignmentUpdateRequest, AssignmentStructureSchema, StructureCriterionSchema, CriterionUpsertRequest, MarkerJobSchema
 from ..schemas.feedback import CreationResponse
 from ..decorators import require_auth, check_permissions
@@ -61,7 +62,9 @@ def list_assignments(request, course_id: int = None):
 @require_auth()
 # @check_permissions(IsEnrolledStudent)
 def get_assignment(request, assignment_id: int):
-    return Assignment.objects.get(id=assignment_id)
+    # 404 (not 500) for a non-existent assignment, so the frontend can show a
+    # proper "not found" instead of a broken skeleton (report B13).
+    return get_object_or_404(Assignment, id=assignment_id)
 
 
 @router.get("/{assignment_id}/my-status", response=MyAssignmentStatusSchema, operation_id="getMyAssignmentStatus")
