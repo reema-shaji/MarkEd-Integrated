@@ -309,7 +309,7 @@ export default function SelfAssessmentConfigurePage() {
 
           <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
             <div className='border-b border-[#F0ECE4] px-[18px] py-3.5 text-sm font-semibold text-[#131A26]'>
-              Teacher Feedback on Self-Assessment
+              Course organiser feedback on self-assessment
             </div>
             <div className='px-[18px] py-4'>
               <label className='flex cursor-pointer items-center gap-2.5'>

@@ -8,7 +8,7 @@
  */
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Bell, Check, ChevronDown, HelpCircle, LogOut } from 'lucide-react'
+import { Bell, Check, ChevronDown, HelpCircle, LogOut, Sparkles } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -152,16 +152,38 @@ export function TopHeader() {
         <Bell className='h-[18px] w-[18px]' strokeWidth={1.8} />
       </button>
 
-      {/* Support */}
-      <button
-        title='Support'
-        onClick={() => router.push('/support')}
-        className={`flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[9px] hover:bg-warm-100 ${
-          isSupport ? 'bg-warm-200 text-ink' : 'text-muted2'
-        }`}
-      >
-        <HelpCircle className='h-[18px] w-[18px]' strokeWidth={1.8} />
-      </button>
+      {/* Help */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            title='Help'
+            className={`flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[9px] hover:bg-warm-100 ${
+              isSupport ? 'bg-warm-200 text-ink' : 'text-muted2'
+            }`}
+          >
+            <HelpCircle className='h-[18px] w-[18px]' strokeWidth={1.8} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align='end' className='w-56 rounded-[13px] p-1.5'>
+          <div className='px-2.5 pb-1.5 pt-2 text-[9.5px] font-bold tracking-[.8px] text-faint'>
+            HELP
+          </div>
+          <DropdownMenuItem
+            onClick={() => router.push('/support')}
+            className='cursor-pointer rounded-[9px] px-2.5 py-2.5 text-[13px] font-medium text-[#2C3444] focus:bg-paper'
+          >
+            <HelpCircle className='mr-2.5 h-4 w-4' />
+            Support
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => router.push('/ai-feedback')}
+            className='cursor-pointer rounded-[9px] px-2.5 py-2.5 text-[13px] font-medium text-[#2C3444] focus:bg-paper'
+          >
+            <Sparkles className='mr-2.5 h-4 w-4' />
+            About AI suggestions
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <div className='h-[22px] w-px flex-none bg-line' />
 

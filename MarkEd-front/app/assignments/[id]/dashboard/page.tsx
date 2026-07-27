@@ -239,10 +239,38 @@ export default function DashboardPage() {
   const gradeMax = Math.max(1, ...gradeCounts)
   const graded = gradeCounts.reduce((a, b) => a + b, 0)
 
+  // Accurate submission summary for the Overview section. Uses the same
+  // on-time/late/expected numbers the Submission Statistics card is built
+  // from, so the sentence never contradicts the stat cards.
+  const submittedCount = stats.submission_on_time + stats.submission_late
+  const submitterNoun =
+    assignment.assignment_type === 'GROUP' ? 'groups' : 'students'
+  const submissionSummary =
+    stats.expected_submissions <= 0
+      ? `${submittedCount} ${submitterNoun} submitted`
+      : submittedCount >= stats.expected_submissions
+        ? `All ${submitterNoun} submitted (${submittedCount} of ${stats.expected_submissions})`
+        : `${submittedCount} of ${stats.expected_submissions} ${submitterNoun} submitted`
+
+  // The stat strip only shows the peer-review card when PR is enabled, and the
+  // fourth card only when SA or PR is enabled — so the grid width must adapt.
+  const statCardCount =
+    2 +
+    (assignment.peer_review_enabled ? 1 : 0) +
+    (stats.self_assessment_enabled || assignment.peer_review_enabled ? 1 : 0)
+  const statGridColsClass =
+    statCardCount >= 4
+      ? 'md:grid-cols-4'
+      : statCardCount === 3
+        ? 'md:grid-cols-3'
+        : 'md:grid-cols-2'
+
   return (
     <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       {/* 4-up stat strip */}
-      <div className='mb-5 grid grid-cols-2 divide-x divide-y divide-[#F0ECE4] overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white md:grid-cols-4 md:divide-y-0'>
+      <div
+        className={`mb-5 grid grid-cols-2 divide-x divide-y divide-[#F0ECE4] overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white md:divide-y-0 ${statGridColsClass}`}
+      >
         <div className='px-5 py-[18px]'>
           <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
             Submissions
@@ -266,23 +294,26 @@ export default function DashboardPage() {
           <div className='mt-0.5 text-[11.5px] text-[#8A9099]'>last 24h</div>
         </div>
 
-        <div className='px-5 py-[18px]'>
-          <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
-            Review progress
+        {assignment.peer_review_enabled && (
+          <div className='px-5 py-[18px]'>
+            <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
+              Review progress
+            </div>
+            <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
+              {stats.completion_rate}%
+            </div>
+            <div className='mt-[9px] h-1 overflow-hidden rounded-full bg-[#F0ECE4]'>
+              <div
+                className='h-full rounded-full bg-[#2F7D4F]'
+                style={{ width: `${stats.completion_rate}%` }}
+              />
+            </div>
           </div>
-          <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
-            {stats.completion_rate}%
-          </div>
-          <div className='mt-[9px] h-1 overflow-hidden rounded-full bg-[#F0ECE4]'>
-            <div
-              className='h-full rounded-full bg-[#2F7D4F]'
-              style={{ width: `${stats.completion_rate}%` }}
-            />
-          </div>
-        </div>
+        )}
 
-        <div className='px-5 py-[18px]'>
-          {stats.self_assessment_enabled ? (
+        {(stats.self_assessment_enabled || assignment.peer_review_enabled) && (
+          <div className='px-5 py-[18px]'>
+            {stats.self_assessment_enabled ? (
             <>
               <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
                 Self-assessments
@@ -308,8 +339,9 @@ export default function DashboardPage() {
                 </span>
               </div>
             </>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Overview */}
@@ -317,8 +349,11 @@ export default function DashboardPage() {
         <div className='mb-2 text-[15px] font-semibold tracking-[-.1px] text-[#131A26]'>
           Overview
         </div>
-        <p className='mb-4 text-sm text-[#5A6070]'>
+        <p className='mb-2 text-sm text-[#5A6070]'>
           {assignment.assignmentDescription}
+        </p>
+        <p className='mb-4 text-sm font-medium text-[#131A26]'>
+          {submissionSummary}
         </p>
         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
           <CountdownCard
@@ -416,7 +451,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Peer Review Matches */}
+      {/* Peer Review Matches — only relevant when peer review is enabled */}
+      {assignment.peer_review_enabled && (
       <div className='rounded-[14px] border border-[#EAE5DB] bg-white p-6'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div className='text-[15px] font-semibold tracking-[-.1px] text-[#131A26]'>
@@ -550,6 +586,7 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }

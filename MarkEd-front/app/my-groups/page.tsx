@@ -159,7 +159,7 @@ export default function MyGroupsPage() {
 
       {groups !== null && groups.length > 0 && (
         <div className='text-xs leading-[1.5] text-[#8A9099]'>
-          Self-enrolment for group sets is closed. Contact your course organiser
+          Self-enrolment for group categories is closed. Contact your course organiser
           to change groups.
         </div>
       )}

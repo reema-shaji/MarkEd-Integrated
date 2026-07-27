@@ -78,7 +78,7 @@ export default function PeerReviewListPage() {
         </div>
       ) : (
         <div className='flex flex-col gap-3'>
-          {reviews.map((rv, idx) => {
+          {reviews.map((rv) => {
             const done = rv.status?.toUpperCase() === 'COMPLETED'
             const badge = done
               ? { label: 'Completed', cls: 'bg-[#E9F1EA] text-[#2F7D4F]' }

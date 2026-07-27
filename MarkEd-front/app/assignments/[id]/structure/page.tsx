@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
+  AssignmentSchema,
   AssignmentStructureSchema,
   DefaultService,
   StructureCriterionSchema,
@@ -10,7 +11,11 @@ import {
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useUser } from '@/src/contexts/user-context'
+
+/** datetime-local wants "YYYY-MM-DDTHH:mm"; the API sends full ISO. */
+const toLocalInput = (iso?: string | null) => (iso ? iso.slice(0, 16) : '')
 
 export default function AssignmentStructurePage() {
   const params = useParams()
@@ -20,7 +25,20 @@ export default function AssignmentStructurePage() {
 
   const [structure, setStructure] =
     React.useState<AssignmentStructureSchema | null>(null)
+  const [assignment, setAssignment] = React.useState<AssignmentSchema | null>(
+    null
+  )
   const [loadFailed, setLoadFailed] = React.useState(false)
+
+  // Edit-assignment modal state (staff only). Website is intentionally not
+  // prefilled: the assignment schema does not expose the current value, so it
+  // is only sent when the user types one (blank leaves it untouched).
+  const [editOpen, setEditOpen] = React.useState(false)
+  const [editTitle, setEditTitle] = React.useState('')
+  const [editDescription, setEditDescription] = React.useState('')
+  const [editWebsite, setEditWebsite] = React.useState('')
+  const [editDeadline, setEditDeadline] = React.useState('')
+  const [savingAssignment, setSavingAssignment] = React.useState(false)
 
   // Inline edit state: id of the criterion being edited (or 'new').
   const [editingId, setEditingId] = React.useState<number | 'new' | null>(null)
@@ -30,8 +48,12 @@ export default function AssignmentStructurePage() {
 
   const fetchStructure = React.useCallback(async () => {
     try {
-      const data = await DefaultService.getAssignmentStructure(assignmentId)
+      const [data, assignmentData] = await Promise.all([
+        DefaultService.getAssignmentStructure(assignmentId),
+        DefaultService.getAssignment(assignmentId),
+      ])
       setStructure(data)
+      setAssignment(assignmentData)
     } catch (error) {
       console.error('Failed to load assignment structure:', error)
       setLoadFailed(true)
@@ -44,6 +66,47 @@ export default function AssignmentStructurePage() {
       fetchStructure()
     }
   }, [params.id, fetchStructure])
+
+  const openEdit = () => {
+    if (!assignment) return
+    setEditTitle(assignment.assignmentTitle ?? '')
+    setEditDescription(assignment.assignmentDescription ?? '')
+    setEditWebsite('')
+    setEditDeadline(toLocalInput(assignment.deadline))
+    setEditOpen(true)
+  }
+
+  const saveAssignment = async () => {
+    const title = editTitle.trim()
+    if (!title) {
+      toast.error('Assignment title is required')
+      return
+    }
+    if (!editDeadline) {
+      toast.error('Set a submission deadline')
+      return
+    }
+    const website = editWebsite.trim()
+    setSavingAssignment(true)
+    try {
+      await DefaultService.updateAssignment(assignmentId, {
+        assignmentTitle: title,
+        assignmentDescription: editDescription.trim() || null,
+        // Only send website when the user typed one — the current value is not
+        // exposed, so an empty field must not clobber it.
+        ...(website ? { assignmentWebsite: website } : {}),
+        deadline: new Date(editDeadline).toISOString(),
+      })
+      toast.success('Assignment updated')
+      setEditOpen(false)
+      await fetchStructure()
+    } catch (error) {
+      console.error('Failed to update assignment:', error)
+      toast.error('Failed to update assignment')
+    } finally {
+      setSavingAssignment(false)
+    }
+  }
 
   const beginAdd = () => {
     setEditingId('new')
@@ -156,7 +219,7 @@ export default function AssignmentStructurePage() {
           placeholder='Max'
           className={`${inputCls} w-20`}
         />
-        <span className='text-[12px] text-[#5A6070]'>pts</span>
+        <span className='text-[12px] text-[#5A6070]'>marks</span>
       </div>
       <button
         onClick={saveEdit}
@@ -178,8 +241,18 @@ export default function AssignmentStructurePage() {
 
   return (
     <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
-      <div className='mb-[18px] text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
-        Assignment Structure
+      <div className='mb-[18px] flex items-center justify-between gap-3'>
+        <div className='text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
+          Assignment Structure
+        </div>
+        {assignment && (
+          <button
+            onClick={openEdit}
+            className='rounded-[9px] bg-[#131A26] px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-[#243247]'
+          >
+            Edit assignment
+          </button>
+        )}
       </div>
 
       {/* Marking Criteria */}
@@ -216,7 +289,7 @@ export default function AssignmentStructurePage() {
                 </span>
                 <span className='flex items-center gap-2.5'>
                   <span className='text-[12px] text-[#5A6070]'>
-                    0–{cr.marks} pts
+                    0–{cr.marks} marks
                   </span>
                   <button
                     onClick={() => beginEdit(cr)}
@@ -259,6 +332,82 @@ export default function AssignmentStructurePage() {
           </button>
         )}
       </div>
+
+      {/* Edit assignment (staff) */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className='max-w-md gap-0 rounded-[14px] border-[#EAE5DB] bg-[#F5F3EF] p-0'>
+          <div className='border-b border-[#EAE5DB] px-5 py-4 text-[15px] font-semibold tracking-[-.1px] text-[#131A26]'>
+            Edit assignment
+          </div>
+          <div className='space-y-4 px-5 py-5'>
+            <div>
+              <label className='mb-1.5 block text-[13px] font-medium text-[#2C3444]'>
+                Title
+              </label>
+              <input
+                type='text'
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className={`${inputCls} w-full`}
+              />
+            </div>
+            <div>
+              <label className='mb-1.5 block text-[13px] font-medium text-[#2C3444]'>
+                Description
+              </label>
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                rows={4}
+                className={`${inputCls} w-full resize-y`}
+              />
+            </div>
+            <div>
+              <label className='mb-1.5 block text-[13px] font-medium text-[#2C3444]'>
+                Website{' '}
+                <span className='font-normal text-[#8A9099]'>(optional)</span>
+              </label>
+              <input
+                type='url'
+                value={editWebsite}
+                onChange={(e) => setEditWebsite(e.target.value)}
+                placeholder='https://…'
+                className={`${inputCls} w-full`}
+              />
+            </div>
+            <div>
+              <label className='mb-1.5 block text-[13px] font-medium text-[#2C3444]'>
+                Submission deadline
+              </label>
+              <input
+                type='datetime-local'
+                value={editDeadline}
+                onChange={(e) => setEditDeadline(e.target.value)}
+                className={`${inputCls} w-full`}
+              />
+            </div>
+          </div>
+          <div className='flex justify-end gap-2 border-t border-[#EAE5DB] px-5 py-4'>
+            <button
+              onClick={() => setEditOpen(false)}
+              disabled={savingAssignment}
+              className='rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8] disabled:opacity-50'
+            >
+              Cancel
+            </button>
+            <button
+              onClick={saveAssignment}
+              disabled={savingAssignment}
+              className='inline-flex items-center rounded-[9px] bg-[#131A26] px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-[#243247] disabled:cursor-not-allowed disabled:opacity-50'
+            >
+              {savingAssignment && (
+                <Loader2 className='mr-1.5 h-3.5 w-3.5 animate-spin' />
+              )}
+              Save changes
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

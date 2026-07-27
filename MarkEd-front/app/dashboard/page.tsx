@@ -55,29 +55,37 @@ export default function CourseDashboardPage() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
+    setStatusMap({})
     const load = async () => {
+      let res: AssignmentSchema[]
       try {
-        const res = await DefaultService.getAssignments(currentCourseId ?? undefined)
-        if (cancelled) return
-        setAssignments(res)
-        if (user?.isStudent) {
-          const statuses = await Promise.all(
-            res.map((a) =>
-              DefaultService.getMyAssignmentStatus(a.id).catch(() => null)
-            )
-          )
-          if (cancelled) return
-          const map: Record<number, MyAssignmentStatusSchema> = {}
-          res.forEach((a, i) => {
-            const s = statuses[i]
-            if (s) map[a.id] = s
-          })
-          setStatusMap(map)
-        }
+        res = await DefaultService.getAssignments(currentCourseId ?? undefined)
       } catch {
-        if (!cancelled) toast.error('Could not load the dashboard')
-      } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          toast.error('Could not load the dashboard')
+          setLoading(false)
+        }
+        return
+      }
+      if (cancelled) return
+      setAssignments(res)
+      // The primary view can render now — never block the skeleton on the
+      // per-assignment status calls below (a single hanging /my-status request
+      // would otherwise keep students on an infinite skeleton).
+      setLoading(false)
+      if (user?.isStudent) {
+        const statuses = await Promise.all(
+          res.map((a) =>
+            DefaultService.getMyAssignmentStatus(a.id).catch(() => null)
+          )
+        )
+        if (cancelled) return
+        const map: Record<number, MyAssignmentStatusSchema> = {}
+        res.forEach((a, i) => {
+          const s = statuses[i]
+          if (s) map[a.id] = s
+        })
+        setStatusMap(map)
       }
     }
     load()
