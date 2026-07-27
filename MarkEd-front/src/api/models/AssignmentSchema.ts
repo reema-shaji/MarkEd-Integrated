@@ -7,6 +7,7 @@ export type AssignmentSchema = {
     course_id: number;
     assignmentTitle: string;
     assignmentDescription?: (string | null);
+    assignmentWebsite?: (string | null);
     deadline: string;
     assignment_instructions?: (Array<string> | null);
     assignment_type: string;

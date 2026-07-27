@@ -71,7 +71,7 @@ export default function AssignmentStructurePage() {
     if (!assignment) return
     setEditTitle(assignment.assignmentTitle ?? '')
     setEditDescription(assignment.assignmentDescription ?? '')
-    setEditWebsite('')
+    setEditWebsite(assignment.assignmentWebsite ?? '')
     setEditDeadline(toLocalInput(assignment.deadline))
     setEditOpen(true)
   }
@@ -92,9 +92,9 @@ export default function AssignmentStructurePage() {
       await DefaultService.updateAssignment(assignmentId, {
         assignmentTitle: title,
         assignmentDescription: editDescription.trim() || null,
-        // Only send website when the user typed one — the current value is not
-        // exposed, so an empty field must not clobber it.
-        ...(website ? { assignmentWebsite: website } : {}),
+        // Website is now prefilled from the assignment, so an empty field
+        // legitimately clears it.
+        assignmentWebsite: website || null,
         deadline: new Date(editDeadline).toISOString(),
       })
       toast.success('Assignment updated')

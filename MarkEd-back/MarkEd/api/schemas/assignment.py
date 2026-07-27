@@ -7,6 +7,7 @@ class AssignmentSchema(Schema):
     course_id: int
     assignmentTitle: str
     assignmentDescription: Optional[str] = None
+    assignmentWebsite: Optional[str] = None
     deadline: datetime
     assignment_instructions: Optional[List[str]] = None
     # Unified: INDIVIDUAL | GROUP (Unified PRD §6.2)
