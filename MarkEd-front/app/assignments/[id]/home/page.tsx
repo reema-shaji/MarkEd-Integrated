@@ -64,19 +64,27 @@ export default function AssignmentHomePage() {
 
   React.useEffect(() => {
     if (!params.id) return
-    const load = async () => {
-      try {
-        const [a, s] = await Promise.all([
-          DefaultService.getAssignment(id),
-          DefaultService.getMyAssignmentStatus(id).catch(() => null),
-        ])
-        setAssignment(a)
-        setStatus(s)
-      } catch {
-        toast.error('Failed to load assignment')
-      }
+    let cancelled = false
+    // Render as soon as the assignment loads; the status call (heavier — it
+    // aggregates the student's mark) fills in the facet cards when ready, so a
+    // slow status request no longer holds the whole page on a skeleton (B4).
+    DefaultService.getAssignment(id)
+      .then((a) => {
+        if (!cancelled) setAssignment(a)
+      })
+      .catch(() => {
+        if (!cancelled) toast.error('Failed to load assignment')
+      })
+    DefaultService.getMyAssignmentStatus(id)
+      .then((s) => {
+        if (!cancelled) setStatus(s)
+      })
+      .catch(() => {
+        if (!cancelled) setStatus(null)
+      })
+    return () => {
+      cancelled = true
     }
-    load()
   }, [params.id, id])
 
   if (!assignment) {
