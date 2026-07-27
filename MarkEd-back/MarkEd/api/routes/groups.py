@@ -941,11 +941,26 @@ def get_my_group_result_by_assignment(request, assignment_id: int):
     finalised = GroupSubmissionPersonalAdjustment.objects.filter(
         group_submission=gs, status='final'
     ).exists()
+    released = assignment.results_released
+    breakdown = _personal_final_score(gs, student)
+    if not released:
+        # Withhold the numbers until the course organiser releases results; keep
+        # the total (a non-sensitive max) so the page can still frame it.
+        breakdown = {
+            'group_score': 0.0,
+            'group_total': breakdown['group_total'],
+            'group_percentage': 0.0,
+            'personal_adjustment': 0.0,
+            'adjustment_reason': None,
+            'final_score': 0.0,
+            'final_percentage': 0.0,
+        }
     return {
         'group_name': group.name,
         'submission_version': gs.submission_version,
         'finalised': finalised,
-        'breakdown': _personal_final_score(gs, student),
+        'released': released,
+        'breakdown': breakdown,
     }
 
 

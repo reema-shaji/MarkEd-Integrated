@@ -13,6 +13,7 @@ export type MyGroupResultSchema = {
     group_name: string;
     submission_version: number;
     finalised: boolean;
+    released?: boolean;
     breakdown: GroupResultSchema;
 };
 

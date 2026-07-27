@@ -206,6 +206,10 @@ class MyGroupResultSchema(Schema):
     group_name: str
     submission_version: int
     finalised: bool
+    # Whether the course organiser has released results to students. Until then
+    # the breakdown numbers are withheld (zeroed) and the page shows a
+    # "not released" state.
+    released: bool = False
     breakdown: GroupResultSchema
 
 

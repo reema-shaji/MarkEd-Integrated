@@ -70,6 +70,7 @@ export type { PresignedPostData } from './models/PresignedPostData';
 export type { RandomAssignRequest } from './models/RandomAssignRequest';
 export type { ReflectionPromptSchema } from './models/ReflectionPromptSchema';
 export type { ReflectionPromptsSaveRequest } from './models/ReflectionPromptsSaveRequest';
+export type { ResultsReleaseRequest } from './models/ResultsReleaseRequest';
 export type { RubricItemSchema } from './models/RubricItemSchema';
 export type { RubricLevelSchema } from './models/RubricLevelSchema';
 export type { RubricSelectionSaveRequest } from './models/RubricSelectionSaveRequest';

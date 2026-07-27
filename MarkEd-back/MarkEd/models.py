@@ -113,6 +113,12 @@ class Assignment(models.Model):
     assignmentDescription: models.TextField = models.TextField(blank=True, null=True)
     assignmentWebsite: models.URLField = models.URLField(blank=True, null=True)
     deadline: models.DateTimeField = models.DateTimeField()
+    # Whether finalised marks are visible to students. Marking finished (a
+    # marker's job) and marks released (a course organiser's decision) are
+    # separate steps — students only see their mark once both are true. This
+    # makes real the "Release marks" control the source dissertations only ever
+    # showed as a disabled placeholder.
+    results_released: models.BooleanField = models.BooleanField(default=False)
     permission_choice: typing.Tuple[typing.Tuple[int, str], ...] = (
         (0, 'disabled'),
         (1, 'enabled'),

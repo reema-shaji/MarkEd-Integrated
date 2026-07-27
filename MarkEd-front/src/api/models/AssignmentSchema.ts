@@ -9,6 +9,7 @@ export type AssignmentSchema = {
     assignmentDescription?: (string | null);
     assignmentWebsite?: (string | null);
     deadline: string;
+    results_released?: boolean;
     assignment_instructions?: (Array<string> | null);
     assignment_type: string;
     status: number;

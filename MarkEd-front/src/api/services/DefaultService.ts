@@ -58,6 +58,7 @@ import type { PersonalAdjustmentSchema } from '../models/PersonalAdjustmentSchem
 import type { RandomAssignRequest } from '../models/RandomAssignRequest';
 import type { ReflectionPromptSchema } from '../models/ReflectionPromptSchema';
 import type { ReflectionPromptsSaveRequest } from '../models/ReflectionPromptsSaveRequest';
+import type { ResultsReleaseRequest } from '../models/ResultsReleaseRequest';
 import type { RubricSelectionSaveRequest } from '../models/RubricSelectionSaveRequest';
 import type { RubricTreeNode } from '../models/RubricTreeNode';
 import type { SAFeedbackRequest } from '../models/SAFeedbackRequest';
@@ -393,6 +394,33 @@ export class DefaultService {
             path: {
                 'assignment_id': assignmentId,
             },
+        });
+    }
+    /**
+     * Set Results Released
+     * Release finalised marks to students, or retract them.
+     *
+     * Course-organiser only. Making finished marking visible to students is a
+     * deliberate decision separate from a marker finishing their scoring — this is
+     * the real version of the 'Release marks' control the source dissertations
+     * only ever rendered as a disabled placeholder.
+     * @param assignmentId
+     * @param requestBody
+     * @returns AssignmentSchema OK
+     * @throws ApiError
+     */
+    public static setResultsReleased(
+        assignmentId: number,
+        requestBody: ResultsReleaseRequest,
+    ): CancelablePromise<AssignmentSchema> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/assignments/{assignment_id}/release-results',
+            path: {
+                'assignment_id': assignmentId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**

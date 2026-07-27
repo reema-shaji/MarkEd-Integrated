@@ -2,7 +2,7 @@ from ninja import Router
 from typing import List, Set
 from django.db import models
 from django.shortcuts import get_object_or_404
-from ..schemas.assignment import AssignmentSchema, AssignmentCreateRequest, MyAssignmentStatusSchema, PeerAssignmentRequest, PeerAssignmentCreationResponse, AssignmentStatistics, AssignmentUpdateRequest, AssignmentStructureSchema, StructureCriterionSchema, CriterionUpsertRequest, MarkerJobSchema
+from ..schemas.assignment import AssignmentSchema, AssignmentCreateRequest, MyAssignmentStatusSchema, PeerAssignmentRequest, PeerAssignmentCreationResponse, AssignmentStatistics, AssignmentUpdateRequest, AssignmentStructureSchema, StructureCriterionSchema, CriterionUpsertRequest, MarkerJobSchema, ResultsReleaseRequest
 from ..schemas.feedback import CreationResponse
 from ..decorators import require_auth, check_permissions
 from ..permissions import IsCourseStaffFromAssignment, CanCreateAssignment
@@ -96,7 +96,9 @@ def get_my_assignment_status(request, assignment_id: int):
     # the group-result page, so they're intentionally left out here.
     mark_released = False
     mark_score = mark_total = mark_percentage = None
-    if submission and not assignment.is_group_assignment():
+    # Shown only once marking is finished AND the course organiser has released
+    # results (the "Release marks" gate).
+    if submission and not assignment.is_group_assignment() and assignment.results_released:
         rows = list(
             SubmissionCriteria.objects.filter(submission=submission)
             .select_related('criteria')
@@ -705,6 +707,23 @@ def update_assignment(request, assignment_id: int, data: AssignmentUpdateRequest
     if data.deadline is not None:
         assignment.deadline = data.deadline
     assignment.save()
+    return assignment
+
+
+@router.post("/{assignment_id}/release-results", response=AssignmentSchema, operation_id="setResultsReleased")
+@require_auth(roles=['Academic'])
+@check_permissions(IsCourseStaffFromAssignment)
+def set_results_released(request, assignment_id: int, data: ResultsReleaseRequest):
+    """Release finalised marks to students, or retract them.
+
+    Course-organiser only. Making finished marking visible to students is a
+    deliberate decision separate from a marker finishing their scoring — this is
+    the real version of the 'Release marks' control the source dissertations
+    only ever rendered as a disabled placeholder.
+    """
+    assignment = get_object_or_404(Assignment, id=assignment_id)
+    assignment.results_released = data.released
+    assignment.save(update_fields=['results_released'])
     return assignment
 
 

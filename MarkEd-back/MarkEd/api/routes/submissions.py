@@ -114,12 +114,15 @@ def get_my_submission_result(request, assignment_id: int):
         .select_related('criteria')
     )
     finished = bool(rows) and all(r.status == 2 for r in rows)
+    # A student sees the mark only once marking is finished AND the course
+    # organiser has released results (the explicit "Release marks" gate).
+    released = finished and submission.assignment.results_released
 
-    if not finished:
-        # Marking not complete: withhold the numbers, mirror the original "-".
+    if not released:
+        # Withhold the numbers until released; mirror the original "-".
         return {
             "released": False,
-            "status": "Marking" if rows else "Submitted",
+            "status": "Marked" if finished else ("Marking" if rows else "Submitted"),
             "score": 0.0,
             "total": 0.0,
             "percentage": 0.0,

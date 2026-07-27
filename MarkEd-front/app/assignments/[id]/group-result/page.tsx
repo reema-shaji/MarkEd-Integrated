@@ -47,7 +47,7 @@ export default function GroupResultPage() {
   }
 
 
-  if (message || !result) {
+  if (message || !result || !result.released) {
     return (
       <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='mb-1 text-[21px] font-semibold -tracking-[.45px] text-[#131A26]'>

@@ -9,6 +9,7 @@ class AssignmentSchema(Schema):
     assignmentDescription: Optional[str] = None
     assignmentWebsite: Optional[str] = None
     deadline: datetime
+    results_released: bool = False
     assignment_instructions: Optional[List[str]] = None
     # Unified: INDIVIDUAL | GROUP (Unified PRD §6.2)
     assignment_type: str
@@ -107,6 +108,11 @@ class AssignmentUpdateRequest(Schema):
     assignmentDescription: Optional[str] = None
     assignmentWebsite: Optional[str] = None
     deadline: Optional[datetime] = None
+
+
+class ResultsReleaseRequest(Schema):
+    """Toggle whether finalised marks are visible to students."""
+    released: bool = True
 
 
 class StructureCriterionSchema(Schema):

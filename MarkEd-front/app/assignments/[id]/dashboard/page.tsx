@@ -52,6 +52,7 @@ export default function DashboardPage() {
     null
   )
   const [isMatching, setIsMatching] = React.useState(false)
+  const [releasing, setReleasing] = React.useState(false)
   const [matches, setMatches] = React.useState<PeerMatch[]>([])
   const [stats, setStats] = React.useState<AssignmentStatistics | null>(null)
   const [allocations, setAllocations] = React.useState<
@@ -144,6 +145,23 @@ export default function DashboardPage() {
       toast.error('Failed to match peers: ' + errorMessage)
     } finally {
       setIsMatching(false)
+    }
+  }
+
+  const handleToggleRelease = async () => {
+    if (!assignment) return
+    const next = !assignment.results_released
+    setReleasing(true)
+    try {
+      const updated = await DefaultService.setResultsReleased(Number(params.id), {
+        released: next,
+      })
+      setAssignment(updated as AssignmentSchema)
+      toast.success(next ? 'Marks released to students' : 'Marks hidden from students')
+    } catch {
+      toast.error('Could not update mark release')
+    } finally {
+      setReleasing(false)
     }
   }
 
@@ -267,6 +285,42 @@ export default function DashboardPage() {
 
   return (
     <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
+      {/* Release marks control — the course organiser decides when finalised
+          marks become visible to students (separate from finalising marking). */}
+      <div className='mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#EAE5DB] bg-white px-5 py-4'>
+        <div>
+          <div className='flex items-center gap-2 text-[14px] font-semibold text-[#131A26]'>
+            Marks{' '}
+            {assignment.results_released ? (
+              <span className='inline-flex items-center gap-1 rounded-[6px] bg-[#E9F1EA] px-2 py-0.5 text-[11px] font-semibold text-[#2F7D4F]'>
+                Released
+              </span>
+            ) : (
+              <span className='inline-flex items-center gap-1 rounded-[6px] bg-[#F5F3EF] px-2 py-0.5 text-[11px] font-semibold text-[#8A6D3B]'>
+                Not released
+              </span>
+            )}
+          </div>
+          <div className='mt-0.5 text-[12.5px] text-[#8A9099]'>
+            {assignment.results_released
+              ? 'Students can see their finalised marks and feedback.'
+              : 'Finalised marks stay hidden from students until you release them.'}
+          </div>
+        </div>
+        <button
+          onClick={handleToggleRelease}
+          disabled={releasing}
+          className={
+            assignment.results_released
+              ? 'inline-flex items-center rounded-[9px] border border-[#DED8CA] bg-white px-4 py-2 text-[13px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8] disabled:opacity-50'
+              : 'inline-flex items-center rounded-[9px] bg-[#131A26] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#243247] disabled:opacity-50'
+          }
+        >
+          {releasing && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+          {assignment.results_released ? 'Hide marks' : 'Release marks'}
+        </button>
+      </div>
+
       {/* 4-up stat strip */}
       <div
         className={`mb-5 grid grid-cols-2 divide-x divide-y divide-[#F0ECE4] overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white md:divide-y-0 ${statGridColsClass}`}
