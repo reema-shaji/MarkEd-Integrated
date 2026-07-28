@@ -267,6 +267,35 @@ Four issues remained after the post-restart retest and were then closed:
   academics)…") that showed to students on the Assignment tab. Replaced with a
   real student-facing brief; the scenario note now lives in a seeder comment.
 
+## 13. Notifications — [Restored]
+
+- **Before:** The `Notification` model was inherited from all three source
+  dissertations (per-receiver, a `subject` code 1–6, unread/read `status`), and
+  the originals had a working pipeline: `notify()` populated a navbar badge +
+  dropdown, `dismiss()` flipped unread→read, and five triggers created
+  notifications (moderation/help emails, 1- and 2-day deadline reminders, and
+  marks-released). Unification carried the model over but wired **none** of it —
+  the navbar bell was an inert "No new notifications" placeholder. (The source
+  also had a student-side bug where the badge count was never populated.)
+- **Change:** Restored the pipeline on the unified schema:
+  - **API** (`routes/notifications.py`): list (newest first + unread count),
+    lightweight unread-count for the badge, read-all (the original `dismiss()`),
+    and read-one. Per-subject messages and deep links mirror the original
+    `notify()`.
+  - **Triggers wired to real unified actions:** *marks released* (subject 6) —
+    created for each student with finalised marks when a course organiser
+    releases results; *deadline reminders* (subjects 4/5) — created lazily for
+    staff when an assignment is 0–1 / 1–2 days from its deadline, deduped.
+    Moderation/help (1/2) and submission-added (3) have no unified action to hook
+    into, but the display handles them so they light up automatically if those
+    actions are added later.
+  - **Frontend:** a real notification bell (red unread badge, dropdown of recent
+    notifications, "Mark all read", "View all", each item deep-links and marks
+    itself read) and a `/notifications` page. The unread count is populated for
+    **every** role — fixing the source's student-badge bug.
+- **Why:** The feature existed and was operational in all three sources;
+  unification had left it as dead model + placeholder UI.
+
 ## Notes on things deliberately *not* changed
 
 - **Notifications** — intentionally out of scope for this pass.
