@@ -44,6 +44,8 @@ import type { MoveMemberRequest } from '../models/MoveMemberRequest';
 import type { MyAssignmentStatusSchema } from '../models/MyAssignmentStatusSchema';
 import type { MyGroupResultSchema } from '../models/MyGroupResultSchema';
 import type { MySubmissionResultSchema } from '../models/MySubmissionResultSchema';
+import type { NotificationActionResponse } from '../models/NotificationActionResponse';
+import type { NotificationListResponse } from '../models/NotificationListResponse';
 import type { PeerAssignmentCreationResponse } from '../models/PeerAssignmentCreationResponse';
 import type { PeerAssignmentRequest } from '../models/PeerAssignmentRequest';
 import type { PeerMatch } from '../models/PeerMatch';
@@ -77,6 +79,7 @@ import type { SubmissionResponse } from '../models/SubmissionResponse';
 import type { SubmissionSchema } from '../models/SubmissionSchema';
 import type { TokenOut } from '../models/TokenOut';
 import type { UngroupedStudentSchema } from '../models/UngroupedStudentSchema';
+import type { UnreadCountResponse } from '../models/UnreadCountResponse';
 import type { UserSchema } from '../models/UserSchema';
 import type { WorkspaceCommentCreateRequest } from '../models/WorkspaceCommentCreateRequest';
 import type { WorkspaceCommentSchema } from '../models/WorkspaceCommentSchema';
@@ -2119,6 +2122,61 @@ export class DefaultService {
             url: '/api/feedback-bank/{entry_id}/favourite',
             path: {
                 'entry_id': entryId,
+            },
+        });
+    }
+    /**
+     * List Notifications
+     * The current user's notifications (newest first) + unread count. Creates
+     * any due deadline reminders first (staff only).
+     * @returns NotificationListResponse OK
+     * @throws ApiError
+     */
+    public static listNotifications(): CancelablePromise<NotificationListResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/notifications/',
+        });
+    }
+    /**
+     * Unread Count
+     * Lightweight unread count for the navbar badge (no side effects).
+     * @returns UnreadCountResponse OK
+     * @throws ApiError
+     */
+    public static getUnreadNotificationCount(): CancelablePromise<UnreadCountResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/notifications/unread-count',
+        });
+    }
+    /**
+     * Mark All Read
+     * Dismiss: flip all of the user's unread notifications to read (the
+     * original dismiss()).
+     * @returns NotificationActionResponse OK
+     * @throws ApiError
+     */
+    public static markNotificationsRead(): CancelablePromise<NotificationActionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/notifications/read-all',
+        });
+    }
+    /**
+     * Mark One Read
+     * @param notificationId
+     * @returns NotificationActionResponse OK
+     * @throws ApiError
+     */
+    public static markNotificationRead(
+        notificationId: number,
+    ): CancelablePromise<NotificationActionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/notifications/{notification_id}/read',
+            path: {
+                'notification_id': notificationId,
             },
         });
     }

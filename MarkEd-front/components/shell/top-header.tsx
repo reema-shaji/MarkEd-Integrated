@@ -8,14 +8,14 @@
  */
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Bell, Check, ChevronDown, HelpCircle, LogOut, Sparkles } from 'lucide-react'
+import { Check, ChevronDown, HelpCircle, LogOut, Sparkles } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { toast } from 'sonner'
+import { NotificationBell } from './notification-bell'
 import { useUser } from '@/src/contexts/user-context'
 import { useCourse } from '@/src/contexts/course-context'
 import { DefaultService, CourseSchema } from '@/src/api'
@@ -141,16 +141,8 @@ export function TopHeader() {
 
       <div className='flex-1' />
 
-      {/* Notifications (no backing data yet — inert placeholder) */}
-      <button
-        title='Notifications'
-        onClick={() => toast('No new notifications')}
-        className={`relative flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[9px] hover:bg-warm-100 ${
-          isNotifs ? 'bg-warm-200 text-ink' : 'text-muted2'
-        }`}
-      >
-        <Bell className='h-[18px] w-[18px]' strokeWidth={1.8} />
-      </button>
+      {/* Notifications */}
+      <NotificationBell active={isNotifs} />
 
       {/* Help */}
       <DropdownMenu>

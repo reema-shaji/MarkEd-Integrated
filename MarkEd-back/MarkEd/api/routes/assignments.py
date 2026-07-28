@@ -722,8 +722,14 @@ def set_results_released(request, assignment_id: int, data: ResultsReleaseReques
     only ever rendered as a disabled placeholder.
     """
     assignment = get_object_or_404(Assignment, id=assignment_id)
+    was_released = assignment.results_released
     assignment.results_released = data.released
     assignment.save(update_fields=['results_released'])
+    # Notify students on the release transition (subject 6), like the source
+    # dissertations did when a marker marked a submission complete.
+    if data.released and not was_released:
+        from .notifications import create_marks_released_notifications
+        create_marks_released_notifications(assignment)
     return assignment
 
 

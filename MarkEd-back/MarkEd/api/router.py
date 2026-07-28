@@ -8,6 +8,7 @@ from .routes import (
     files,
     groups,
     health,
+    notifications,
     peer_reviews,
     self_assessment,
     submissions,
@@ -39,3 +40,7 @@ api.add_router("/self-assessment", self_assessment.sa_router)
 
 # Feedback bank: reusable marker feedback snippets (prototype "Feedback Bank").
 api.add_router("/feedback-bank", feedback_bank.router)
+
+# Notifications: restores the notify()/dismiss() pipeline from the source
+# dissertations (per-receiver Notification with subject + unread/read status).
+api.add_router("/notifications", notifications.router)
