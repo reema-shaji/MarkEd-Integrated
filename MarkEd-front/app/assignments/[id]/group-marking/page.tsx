@@ -229,6 +229,7 @@ export default function GroupMarkingPage() {
             <div className='overflow-hidden rounded-[10px] border border-line-card'>
               <MarkerPDFViewer
                 url={selected.pre_signed_file_url}
+                previewOnly
                 peerReviewEnabled={false}
               />
             </div>

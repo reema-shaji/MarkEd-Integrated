@@ -33,6 +33,10 @@ interface MarkerPDFViewerProps {
   // Whether this assignment has peer review; when false the sidebar doesn't
   // frame the empty state as "peer feedback".
   peerReviewEnabled?: boolean
+  // Read-only preview: hide the annotations sidebar entirely and fit the PDF
+  // to its container instead of a fixed 760px. Used where the viewer sits in a
+  // narrow column (e.g. group marking) and no commenting is possible.
+  previewOnly?: boolean
 }
 
 export default function MarkerPDFViewer({
@@ -42,12 +46,32 @@ export default function MarkerPDFViewer({
   otherControls,
   isMarkerView = true,
   peerReviewEnabled = true,
+  previewOnly = false,
 }: MarkerPDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0)
   const [initialAnnotations, setInitialAnnotations] = useState<Annotation[]>([])
   const [annotations, setAnnotations] = useState<Annotation[]>([])
   const { user } = useUser()
   const sidebarRef = useRef<HTMLDivElement>(null)
+
+  // In preview mode the PDF fits the width of its (narrow) column rather than a
+  // fixed 760px, so it never clips.
+  const pdfContainerRef = useRef<HTMLDivElement>(null)
+  const [fitWidth, setFitWidth] = useState<number>(760)
+  useEffect(() => {
+    if (!previewOnly) return
+    const el = pdfContainerRef.current
+    if (!el) return
+    const measure = () => {
+      const w = el.clientWidth - 24 // account for the px-3 padding
+      setFitWidth(Math.max(280, Math.min(760, w)))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [previewOnly])
+  const pageWidth = previewOnly ? fitWidth : 760
 
   const {
     selectedText,
@@ -402,14 +426,17 @@ export default function MarkerPDFViewer({
   )
 
   return (
-    <div className='min-h-screen-5xl bg-paper'>
+    <div className={previewOnly ? 'bg-paper' : 'min-h-screen-5xl bg-paper'}>
       <Controls url={url} annotations={annotations} isMarkerView={isMarkerView}>
         {otherControls}
       </Controls>
 
       <div className='flex'>
         <div
-          className='relative flex flex-1 justify-center overflow-x-auto px-6 py-6'
+          ref={pdfContainerRef}
+          className={`relative flex flex-1 justify-center overflow-x-auto ${
+            previewOnly ? 'px-3 py-4' : 'px-6 py-6'
+          }`}
           onClick={(event) => {
             if (event.target === event.currentTarget) {
               setSelectedAnnotation(null)
@@ -430,7 +457,7 @@ export default function MarkerPDFViewer({
             <div key={`page_${index + 1}`} className='relative'>
               <PDFPage
                 pageNumber={index + 1}
-                width={760}
+                width={pageWidth}
                 className='overflow-hidden rounded-[14px] border border-[#EAE5DB] shadow-[0_1px_4px_rgba(19,26,38,0.06)]'
                 onMouseUp={() => {
                   setCurrentPageNumber(index + 1)
@@ -444,31 +471,33 @@ export default function MarkerPDFViewer({
         </Document>
         </div>
 
-        <AnnotationsSidebar
-          ref={sidebarRef as React.RefObject<HTMLDivElement>}
-          annotations={annotations}
-          draftAnnotation={draftAnnotation}
-          selectedAnnotation={selectedAnnotation}
-          highlightedAnnotation={highlightedAnnotation}
-          onDraftChange={setDraftAnnotation}
-          onDraftCancel={() => setDraftAnnotation(null)}
-          onDraftSubmit={handleDraftSubmit}
-          onAnnotationSelect={setSelectedAnnotation}
-          onAnnotationHighlight={setHighlightedAnnotation}
-          onAnnotationDelete={handleAnnotationDelete}
-          onEdit={onAnnotationEdit}
-          isMarkerView={isMarkerView}
-          peerReviewEnabled={peerReviewEnabled}
-          className={
-            numPages > 0
-              ? 'delay-500 duration-300 animate-in fade-in'
-              : 'opacity-0'
-          }
-          onDismissLLM={function (): void {
-            throw new Error('Function not implemented.')
-          }}
-          onMarkerFeedback={onMarkerFeedback}
-        />
+        {!previewOnly && (
+          <AnnotationsSidebar
+            ref={sidebarRef as React.RefObject<HTMLDivElement>}
+            annotations={annotations}
+            draftAnnotation={draftAnnotation}
+            selectedAnnotation={selectedAnnotation}
+            highlightedAnnotation={highlightedAnnotation}
+            onDraftChange={setDraftAnnotation}
+            onDraftCancel={() => setDraftAnnotation(null)}
+            onDraftSubmit={handleDraftSubmit}
+            onAnnotationSelect={setSelectedAnnotation}
+            onAnnotationHighlight={setHighlightedAnnotation}
+            onAnnotationDelete={handleAnnotationDelete}
+            onEdit={onAnnotationEdit}
+            isMarkerView={isMarkerView}
+            peerReviewEnabled={peerReviewEnabled}
+            className={
+              numPages > 0
+                ? 'delay-500 duration-300 animate-in fade-in'
+                : 'opacity-0'
+            }
+            onDismissLLM={function (): void {
+              throw new Error('Function not implemented.')
+            }}
+            onMarkerFeedback={onMarkerFeedback}
+          />
+        )}
       </div>
     </div>
   )
