@@ -339,6 +339,14 @@ LOGGING = {
     },
 }
 
+# AI peer-review suggestions run as a Celery task and therefore need a working
+# broker (Redis) + worker + OpenAI key. Off by default so a deployment without
+# those never tries to enqueue the task (which would otherwise error/hang).
+# Set AI_SUGGESTIONS_ENABLED=true only where the broker/worker/OpenAI all exist.
+AI_SUGGESTIONS_ENABLED = os.getenv('AI_SUGGESTIONS_ENABLED', 'false').lower() in (
+    '1', 'true', 'yes', 'on'
+)
+
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')

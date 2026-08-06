@@ -115,7 +115,14 @@ export default function SubmissionsPage() {
 
   // Marker / TA state
   const [markQueue, setMarkQueue] = React.useState<
-    { key: string; title: string; meta: string; href: string }[]
+    {
+      key: string
+      title: string
+      meta: string
+      href: string
+      status?: string
+      score?: string | null
+    }[]
   >([])
   const [allocations, setAllocations] = React.useState<
     PeerReviewSchemaWithStudent[]
@@ -191,6 +198,9 @@ export default function SubmissionsPage() {
               title: s.student_name,
               meta: s.student_number,
               href: `/assignments/${id}/mark/${s.id}`,
+              status: s.marking_status ?? 'Unmarked',
+              score:
+                s.score != null ? `${s.score}/${s.total}` : null,
             }))
           )
         }
@@ -300,27 +310,49 @@ export default function SubmissionsPage() {
               Nothing to mark yet. Submissions appear here as students submit.
             </p>
           ) : (
-            markQueue.map((q) => (
-              <div
-                key={q.key}
-                className='flex items-center gap-3 border-b border-[#F0ECE4] px-5 py-[13px] last:border-b-0'
-              >
-                <span className='flex-1'>
-                  <span className='block text-[13.5px] font-semibold text-[#131A26]'>
-                    {q.title}
-                  </span>
-                  <span className='mt-px block font-mono text-xs text-[#5A6070]'>
-                    {q.meta}
-                  </span>
-                </span>
-                <button
-                  onClick={() => router.push(q.href)}
-                  className='rounded-[9px] bg-[#131A26] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#243247]'
+            markQueue.map((q) => {
+              const st = q.status ?? 'Unmarked'
+              const style = STATUS_STYLES[st] ?? STATUS_STYLES.Unmarked
+              const label =
+                st === 'Marked' ? 'View' : st === 'In progress' ? 'Continue' : 'Mark'
+              const marked = st === 'Marked'
+              return (
+                <div
+                  key={q.key}
+                  className='flex items-center gap-3 border-b border-[#F0ECE4] px-5 py-[13px] last:border-b-0'
                 >
-                  Mark
-                </button>
-              </div>
-            ))
+                  <span className='min-w-0 flex-1'>
+                    <span className='block text-[13.5px] font-semibold text-[#131A26]'>
+                      {q.title}
+                    </span>
+                    <span className='mt-px block font-mono text-xs text-[#5A6070]'>
+                      {q.meta}
+                    </span>
+                  </span>
+                  <span
+                    className='inline-block whitespace-nowrap rounded-[6px] px-2 py-0.5 text-[11px] font-semibold'
+                    style={{ backgroundColor: style.bg, color: style.fg }}
+                  >
+                    {st}
+                  </span>
+                  {q.score && (
+                    <span className='w-16 text-right font-mono text-[12px] font-semibold text-[#131A26]'>
+                      {q.score}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => router.push(q.href)}
+                    className={
+                      marked
+                        ? 'rounded-[9px] border border-[#DED8CA] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+                        : 'rounded-[9px] bg-[#131A26] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#243247]'
+                    }
+                  >
+                    {label}
+                  </button>
+                </div>
+              )
+            })
           )}
         </div>
       </div>

@@ -1,6 +1,7 @@
 from ninja import Router, Schema
 from ninja.errors import HttpError
 from typing import List
+from django.conf import settings
 from django.utils import timezone
 from ..schemas.peer_review import PeerReviewSchema, PeerReviewCommentSchema, PeerReviewCommentAction, PeerReviewCompletion, DismissLLMFeedbackRequest, DismissedLLMFeedbackResponse, PeerReviewSchemaWithStudent
 from ..schemas.feedback import CreationResponse
@@ -174,7 +175,7 @@ def create_peer_review_comment(request, assignment_id: int, submission_id: int, 
         # Best-effort + fail-fast: if the Celery broker is unreachable (e.g. no
         # worker/Redis in prod) this must NOT fail the comment or slow it down,
         # so retry=False (no publish-retry loop) and swallow broker errors.
-        if request.user_role == 'Student':
+        if request.user_role == 'Student' and settings.AI_SUGGESTIONS_ENABLED:
             try:
                 process_feedback_with_llm.apply_async(
                     args=[comment.id],
@@ -558,11 +559,17 @@ def update_peer_review_comment(request, assignment_id: int, submission_id: int, 
                 llm_comment="",
                 llm_comment_dismissed=False
             )
-            
-            process_feedback_with_llm.apply_async(
-                args=[comment.id],
-                countdown=random.randint(MIN_LLM_DELAY_SECONDS, MAX_LLM_DELAY_SECONDS)
-            )
+
+            # Best-effort, only when the AI pipeline (broker/worker/OpenAI) exists.
+            if settings.AI_SUGGESTIONS_ENABLED:
+                try:
+                    process_feedback_with_llm.apply_async(
+                        args=[comment.id],
+                        countdown=random.randint(MIN_LLM_DELAY_SECONDS, MAX_LLM_DELAY_SECONDS),
+                        retry=False,
+                    )
+                except Exception as llm_err:
+                    print(f"AI suggestion scheduling skipped (broker unavailable): {llm_err}")
             
         return {
             "success": True,
