@@ -114,14 +114,14 @@ export function AppHero() {
     })
     const t: Tab[] = []
     if (user?.isStaff) {
-      t.push(mk('Dashboard', 'dashboard', ['dashboard', '']))
-      // One "Marking" tab whose content depends on the type: group work opens
-      // the group-submission marking, individual work the submissions list.
+      // "Marking" is the default staff landing — it now includes the release-
+      // marks toggle, submission stats and grade distribution that used to live
+      // on a separate Dashboard tab (removed to reduce navigation clutter).
       t.push({
         label: 'Marking',
         seg: isGroup ? 'group-marking' : 'submissions',
         href: `${base}/${isGroup ? 'group-marking' : 'submissions'}`,
-        active: ['submissions', 'group-marking', 'mark'].includes(seg),
+        active: ['submissions', 'group-marking', 'mark', 'dashboard', ''].includes(seg),
       })
       // Peer-review moderation only exists when peer review is enabled.
       if (hasPeer) {

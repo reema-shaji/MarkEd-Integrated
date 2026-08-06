@@ -18,7 +18,7 @@ export default function Page() {
   const router = useRouter()
 
   useEffect(() => {
-    router.replace(getToken() ? '/assignments' : '/login')
+    router.replace(getToken() ? '/dashboard' : '/login')
   }, [router])
 
   return (

@@ -145,7 +145,7 @@ export default function CourseDashboardPage() {
     router.push(
       user?.isStudent
         ? `/assignments/${a.id}/home`
-        : `/assignments/${a.id}/dashboard`
+        : `/assignments/${a.id}/${a.assignment_type === 'GROUP' ? 'group-marking' : 'submissions'}`
     )
 
   return (

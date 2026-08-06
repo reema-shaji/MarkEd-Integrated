@@ -296,6 +296,37 @@ Four issues remained after the post-restart retest and were then closed:
 - **Why:** The feature existed and was operational in all three sources;
   unification had left it as dead model + placeholder UI.
 
+## 14. Dashboard removal — controls relocated to their action pages
+
+### 14.1 Assignment-level dashboard tab removed — [Design]
+- **Before:** Staff saw a separate "Dashboard" tab on every assignment with the
+  Release Marks toggle, submission statistics, grade distribution, and (for
+  peer-review assignments) the full reviewer-to-reviewee match map. Markers/TAs
+  saw a marking queue on this tab. The dashboard duplicated navigation and added
+  an extra click to reach the only actionable control (Release Marks).
+- **Change:** Removed the Dashboard tab from the assignment-level navigation.
+  All controls have been relocated to the pages where the related action
+  happens:
+  - **Release Marks toggle + submission stats + grade distribution** → moved to
+    the **Marking tab** (submissions page), shown above the submissions list
+    for academics. The marking workflow is now linear: see submissions, check
+    stats, release marks — all on one page.
+  - **Marker/TA marking queue** → moved to the **Marking tab**. Markers/TAs
+    now land directly on their queue with a summary strip (to-mark count +
+    peer-review count).
+  - **Peer review match listing + status summary** → moved to the **Peer
+    Reviews tab** (marking-queue page), below the matching control for
+    academics. All peer-review management is now under one tab.
+  - The old `/assignments/[id]/dashboard` URL now redirects to the Marking tab
+    so bookmarks still work.
+  - The course-level dashboard's staff click target updated from
+    `/assignments/[id]/dashboard` to the appropriate marking page.
+- **Why:** The supervisor identified the separate dashboard as adding
+  unnecessary navigation. Relocating controls to their action pages reduces
+  clicks and keeps related information together. The student dashboard was
+  also flagged as unnecessary (students access everything via the Assignment
+  and Results tabs).
+
 ## Notes on things deliberately *not* changed
 
 - **Notifications** — intentionally out of scope for this pass.
