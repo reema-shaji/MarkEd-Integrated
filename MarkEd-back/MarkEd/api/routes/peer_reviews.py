@@ -1,4 +1,5 @@
 from ninja import Router, Schema
+from ninja.errors import HttpError
 from typing import List
 from django.utils import timezone
 from ..schemas.peer_review import PeerReviewSchema, PeerReviewCommentSchema, PeerReviewCommentAction, PeerReviewCompletion, DismissLLMFeedbackRequest, DismissedLLMFeedbackResponse, PeerReviewSchemaWithStudent
@@ -129,18 +130,12 @@ def create_peer_review_comment(request, assignment_id: int, submission_id: int, 
     try:
         # Check rate limit
         if not check_comment_rate_limit(request.user_id):
-            return {
-                "success": False,
-                "message": "Too many comments. Please wait a minute before trying again."
-            }
+            raise HttpError(429, "Too many comments. Please wait a minute before trying again.")
 
         try:
             cleaned_feedback = validate_peer_review_content(data.feedback)
         except ValidationError as e:
-            return {
-                "success": False,
-                "message": str(e)
-            }
+            raise HttpError(400, str(e))
 
         # Ensure position data has all required fields
         position_data = data.position_data
@@ -175,12 +170,19 @@ def create_peer_review_comment(request, assignment_id: int, submission_id: int, 
             position_data=position_data
         )
         
-        # Only schedule LLM processing for student comments
+        # Only schedule the (optional) AI suggestion for student comments.
+        # Best-effort + fail-fast: if the Celery broker is unreachable (e.g. no
+        # worker/Redis in prod) this must NOT fail the comment or slow it down,
+        # so retry=False (no publish-retry loop) and swallow broker errors.
         if request.user_role == 'Student':
-            process_feedback_with_llm.apply_async(
-                args=[comment.id],
-                countdown=random.randint(MIN_LLM_DELAY_SECONDS, MAX_LLM_DELAY_SECONDS)
-            )
+            try:
+                process_feedback_with_llm.apply_async(
+                    args=[comment.id],
+                    countdown=random.randint(MIN_LLM_DELAY_SECONDS, MAX_LLM_DELAY_SECONDS),
+                    retry=False,
+                )
+            except Exception as llm_err:
+                print(f"AI suggestion scheduling skipped (broker unavailable): {llm_err}")
         
         return {
             "id": comment.id,
@@ -198,16 +200,17 @@ def create_peer_review_comment(request, assignment_id: int, submission_id: int, 
                 "role": comment.review_allocation.reviewer.role,
                 "isValid": comment.review_allocation.reviewer.isValid
             },
-            "marker_feedback": comment.marker_comment,
+            "marker_feedback": comment.marker_comment or "",
             "llm_feedback": "",
             "llm_feedback_dismissed": True,
         }
-        
+
+    except HttpError:
+        raise
     except Exception as e:
-        return {
-            "success": False,
-            "message": str(e)
-        }
+        # Return a real error response rather than a dict that fails the
+        # PeerReviewCommentSchema validation (which itself 500s).
+        raise HttpError(500, f"Could not save comment: {str(e)}")
 
 @router.get("/{assignment_id}/{submission_id}/comments", response=List[PeerReviewCommentSchema], operation_id="getPeerReviewComments")
 @require_auth()
