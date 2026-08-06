@@ -32,6 +32,7 @@ import {
 import { FileText, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useUser } from '@/src/contexts/user-context'
 import { formatDateTime } from '@/lib/date'
 
@@ -70,6 +71,47 @@ export default function SubmissionsPage() {
   )
   const [stats, setStats] = React.useState<AssignmentStatistics | null>(null)
   const [releasing, setReleasing] = React.useState(false)
+
+  // Edit assignment dialog state
+  const [editOpen, setEditOpen] = React.useState(false)
+  const [editTitle, setEditTitle] = React.useState('')
+  const [editDescription, setEditDescription] = React.useState('')
+  const [editWebsite, setEditWebsite] = React.useState('')
+  const [editDeadline, setEditDeadline] = React.useState('')
+  const [savingAssignment, setSavingAssignment] = React.useState(false)
+
+  const toLocalInput = (iso?: string | null) => (iso ? iso.slice(0, 16) : '')
+
+  const openEdit = () => {
+    if (!assignment) return
+    setEditTitle(assignment.assignmentTitle ?? '')
+    setEditDescription(assignment.assignmentDescription ?? '')
+    setEditWebsite(assignment.assignmentWebsite ?? '')
+    setEditDeadline(toLocalInput(assignment.deadline))
+    setEditOpen(true)
+  }
+
+  const saveAssignment = async () => {
+    const t = editTitle.trim()
+    if (!t) { toast.error('Assignment title is required'); return }
+    if (!editDeadline) { toast.error('Set a submission deadline'); return }
+    setSavingAssignment(true)
+    try {
+      const updated = await DefaultService.updateAssignment(Number(params.id), {
+        assignmentTitle: t,
+        assignmentDescription: editDescription.trim() || null,
+        assignmentWebsite: editWebsite.trim() || null,
+        deadline: new Date(editDeadline).toISOString(),
+      })
+      setAssignment(updated as AssignmentSchema)
+      toast.success('Assignment updated')
+      setEditOpen(false)
+    } catch {
+      toast.error('Failed to update assignment')
+    } finally {
+      setSavingAssignment(false)
+    }
+  }
 
   // Marker / TA state
   const [markQueue, setMarkQueue] = React.useState<
@@ -427,6 +469,14 @@ export default function SubmissionsPage() {
           </div>
         </div>
         <div className='flex gap-2'>
+          {assignment && isAcademic && (
+            <button
+              onClick={openEdit}
+              className='rounded-[9px] bg-[#131A26] px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-[#243247]'
+            >
+              Edit assignment
+            </button>
+          )}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -510,6 +560,82 @@ export default function SubmissionsPage() {
           )}
         </div>
       )}
+
+      {/* Edit assignment dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className='max-w-md gap-0 rounded-[14px] border-[#EAE5DB] bg-[#F5F3EF] p-0'>
+          <div className='border-b border-[#EAE5DB] px-5 py-4 text-[15px] font-semibold tracking-[-.1px] text-[#131A26]'>
+            Edit assignment
+          </div>
+          <div className='space-y-4 px-5 py-5'>
+            <div>
+              <label className='mb-1.5 block text-[13px] font-medium text-[#2C3444]'>
+                Title
+              </label>
+              <input
+                type='text'
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className='w-full rounded-[9px] border border-[#DED8CA] bg-white px-3 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#DED8CA]'
+              />
+            </div>
+            <div>
+              <label className='mb-1.5 block text-[13px] font-medium text-[#2C3444]'>
+                Description
+              </label>
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                rows={4}
+                className='w-full resize-y rounded-[9px] border border-[#DED8CA] bg-white px-3 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#DED8CA]'
+              />
+            </div>
+            <div>
+              <label className='mb-1.5 block text-[13px] font-medium text-[#2C3444]'>
+                Website{' '}
+                <span className='font-normal text-[#8A9099]'>(optional)</span>
+              </label>
+              <input
+                type='url'
+                value={editWebsite}
+                onChange={(e) => setEditWebsite(e.target.value)}
+                placeholder='https://…'
+                className='w-full rounded-[9px] border border-[#DED8CA] bg-white px-3 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#DED8CA]'
+              />
+            </div>
+            <div>
+              <label className='mb-1.5 block text-[13px] font-medium text-[#2C3444]'>
+                Submission deadline
+              </label>
+              <input
+                type='datetime-local'
+                value={editDeadline}
+                onChange={(e) => setEditDeadline(e.target.value)}
+                className='w-full rounded-[9px] border border-[#DED8CA] bg-white px-3 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#DED8CA]'
+              />
+            </div>
+          </div>
+          <div className='flex justify-end gap-2 border-t border-[#EAE5DB] px-5 py-4'>
+            <button
+              onClick={() => setEditOpen(false)}
+              disabled={savingAssignment}
+              className='rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8] disabled:opacity-50'
+            >
+              Cancel
+            </button>
+            <button
+              onClick={saveAssignment}
+              disabled={savingAssignment}
+              className='inline-flex items-center rounded-[9px] bg-[#131A26] px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-[#243247] disabled:cursor-not-allowed disabled:opacity-50'
+            >
+              {savingAssignment && (
+                <Loader2 className='mr-1.5 h-3.5 w-3.5 animate-spin' />
+              )}
+              Save changes
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -312,7 +312,7 @@ export default function PeerReviewsPage() {
   return (
     <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
       <div className='text-[21px] font-semibold tracking-[-.45px] text-[#131A26]'>
-        My Allocation
+        Peer Reviews
       </div>
       <div className='mb-5 text-[14px] text-[#5A6070]'>
         Submissions allocated to you to review for this assignment.

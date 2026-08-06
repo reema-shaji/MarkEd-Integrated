@@ -236,7 +236,7 @@ export function FeedbackBankDialog({
               className='inline-flex items-center gap-1 rounded-[9px] bg-[#131A26] px-3.5 py-[7px] text-[13px] font-semibold text-white hover:bg-[#243247]'
             >
               <Plus className='h-3.5 w-3.5' />
-              Save Feedback
+              Add Feedback
             </button>
             <button
               onClick={() => onOpenChange(false)}
@@ -353,7 +353,7 @@ export function FeedbackBankDialog({
             <div className='mt-1 text-[13px] text-[#8A9099]'>
               {search || activeCategory !== 'All' || favouritesOnly
                 ? 'No snippets match your filters.'
-                : 'Use “Save Feedback” to add reusable snippets for the course.'}
+                : 'Use “Add Feedback” to add reusable snippets for the course.'}
             </div>
           </div>
         ) : (

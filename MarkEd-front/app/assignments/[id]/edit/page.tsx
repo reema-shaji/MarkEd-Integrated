@@ -1,25 +1,21 @@
 'use client'
 
 /**
- * Create Assignment — the unified create form (Design PRD §6.1).
- *
- * Matches the prototype "Create Assignment" screen: Basic information, then a
- * Submission type section where Individual/Group is a choice and peer review
- * and self-assessment are independent toggles (not separate types). Posts to
- * the unified /assignments/create/{course_id} endpoint.
- *
- * Self-assessment configuration (checklist items, rubric selection, guided
- * reflection prompts) is inline — no separate page.
+ * Edit Assignment — the same form as Create Assignment, but pre-filled with
+ * existing data and using update APIs. Replaces the old Structure tab's edit
+ * dialog with a full-page form that includes criteria and SA configuration.
  */
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import { DefaultService, GroupSetSchema } from '@/src/api'
 import { useCourse } from '@/src/contexts/course-context'
+import { useUser } from '@/src/contexts/user-context'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { Skeleton } from '@/components/ui/skeleton'
 
-type AType = 'INDIVIDUAL' | 'GROUP'
+type CriterionRow = { id: number | null; name: string; marks: string }
 
 const INPUT_CLS =
   'w-full rounded-[9px] border border-[#DED8CA] bg-white px-[13px] py-2.5 text-sm text-[#131A26] outline-none focus:border-[#B8B0A0]'
@@ -35,6 +31,9 @@ const DEFAULT_REFLECTIONS = [
   { stage: 'action_plan', label: 'Action Plan', prompt_text: 'If a similar situation arises, what would you do? How will you prepare?' },
 ]
 
+/** datetime-local wants "YYYY-MM-DDTHH:mm"; the API sends full ISO. */
+const toLocalInput = (iso?: string | null) => (iso ? iso.slice(0, 16) : '')
+
 function RequiredTag() {
   return (
     <span className='ml-1.5 rounded-[4px] bg-[#F8EFDC] px-1.5 py-px align-[1px] text-[10px] font-bold tracking-[.5px] text-[#8A5D14]'>
@@ -43,38 +42,25 @@ function RequiredTag() {
   )
 }
 
-/** Small toggle used inside SA sub-sections. */
-function MiniToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      type='button'
-      onClick={() => onChange(!value)}
-      aria-pressed={value}
-      className={`flex h-5 w-9 flex-none items-center rounded-[99px] p-0.5 ${
-        value ? 'justify-end bg-[#131A26]' : 'justify-start bg-[#D8D2C6]'
-      }`}
-    >
-      <span className='block h-4 w-4 rounded-full bg-white shadow-[0_1px_2px_rgba(19,26,38,.2)]' />
-    </button>
-  )
-}
-
-export default function CreateAssignmentPage() {
+export default function EditAssignmentPage() {
+  const params = useParams()
   const router = useRouter()
+  const { user } = useUser()
   const { currentCourseId } = useCourse()
+  const assignmentId = Number(params.id)
+
+  const [isLoading, setIsLoading] = useState(true)
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [deadline, setDeadline] = useState('')
   const [website, setWebsite] = useState('')
 
-  const [type, setType] = useState<AType>('INDIVIDUAL')
+  const [assignmentType, setAssignmentType] = useState<string>('INDIVIDUAL')
   const [groupSets, setGroupSets] = useState<GroupSetSchema[]>([])
   const [groupSetId, setGroupSetId] = useState<string>('')
 
-  const [criteria, setCriteria] = useState<{ name: string; marks: string }[]>([
-    { name: 'Marks', marks: '100' },
-  ])
+  const [criteria, setCriteria] = useState<CriterionRow[]>([])
 
   const [peerEnabled, setPeerEnabled] = useState(false)
   const [reviewsPerStudent, setReviewsPerStudent] = useState(3)
@@ -82,49 +68,102 @@ export default function CreateAssignmentPage() {
 
   const [saEnabled, setSaEnabled] = useState(false)
   const [saDeadline, setSaDeadline] = useState('')
-  const [saFeedback, setSaFeedback] = useState(false)
-
-  // Checklist (local — saved after assignment creation)
   const [saChecklist, setSaChecklist] = useState(false)
-  const [checklistItems, setChecklistItems] = useState<{ name: string; description: string }[]>([])
-
-  // Rubric self-grading (indices into `criteria` array — mapped to IDs after creation)
   const [saRubric, setSaRubric] = useState(false)
-  const [rubricSelectedIndices, setRubricSelectedIndices] = useState<Set<number>>(new Set())
-
-  // Guided reflection (local with Gibbs defaults)
   const [saReflection, setSaReflection] = useState(false)
-  const [reflectionPrompts, setReflectionPrompts] = useState(
-    DEFAULT_REFLECTIONS.map((p) => ({ ...p }))
-  )
+  const [saFeedback, setSaFeedback] = useState(false)
+  const [checklistItems, setChecklistItems] = useState<{ id: number | null; name: string; description: string }[]>([])
+  const [rubricSelected, setRubricSelected] = useState<Set<number>>(new Set())
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [rubricTree, setRubricTree] = useState<{ id: number; name: string; marks: number; selected: boolean; children?: any[] }[]>([])
+  const [reflectionPrompts, setReflectionPrompts] = useState<{ stage: string; label: string; prompt_text: string }[]>(DEFAULT_REFLECTIONS)
 
   const [submitting, setSubmitting] = useState(false)
 
+  const load = useCallback(async () => {
+    try {
+      const [assignment, structure] = await Promise.all([
+        DefaultService.getAssignment(assignmentId),
+        DefaultService.getAssignmentStructure(assignmentId),
+      ])
+
+      // Basic info
+      setTitle(assignment.assignmentTitle ?? '')
+      setDescription(assignment.assignmentDescription ?? '')
+      setDeadline(toLocalInput(assignment.deadline))
+      setWebsite(assignment.assignmentWebsite ?? '')
+      setAssignmentType(assignment.assignment_type ?? 'INDIVIDUAL')
+      if (assignment.group_set_id) setGroupSetId(String(assignment.group_set_id))
+
+      // Peer review
+      setPeerEnabled(Boolean(assignment.peer_review_enabled))
+      setReviewsPerStudent(assignment.reviews_per_student ?? 3)
+      setReviewDeadline(toLocalInput(assignment.review_deadline))
+
+      // Self-assessment
+      setSaEnabled(Boolean(assignment.self_assessment_enabled))
+      setSaDeadline(toLocalInput(assignment.self_assessment_deadline))
+
+      // Criteria
+      const existingCriteria = (structure.criteria ?? []).map(
+        (c: { id: number; name: string; marks: number }) => ({
+          id: c.id,
+          name: c.name,
+          marks: String(c.marks),
+        })
+      )
+      setCriteria(existingCriteria)
+
+      // SA settings (best-effort)
+      try {
+        const saSettings = await DefaultService.getSelfAssessmentSettings(assignmentId)
+        setSaChecklist(Boolean(saSettings.use_checklist))
+        setSaRubric(Boolean(saSettings.use_rubric))
+        setSaReflection(Boolean(saSettings.use_reflection))
+        setSaFeedback(Boolean(saSettings.needs_feedback))
+      } catch {
+        // SA settings may not exist yet
+      }
+
+      // Load checklist items, rubric tree, reflection prompts
+      try {
+        const [cl, rt, rf] = await Promise.all([
+          DefaultService.listChecklistItems(assignmentId),
+          DefaultService.getRubricTree(assignmentId),
+          DefaultService.getReflectionPrompts(assignmentId),
+        ])
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        setChecklistItems((cl as any[]).map((i: any) => ({ id: i.id, name: i.name, description: i.description ?? '' })))
+        setRubricTree(rt as any[])
+        const sel = new Set<number>()
+        const walk = (nodes: any[]) => nodes.forEach((n: any) => { if (n.selected) sel.add(n.id); if (n.children) walk(n.children) })
+        walk(rt as any[])
+        setRubricSelected(sel)
+        if ((rf as any[]).length > 0) setReflectionPrompts(rf as any[])
+        /* eslint-enable @typescript-eslint/no-explicit-any */
+      } catch { /* SA data may not exist yet */ }
+
+      // Group sets for the selector
+      if (currentCourseId) {
+        DefaultService.listGroupSets(currentCourseId)
+          .then(setGroupSets)
+          .catch(() => {})
+      }
+    } catch {
+      toast.error('Could not load assignment')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [assignmentId, currentCourseId])
+
   useEffect(() => {
-    if (!currentCourseId) return
-    DefaultService.listGroupSets(currentCourseId)
-      .then((sets) => {
-        setGroupSets(sets)
-        if (sets[0]) setGroupSetId(String(sets[0].id))
-      })
-      .catch(() => {})
-  }, [currentCourseId])
+    load()
+  }, [load])
 
-  const toggleRubricIndex = (idx: number) =>
-    setRubricSelectedIndices((prev) => {
-      const next = new Set(prev)
-      if (next.has(idx)) next.delete(idx)
-      else next.add(idx)
-      return next
-    })
-
-  const create = async () => {
-    if (!currentCourseId) return toast.error('No course selected')
+  const save = async () => {
     if (!title.trim()) return toast.error('Give the assignment a title')
     if (!deadline) return toast.error('Set a submission deadline')
-    if (type === 'GROUP' && !groupSetId) {
-      return toast.error('Choose a group category for a group assignment')
-    }
+
     // Deadline validation
     const deadlineMs = new Date(deadline).getTime()
     if (peerEnabled && reviewDeadline && new Date(reviewDeadline).getTime() <= deadlineMs) {
@@ -133,6 +172,7 @@ export default function CreateAssignmentPage() {
     if (saEnabled && saDeadline && new Date(saDeadline).getTime() <= deadlineMs) {
       return toast.error('Self-assessment deadline must be after the submission deadline')
     }
+
     // Validate criteria
     const validCriteria = criteria.filter((c) => c.name.trim())
     for (const c of validCriteria) {
@@ -141,49 +181,36 @@ export default function CreateAssignmentPage() {
         return toast.error(`Enter a valid max mark for criterion "${c.name}"`)
       }
     }
+
     setSubmitting(true)
     try {
-      const response = await DefaultService.createAssignment(currentCourseId, {
-        title: title.trim(),
-        description: description.trim() || null,
-        deadline: new Date(deadline).toISOString(),
+      // 1. Update assignment basics
+      // Update core assignment fields
+      await DefaultService.updateAssignment(assignmentId, {
+        assignmentTitle: title.trim(),
+        assignmentDescription: description.trim() || null,
         assignmentWebsite: website.trim() || null,
-        assignment_type: type,
-        group_set_id: type === 'GROUP' ? Number(groupSetId) : null,
-        min_group_size: null,
-        max_group_size: null,
-        peer_review_enabled: peerEnabled,
-        reviews_per_student: peerEnabled ? reviewsPerStudent : null,
-        review_deadline:
-          peerEnabled && reviewDeadline
-            ? new Date(reviewDeadline).toISOString()
-            : null,
-        self_assessment_enabled: saEnabled,
-        self_assessment_deadline:
-          saEnabled && saDeadline ? new Date(saDeadline).toISOString() : null,
+        deadline: new Date(deadline).toISOString(),
       })
-      if (!response.success) throw new Error(response.message)
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const assignmentId = (response as any).assignment_id ?? (response as any).id
-
-      // Create criteria — collect results for rubric mapping
-      let criteriaIds: (number | null)[] = []
-      if (assignmentId && validCriteria.length > 0) {
-        const results = await Promise.all(
-          validCriteria.map((c) =>
-            DefaultService.createAssignmentCriterion(assignmentId, {
+      // 2. Manage criteria: update existing, create new
+      await Promise.all(
+        validCriteria.map((c) => {
+          if (c.id) {
+            return DefaultService.updateAssignmentCriterion(assignmentId, c.id, {
               name: c.name.trim(),
               marks: Number(c.marks),
-            }).catch(() => null)
-          )
-        )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        criteriaIds = results.map((r: any) => r?.id ?? null)
-      }
+            }).catch(() => {})
+          }
+          return DefaultService.createAssignmentCriterion(assignmentId, {
+            name: c.name.trim(),
+            marks: Number(c.marks),
+          }).catch(() => {})
+        })
+      )
 
-      // Save SA configuration if enabled
-      if (saEnabled && assignmentId) {
+      // 3. Update SA settings
+      if (saEnabled) {
         await DefaultService.updateSelfAssessmentSettings(assignmentId, {
           enabled: true,
           use_checklist: saChecklist,
@@ -193,90 +220,106 @@ export default function CreateAssignmentPage() {
           deadline: saDeadline ? new Date(saDeadline).toISOString() : undefined,
         }).catch(() => {})
 
-        // Create checklist items
+        // Save checklist items (add new, update existing)
         if (saChecklist) {
           for (const item of checklistItems) {
             if (item.name.trim()) {
-              await DefaultService.addChecklistItem(assignmentId, {
-                name: item.name.trim(),
-                description: item.description.trim() || undefined,
-              }).catch(() => {})
+              if (item.id) {
+                await DefaultService.editChecklistItem(item.id, { name: item.name.trim(), description: item.description.trim() || undefined }).catch(() => {})
+              } else {
+                await DefaultService.addChecklistItem(assignmentId, { name: item.name.trim(), description: item.description.trim() || undefined }).catch(() => {})
+              }
             }
           }
         }
-
-        // Save rubric selection (map form indices → created criterion IDs)
-        if (saRubric && rubricSelectedIndices.size > 0) {
-          // Map indices from the original criteria array to validCriteria indices
-          const selectedIds: number[] = []
-          validCriteria.forEach((_, vi) => {
-            // Find the original index in `criteria` for this validCriterion
-            const origIdx = criteria.indexOf(validCriteria[vi])
-            if (rubricSelectedIndices.has(origIdx) && criteriaIds[vi]) {
-              selectedIds.push(criteriaIds[vi]!)
-            }
-          })
-          if (selectedIds.length > 0) {
-            await DefaultService.saveRubricSelection(assignmentId, {
-              criteria_ids: selectedIds,
-            }).catch(() => {})
-          }
+        // Save rubric selection
+        if (saRubric) {
+          await DefaultService.saveRubricSelection(assignmentId, { criteria_ids: [...rubricSelected] }).catch(() => {})
         }
-
         // Save reflection prompts
         if (saReflection) {
           await DefaultService.saveReflectionPrompts(assignmentId, {
-            prompts: Object.fromEntries(
-              reflectionPrompts.map((p) => [p.stage, p.prompt_text])
-            ),
+            prompts: Object.fromEntries(reflectionPrompts.map(p => [p.stage, p.prompt_text])),
           }).catch(() => {})
         }
       }
 
-      toast.success('Assignment created')
-      router.push('/assignments')
+      toast.success('Assignment updated')
+      router.push(`/assignments/${assignmentId}/submissions`)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not create the assignment')
+      toast.error(
+        err instanceof Error ? err.message : 'Could not update the assignment'
+      )
     } finally {
       setSubmitting(false)
     }
   }
 
-  const typeOptions: { value: AType; title: string; desc: string }[] = [
-    {
-      value: 'INDIVIDUAL',
-      title: 'Individual',
-      desc: 'Each student submits their own work.',
-    },
-    {
-      value: 'GROUP',
-      title: 'Group',
-      desc: 'One submission per group, from any member.',
-    },
-  ]
+  /** Toggle a criterion ID in the rubricSelected set */
+  const toggleRubricCriterion = (id: number) => {
+    setRubricSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
-  // Valid criteria (for rubric section)
-  const validCriteria = criteria.filter((c) => c.name.trim())
+  /** Render rubric tree checkboxes recursively */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderRubricNode = (node: any, depth = 0): React.ReactNode => (
+    <div key={node.id} style={{ paddingLeft: depth * 20 }}>
+      <label className='flex cursor-pointer items-center gap-2.5 py-1'>
+        <input
+          type='checkbox'
+          checked={rubricSelected.has(node.id)}
+          onChange={() => toggleRubricCriterion(node.id)}
+          className='h-[15px] w-[15px] accent-[#131A26]'
+        />
+        <span className='text-[13px] text-[#2C3444]'>
+          {node.name}
+          <span className='ml-1.5 text-[12px] text-[#8A9099]'>({node.marks} marks)</span>
+        </span>
+      </label>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      {node.children?.map((child: any) => renderRubricNode(child, depth + 1))}
+    </div>
+  )
+
+  // Guard: only academics / TAs can edit
+  if (user && !user.isAcademic && !user.isTA) {
+    return (
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
+        <div className='rounded-[14px] border border-[#EAE5DB] bg-white px-5 py-12 text-center text-sm text-[#8A9099]'>
+          This page is not available for your role.
+        </div>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
+        <Skeleton className='mb-2 h-6 w-60' />
+        <Skeleton className='mb-6 h-4 w-96' />
+        <Skeleton className='mb-4 h-52 w-full rounded-[14px]' />
+        <Skeleton className='mb-4 h-40 w-full rounded-[14px]' />
+        <Skeleton className='h-32 w-full rounded-[14px]' />
+      </div>
+    )
+  }
+
+  const isGroup = assignmentType === 'GROUP'
 
   return (
     <div className='mx-auto flex min-h-full w-full flex-col'>
       <div className='mx-auto w-full max-w-[1200px] px-7 pt-8'>
-        {/* Breadcrumb */}
-        <div className='mb-[5px] text-[12.5px] text-[#8A9099]'>
-          <button
-            onClick={() => router.push('/assignments')}
-            className='text-[#8A9099] hover:text-[#5A6070]'
-          >
-            Assignments
-          </button>{' '}
-          <span className='text-[#C6BFB0]'>/</span> New
-        </div>
         <div className='mb-[22px]'>
           <div className='text-[23px] font-semibold tracking-[-0.5px] text-[#131A26]'>
-            Create Assignment
+            Edit Assignment
           </div>
           <div className='mt-[3px] text-[13.5px] text-[#5A6070]'>
-            Peer review and self-assessment are optional and can be changed later.
+            Update assignment details, criteria, and assessment settings.
           </div>
         </div>
 
@@ -285,9 +328,6 @@ export default function CreateAssignmentPage() {
           <div className='border-b border-[#F0ECE4] px-6 pb-[15px] pt-[18px]'>
             <span className='block text-[14px] font-semibold tracking-[-0.05px] text-[#131A26]'>
               Basic information
-            </span>
-            <span className='mt-0.5 block text-[12.5px] leading-[1.5] text-[#5A6070]'>
-              What the assignment is called and when it is due.
             </span>
           </div>
           <div className='px-6 pb-[22px] pt-5'>
@@ -301,7 +341,6 @@ export default function CreateAssignmentPage() {
                   type='text'
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder='e.g. Design Report'
                   className={`${INPUT_CLS} max-w-[460px]`}
                 />
               </div>
@@ -311,12 +350,8 @@ export default function CreateAssignmentPage() {
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder='What should students produce?'
                   className={`${INPUT_CLS} max-w-[620px] resize-y leading-[1.6]`}
                 />
-                <div className='mt-[5px] text-[11.5px] leading-[1.5] text-[#8A9099]'>
-                  Shown to students on the assignment page as the brief.
-                </div>
               </div>
               <div className='grid max-w-[620px] grid-cols-1 gap-4 sm:grid-cols-2'>
                 <div>
@@ -349,84 +384,29 @@ export default function CreateAssignmentPage() {
           </div>
         </section>
 
-        {/* Submission type */}
+        {/* Submission type — read-only after creation */}
         <section className='mb-3.5 overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
           <div className='border-b border-[#F0ECE4] px-6 pb-[15px] pt-[18px]'>
             <span className='block text-[14px] font-semibold tracking-[-0.05px] text-[#131A26]'>
               Submission type
             </span>
             <span className='mt-0.5 block text-[12.5px] leading-[1.5] text-[#5A6070]'>
-              Individual or group submission. This cannot be changed after creation.
+              This cannot be changed after creation.
             </span>
           </div>
           <div className='px-6 pb-[22px] pt-5'>
-            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-              {typeOptions.map((opt) => {
-                const active = type === opt.value
-                return (
-                  <button
-                    key={opt.value}
-                    type='button'
-                    onClick={() => setType(opt.value)}
-                    className={`flex items-start gap-[11px] rounded-[11px] border-[1.5px] p-[15px] text-left transition-colors ${
-                      active
-                        ? 'border-[#131A26] bg-[#FAF8F4]'
-                        : 'border-[#DED8CA] bg-white hover:border-[#B8B0A0]'
-                    }`}
-                  >
-                    <span
-                      className={`mt-px block h-4 w-4 flex-none rounded-full bg-white ${
-                        active
-                          ? 'border-[5px] border-[#131A26]'
-                          : 'border-2 border-[#C6BFB0]'
-                      }`}
-                    />
-                    <span>
-                      <span className='mb-[3px] block text-[14px] font-semibold text-[#131A26]'>
-                        {opt.title}
-                      </span>
-                      <span className='block text-[12px] leading-[1.5] text-[#5A6070]'>
-                        {opt.desc}
-                      </span>
-                    </span>
-                  </button>
-                )
-              })}
+            <div className='flex items-center gap-3 rounded-[11px] border-[1.5px] border-[#131A26] bg-[#FAF8F4] p-[15px]'>
+              <span className='block h-4 w-4 flex-none rounded-full border-[5px] border-[#131A26] bg-white' />
+              <span className='text-[14px] font-semibold text-[#131A26]'>
+                {isGroup ? 'Group' : 'Individual'}
+              </span>
             </div>
-
-            {/* Group settings */}
-            {type === 'GROUP' && (
-              <div className='mt-[18px] rounded-[12px] bg-[#FAF8F4] p-4'>
-                <div className='mb-3 text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
-                  Group settings
-                </div>
-                <div>
-                  <div className={FIELD_LABEL_CLS}>Group category</div>
-                  <div className='flex gap-2'>
-                    <select
-                      value={groupSetId}
-                      onChange={(e) => setGroupSetId(e.target.value)}
-                      className={`${INPUT_CLS} min-w-0 max-w-[460px] flex-1`}
-                    >
-                      {groupSets.map((gs) => (
-                        <option key={gs.id} value={String(gs.id)}>
-                          {gs.name} ({gs.groups_count} groups)
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type='button'
-                      onClick={() => router.push('/groupsets')}
-                      className='whitespace-nowrap rounded-[9px] border border-[#DED8CA] bg-white px-[13px] py-2.5 text-[12.5px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
-                    >
-                      New
-                    </button>
-                  </div>
-                </div>
-                <div className='mt-[5px] text-[11.5px] leading-[1.5] text-[#8A9099]'>
-                  The group leader submits on behalf of the group from the shared
-                  workspace.
-                </div>
+            {isGroup && groupSets.length > 0 && (
+              <div className='mt-3 text-[13px] text-[#5A6070]'>
+                Group category:{' '}
+                <span className='font-semibold text-[#131A26]'>
+                  {groupSets.find((gs) => String(gs.id) === groupSetId)?.name ?? groupSetId}
+                </span>
               </div>
             )}
           </div>
@@ -440,12 +420,14 @@ export default function CreateAssignmentPage() {
                 Marking criteria
               </span>
               <span className='mt-0.5 block text-[12.5px] leading-[1.5] text-[#5A6070]'>
-                Define how this assignment is graded. You can also add criteria later.
+                Define how this assignment is graded.
               </span>
             </span>
             <button
               type='button'
-              onClick={() => setCriteria((prev) => [...prev, { name: '', marks: '' }])}
+              onClick={() =>
+                setCriteria((prev) => [...prev, { id: null, name: '', marks: '' }])
+              }
               className='shrink-0 rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
             >
               + Add Criterion
@@ -454,12 +436,13 @@ export default function CreateAssignmentPage() {
           <div className='px-6 pb-[22px] pt-5'>
             {criteria.length === 0 ? (
               <p className='text-center text-[13px] text-[#8A9099]'>
-                No criteria yet. Click &ldquo;+ Add Criterion&rdquo; to define grading rubric items.
+                No criteria yet. Click &ldquo;+ Add Criterion&rdquo; to define
+                grading rubric items.
               </p>
             ) : (
               <div className='flex flex-col gap-3'>
                 {criteria.map((c, i) => (
-                  <div key={i} className='flex items-center gap-2'>
+                  <div key={c.id ?? `new-${i}`} className='flex items-center gap-2'>
                     <input
                       type='text'
                       value={c.name}
@@ -489,7 +472,9 @@ export default function CreateAssignmentPage() {
                     </div>
                     <button
                       type='button'
-                      onClick={() => setCriteria((prev) => prev.filter((_, j) => j !== i))}
+                      onClick={() =>
+                        setCriteria((prev) => prev.filter((_, j) => j !== i))
+                      }
                       className='rounded-[9px] border border-[#DED8CA] bg-white px-2.5 py-2 text-[12px] font-semibold text-[#8A9099] hover:bg-[#F8E8E5] hover:text-[#A93226]'
                     >
                       Remove
@@ -507,9 +492,6 @@ export default function CreateAssignmentPage() {
             <span className='block text-[14px] font-semibold tracking-[-0.05px] text-[#131A26]'>
               Assessment options
             </span>
-            <span className='mt-0.5 block text-[12.5px] leading-[1.5] text-[#5A6070]'>
-              Both are optional and can be turned on later.
-            </span>
           </div>
           <div className='px-6 pb-5 pt-1.5'>
             {/* Peer review toggle */}
@@ -519,7 +501,9 @@ export default function CreateAssignmentPage() {
                 onClick={() => setPeerEnabled((v) => !v)}
                 aria-pressed={peerEnabled}
                 className={`flex h-6 w-[42px] flex-none items-center rounded-[99px] p-0.5 ${
-                  peerEnabled ? 'justify-end bg-[#131A26]' : 'justify-start bg-[#D8D2C6]'
+                  peerEnabled
+                    ? 'justify-end bg-[#131A26]'
+                    : 'justify-start bg-[#D8D2C6]'
                 }`}
               >
                 <span className='block h-5 w-5 rounded-full bg-white shadow-[0_1px_2px_rgba(19,26,38,.2)]' />
@@ -529,8 +513,7 @@ export default function CreateAssignmentPage() {
                   Peer review
                 </span>
                 <span className='mt-0.5 block text-[12px] leading-[1.5] text-[#5A6070]'>
-                  Students review each other anonymously. On group assignments,
-                  reviewers come only from other groups.
+                  Students review each other anonymously.
                 </span>
               </span>
             </div>
@@ -552,9 +535,6 @@ export default function CreateAssignmentPage() {
                       }
                       className={INPUT_CLS}
                     />
-                    <div className='mt-[5px] text-[11.5px] leading-[1.5] text-[#8A9099]'>
-                      How many submissions each student must review.
-                    </div>
                   </div>
                   <div>
                     <div className={FIELD_LABEL_CLS}>Review deadline</div>
@@ -579,7 +559,9 @@ export default function CreateAssignmentPage() {
                 onClick={() => setSaEnabled((v) => !v)}
                 aria-pressed={saEnabled}
                 className={`flex h-6 w-[42px] flex-none items-center rounded-[99px] p-0.5 ${
-                  saEnabled ? 'justify-end bg-[#131A26]' : 'justify-start bg-[#D8D2C6]'
+                  saEnabled
+                    ? 'justify-end bg-[#131A26]'
+                    : 'justify-start bg-[#D8D2C6]'
                 }`}
               >
                 <span className='block h-5 w-5 rounded-full bg-white shadow-[0_1px_2px_rgba(19,26,38,.2)]' />
@@ -589,8 +571,7 @@ export default function CreateAssignmentPage() {
                   Self-assessment
                 </span>
                 <span className='mt-0.5 block text-[12px] leading-[1.5] text-[#5A6070]'>
-                  Checklist, rubric self-grading and guided reflection, completed
-                  after submitting.
+                  Checklist, rubric self-grading and guided reflection.
                 </span>
               </span>
             </div>
@@ -602,51 +583,61 @@ export default function CreateAssignmentPage() {
                 </div>
 
                 {/* Deadline */}
-                <div className='max-w-[300px]'>
-                  <div className={FIELD_LABEL_CLS}>Self-assessment deadline</div>
-                  <input
-                    type='datetime-local'
-                    value={saDeadline}
-                    onChange={(e) => setSaDeadline(e.target.value)}
-                    className={INPUT_CLS}
-                  />
-                  <div className='mt-[5px] text-[11.5px] leading-[1.5] text-[#8A9099]'>
-                    Must be after the submission deadline.
-                  </div>
-                </div>
-
-                {/* Teacher feedback */}
-                <div className='mt-4 rounded-[10px] border border-[#E8E3D8] bg-white'>
-                  <div className='flex items-center justify-between px-4 py-2.5'>
-                    <span className='text-[13px] font-semibold text-[#131A26]'>
-                      Course organiser feedback on self-assessment
-                    </span>
-                    <MiniToggle value={saFeedback} onChange={setSaFeedback} />
-                  </div>
-                  {saFeedback && (
-                    <div className='border-t border-[#F0ECE4] px-4 py-2.5'>
-                      <p className='text-[12px] text-[#5A6070]'>
-                        Markers can respond to each student&apos;s self-assessment from the marking screen.
-                      </p>
+                <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+                  <div>
+                    <div className={FIELD_LABEL_CLS}>Self-assessment deadline</div>
+                    <input
+                      type='datetime-local'
+                      value={saDeadline}
+                      onChange={(e) => setSaDeadline(e.target.value)}
+                      className={INPUT_CLS}
+                    />
+                    <div className='mt-[5px] text-[11.5px] leading-[1.5] text-[#8A9099]'>
+                      Must be after the submission deadline.
                     </div>
-                  )}
+                  </div>
                 </div>
 
-                {/* Checklist */}
+                {/* Teacher feedback toggle */}
                 <div className='mt-4 rounded-[10px] border border-[#E8E3D8] bg-white'>
-                  <div className='flex items-center justify-between px-4 py-2.5'>
+                  <div className='flex items-center justify-between px-4 py-2.5 border-b border-[#F0ECE4]'>
+                    <span className='text-[13px] font-semibold text-[#131A26]'>Teacher feedback on self-assessment</span>
+                    <button
+                      type='button'
+                      onClick={() => setSaFeedback(v => !v)}
+                      aria-pressed={saFeedback}
+                      className={`flex h-5 w-9 flex-none items-center rounded-[99px] p-0.5 ${
+                        saFeedback ? 'justify-end bg-[#131A26]' : 'justify-start bg-[#D8D2C6]'
+                      }`}
+                    >
+                      <span className='block h-4 w-4 rounded-full bg-white shadow-[0_1px_2px_rgba(19,26,38,.2)]' />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Checklist sub-section */}
+                <div className='mt-4 rounded-[10px] border border-[#E8E3D8] bg-white'>
+                  <div className='flex items-center justify-between px-4 py-2.5 border-b border-[#F0ECE4]'>
                     <span className='text-[13px] font-semibold text-[#131A26]'>Checklist</span>
-                    <MiniToggle value={saChecklist} onChange={setSaChecklist} />
+                    <button
+                      type='button'
+                      onClick={() => setSaChecklist(v => !v)}
+                      aria-pressed={saChecklist}
+                      className={`flex h-5 w-9 flex-none items-center rounded-[99px] p-0.5 ${
+                        saChecklist ? 'justify-end bg-[#131A26]' : 'justify-start bg-[#D8D2C6]'
+                      }`}
+                    >
+                      <span className='block h-4 w-4 rounded-full bg-white shadow-[0_1px_2px_rgba(19,26,38,.2)]' />
+                    </button>
                   </div>
                   {saChecklist && (
-                    <div className='border-t border-[#F0ECE4] px-4 py-3'>
-                      <p className='mb-2.5 text-[12px] text-[#5A6070]'>
-                        Items students confirm they have done before submitting.
-                      </p>
-                      {checklistItems.length > 0 && (
-                        <div className='mb-2.5 flex flex-col gap-2'>
+                    <div className='px-4 py-3'>
+                      {checklistItems.length === 0 ? (
+                        <p className='text-center text-[12.5px] text-[#8A9099]'>No checklist items yet.</p>
+                      ) : (
+                        <div className='flex flex-col gap-2.5'>
                           {checklistItems.map((item, i) => (
-                            <div key={i} className='flex items-start gap-2'>
+                            <div key={item.id ?? `cl-new-${i}`} className='flex items-start gap-2'>
                               <div className='min-w-0 flex-1'>
                                 <input
                                   type='text'
@@ -657,7 +648,7 @@ export default function CreateAssignmentPage() {
                                     setChecklistItems(next)
                                   }}
                                   placeholder='Item name'
-                                  className={`${INPUT_CLS} mb-1`}
+                                  className={`${INPUT_CLS} mb-1.5`}
                                 />
                                 <input
                                   type='text'
@@ -668,13 +659,13 @@ export default function CreateAssignmentPage() {
                                     setChecklistItems(next)
                                   }}
                                   placeholder='Description (optional)'
-                                  className={`${INPUT_CLS} text-xs`}
+                                  className={INPUT_CLS}
                                 />
                               </div>
                               <button
                                 type='button'
-                                onClick={() => setChecklistItems((prev) => prev.filter((_, j) => j !== i))}
-                                className='mt-2 rounded-[9px] border border-[#DED8CA] bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#8A9099] hover:bg-[#F8E8E5] hover:text-[#A93226]'
+                                onClick={() => setChecklistItems(prev => prev.filter((_, j) => j !== i))}
+                                className='mt-1 shrink-0 rounded-[9px] border border-[#DED8CA] bg-white px-2.5 py-2 text-[12px] font-semibold text-[#8A9099] hover:bg-[#F8E8E5] hover:text-[#A93226]'
                               >
                                 Remove
                               </button>
@@ -684,8 +675,8 @@ export default function CreateAssignmentPage() {
                       )}
                       <button
                         type='button'
-                        onClick={() => setChecklistItems((prev) => [...prev, { name: '', description: '' }])}
-                        className='rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-1.5 text-[11px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+                        onClick={() => setChecklistItems(prev => [...prev, { id: null, name: '', description: '' }])}
+                        className='mt-3 rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
                       >
                         + Add Item
                       </button>
@@ -693,76 +684,70 @@ export default function CreateAssignmentPage() {
                   )}
                 </div>
 
-                {/* Rubric self-grading */}
+                {/* Rubric Self-Grading sub-section */}
                 <div className='mt-4 rounded-[10px] border border-[#E8E3D8] bg-white'>
-                  <div className='flex items-center justify-between px-4 py-2.5'>
-                    <span className='text-[13px] font-semibold text-[#131A26]'>Rubric-Based Self-Grading</span>
-                    <MiniToggle value={saRubric} onChange={setSaRubric} />
+                  <div className='flex items-center justify-between px-4 py-2.5 border-b border-[#F0ECE4]'>
+                    <span className='text-[13px] font-semibold text-[#131A26]'>Rubric Self-Grading</span>
+                    <button
+                      type='button'
+                      onClick={() => setSaRubric(v => !v)}
+                      aria-pressed={saRubric}
+                      className={`flex h-5 w-9 flex-none items-center rounded-[99px] p-0.5 ${
+                        saRubric ? 'justify-end bg-[#131A26]' : 'justify-start bg-[#D8D2C6]'
+                      }`}
+                    >
+                      <span className='block h-4 w-4 rounded-full bg-white shadow-[0_1px_2px_rgba(19,26,38,.2)]' />
+                    </button>
                   </div>
                   {saRubric && (
-                    <div className='border-t border-[#F0ECE4] px-4 py-3'>
-                      <p className='mb-2.5 text-[12px] text-[#5A6070]'>
+                    <div className='px-4 py-3'>
+                      <p className='mb-2.5 text-[12.5px] text-[#5A6070]'>
                         Select which marking criteria students self-grade against.
                       </p>
-                      {validCriteria.length === 0 ? (
-                        <p className='text-[12px] text-[#8A9099]'>
-                          Add marking criteria above first.
-                        </p>
+                      {rubricTree.length === 0 ? (
+                        <p className='text-center text-[12.5px] text-[#8A9099]'>No rubric criteria yet.</p>
                       ) : (
-                        <div className='flex flex-col gap-2'>
-                          {criteria.map((c, i) => {
-                            if (!c.name.trim()) return null
-                            return (
-                              <label key={i} className='flex cursor-pointer items-center gap-2.5'>
-                                <input
-                                  type='checkbox'
-                                  checked={rubricSelectedIndices.has(i)}
-                                  onChange={() => toggleRubricIndex(i)}
-                                  className='h-[14px] w-[14px] accent-[#131A26]'
-                                />
-                                <span className='text-[13px] text-[#131A26]'>
-                                  {c.name}
-                                  {c.marks && (
-                                    <span className='ml-1 text-[11px] text-[#5A6070]'>
-                                      ({c.marks} marks)
-                                    </span>
-                                  )}
-                                </span>
-                              </label>
-                            )
-                          })}
+                        <div className='flex flex-col gap-0.5'>
+                          {rubricTree.map(node => renderRubricNode(node))}
                         </div>
                       )}
                     </div>
                   )}
                 </div>
 
-                {/* Guided reflection */}
+                {/* Guided Reflection sub-section */}
                 <div className='mt-4 rounded-[10px] border border-[#E8E3D8] bg-white'>
-                  <div className='flex items-center justify-between px-4 py-2.5'>
+                  <div className='flex items-center justify-between px-4 py-2.5 border-b border-[#F0ECE4]'>
                     <span className='text-[13px] font-semibold text-[#131A26]'>Guided Reflection</span>
-                    <MiniToggle value={saReflection} onChange={setSaReflection} />
+                    <button
+                      type='button'
+                      onClick={() => setSaReflection(v => !v)}
+                      aria-pressed={saReflection}
+                      className={`flex h-5 w-9 flex-none items-center rounded-[99px] p-0.5 ${
+                        saReflection ? 'justify-end bg-[#131A26]' : 'justify-start bg-[#D8D2C6]'
+                      }`}
+                    >
+                      <span className='block h-4 w-4 rounded-full bg-white shadow-[0_1px_2px_rgba(19,26,38,.2)]' />
+                    </button>
                   </div>
                   {saReflection && (
-                    <div className='border-t border-[#F0ECE4] px-4 py-3'>
-                      <p className='mb-3 text-[12px] text-[#5A6070]'>
+                    <div className='px-4 py-3'>
+                      <p className='mb-3 text-[12.5px] text-[#5A6070]'>
                         Six stages of the Gibbs Reflective Cycle. Prompts are editable.
                       </p>
                       <div className='flex flex-col gap-3'>
-                        {reflectionPrompts.map((prompt, index) => (
-                          <div key={prompt.stage}>
-                            <label className='mb-1 block text-[12px] font-semibold text-[#2C3444]'>
-                              {prompt.label}
-                            </label>
+                        {reflectionPrompts.map((p, i) => (
+                          <div key={p.stage}>
+                            <div className={FIELD_LABEL_CLS}>{p.label}</div>
                             <input
                               type='text'
-                              value={prompt.prompt_text}
+                              value={p.prompt_text}
                               onChange={(e) => {
                                 const next = [...reflectionPrompts]
-                                next[index] = { ...prompt, prompt_text: e.target.value }
+                                next[i] = { ...p, prompt_text: e.target.value }
                                 setReflectionPrompts(next)
                               }}
-                              className={`${INPUT_CLS} text-xs`}
+                              className={INPUT_CLS}
                             />
                           </div>
                         ))}
@@ -780,23 +765,25 @@ export default function CreateAssignmentPage() {
       <div className='sticky bottom-0 z-20 mt-auto border-t border-[#EAE5DB] bg-[#F5F3EF]'>
         <div className='mx-auto flex w-full max-w-[1200px] items-center gap-3 px-7 py-3.5'>
           <span className='flex-1 text-[12.5px] text-[#8A9099]'>
-            Fields marked required must be completed.
+            Changes are saved when you click &ldquo;Save changes&rdquo;.
           </span>
           <button
             type='button'
-            onClick={() => router.push('/assignments')}
+            onClick={() =>
+              router.push(`/assignments/${assignmentId}/submissions`)
+            }
             className='rounded-[9px] border border-[#DED8CA] bg-white px-[17px] py-[9px] text-[13px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
           >
             Cancel
           </button>
           <button
             type='button'
-            onClick={create}
+            onClick={save}
             disabled={submitting}
             className='flex items-center rounded-[9px] bg-[#131A26] px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-[#243247] disabled:opacity-60'
           >
             {submitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-            Create assignment
+            Save changes
           </button>
         </div>
       </div>

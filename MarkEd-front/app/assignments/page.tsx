@@ -90,13 +90,29 @@ export default function AssignmentsPage() {
     }
   }, [currentCourseId, user?.isStudent])
 
-  const sorted = useMemo(
-    () =>
-      [...assignments].sort(
+  const sorted = useMemo(() => {
+    const open = assignments.filter((a) => !isClosed(a))
+    const closed = assignments.filter((a) => isClosed(a))
+
+    if (user?.isStudent) {
+      // Students: nearest deadline first
+      open.sort(
         (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
-      ),
-    [assignments]
-  )
+      )
+    } else {
+      // Staff: latest deadline first
+      open.sort(
+        (a, b) => new Date(b.deadline).getTime() - new Date(a.deadline).getTime()
+      )
+    }
+
+    // Closed assignments always at end, most recently closed first
+    closed.sort(
+      (a, b) => new Date(b.deadline).getTime() - new Date(a.deadline).getTime()
+    )
+
+    return [...open, ...closed]
+  }, [assignments, user])
 
   const statusFor = (a: AssignmentSchema): Status => {
     if (user?.isStudent) {

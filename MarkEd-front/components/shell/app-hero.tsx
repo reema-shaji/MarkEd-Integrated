@@ -19,7 +19,7 @@
 
 import * as React from 'react'
 import { useParams, usePathname, useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Pencil } from 'lucide-react'
 import { useUser } from '@/src/contexts/user-context'
 import { useCourse } from '@/src/contexts/course-context'
 import { useAssignment } from '@/src/contexts/assignment-context'
@@ -66,17 +66,12 @@ export function AppHero() {
   const courseTabs: Tab[] = React.useMemo(() => {
     const t: Tab[] = [
       {
-        label: 'Dashboard',
-        seg: 'course-dashboard',
-        href: '/dashboard',
-        active: pathname === '/dashboard',
-      },
-      {
         label: 'Assignments',
         seg: 'assignments',
         href: '/assignments',
         active:
           pathname === '/assignments' ||
+          pathname === '/dashboard' ||
           pathname.startsWith('/create-assignment') ||
           pathname.startsWith('/create-peer-assignment'),
       },
@@ -114,11 +109,10 @@ export function AppHero() {
     })
     const t: Tab[] = []
     if (user?.isStaff) {
-      // "Marking" is the default staff landing — it now includes the release-
-      // marks toggle, submission stats and grade distribution that used to live
-      // on a separate Dashboard tab (removed to reduce navigation clutter).
+      // "Submissions" is the default staff landing — it includes the release-
+      // marks toggle, submission stats and grade distribution.
       t.push({
-        label: 'Marking',
+        label: 'Submissions',
         seg: isGroup ? 'group-marking' : 'submissions',
         href: `${base}/${isGroup ? 'group-marking' : 'submissions'}`,
         active: ['submissions', 'group-marking', 'mark', 'dashboard', ''].includes(seg),
@@ -127,24 +121,7 @@ export function AppHero() {
       if (hasPeer) {
         t.push(mk('Peer Reviews', 'marking-queue', ['marking-queue', 'marker-review']))
       }
-      t.push(mk('Structure', 'structure'))
-      if (user?.isAcademic || user?.isTA) t.push(mk('Jobs', 'jobs'))
-      if (isGroup && currentAssignment.group_set_id) {
-        t.push({
-          label: 'Group Management',
-          seg: 'group-management',
-          href: `/groupsets/${currentAssignment.group_set_id}`,
-          active: false,
-        })
-      }
-      if (hasSA) {
-        t.push({
-          label: 'Self-Assessment',
-          seg: 'self-assessment',
-          href: `${base}/self-assessment/configure`,
-          active: seg === 'self-assessment',
-        })
-      }
+      if (user?.isAcademic || user?.isTA) t.push(mk('Markers', 'jobs'))
     } else if (user?.isStudent) {
       t.push(mk('Assignment', 'home', ['home', '']))
       // One "Submission" tab: individual work shows the submit form; group work
@@ -179,12 +156,12 @@ export function AppHero() {
         <div className='mx-auto w-full max-w-[1200px] px-7 pb-5 pt-7'>
           <button
             onClick={() => router.push('/assignments')}
-            className='flex items-center gap-1.5 pb-3 text-xs font-medium text-white/60 hover:text-white'
+            className='flex items-center gap-2 rounded-md px-2 py-1.5 -ml-2 mb-1 text-[13px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors'
           >
-            <ArrowLeft className='h-3 w-3' />
-            <span className='font-mono text-[11px] tracking-[.3px]'>{courseCode}</span>
-            <span className='text-white/35'>/</span>
-            All assignments
+            <ArrowLeft className='h-4 w-4' />
+            <span className='font-mono text-[12px] tracking-[.3px]'>{courseCode}</span>
+            <span className='text-white/40'>/</span>
+            <span>All assignments</span>
           </button>
           <div className='flex flex-wrap items-end gap-3'>
             <span className='text-[23px] font-semibold tracking-[-.35px] text-white'>
@@ -200,6 +177,15 @@ export function AppHero() {
                   <HeroBadge>Self-Assessment</HeroBadge>
                 )}
               </span>
+            )}
+            {currentAssignment && (user?.isAcademic || user?.isTA) && (
+              <button
+                onClick={() => router.push(`/assignments/${assignmentId}/edit`)}
+                className='mb-[5px] flex items-center gap-1.5 rounded-md bg-white/[.18] px-2.5 py-1 text-[12px] font-semibold text-white hover:bg-white/30 transition-colors'
+              >
+                <Pencil className='h-3 w-3' />
+                Edit
+              </button>
             )}
           </div>
         </div>
