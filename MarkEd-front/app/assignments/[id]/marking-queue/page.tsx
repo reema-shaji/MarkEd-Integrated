@@ -19,7 +19,7 @@ import {
   PeerMatch,
   PeerReviewSchemaWithStudent,
 } from '@/src/api'
-import { ClipboardList, Users, CheckCircle2, Clock, Loader2 } from 'lucide-react'
+import { ClipboardList, Users, CheckCircle2, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { StatusDot } from '@/components/status-dot'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -68,6 +68,7 @@ export default function PeerReviewsPage() {
       .then(setMatches)
       .catch(() => {})
     DefaultService.getAssignmentStatistics(id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .then((s: any) => setPeerStats(s.peer_review_stats ?? {}))
       .catch(() => {})
   }, [params.id])
@@ -88,7 +89,8 @@ export default function PeerReviewsPage() {
         setMatches(updatedMatches)
         // Refresh stats
         DefaultService.getAssignmentStatistics(Number(params.id))
-          .then((s: any) => setPeerStats(s.peer_review_stats ?? {}))
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then((s: any) => setPeerStats(s.peer_review_stats ?? {}))
           .catch(() => {})
       } else {
         toast.error(
