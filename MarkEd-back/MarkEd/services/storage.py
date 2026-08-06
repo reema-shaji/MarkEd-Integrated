@@ -14,12 +14,22 @@ class StorageService:
         # a local Django endpoint and files are served back from MEDIA_ROOT.
         self.local = getattr(settings, 'USE_LOCAL_STORAGE', False)
         if not self.local:
+            # Force SigV4 — SigV2 POST signing is deprecated and unsupported in
+            # newer regions. IMPORTANT: SigV4 signatures are REGION-SCOPED, so
+            # AWS_REGION MUST equal the bucket's actual region, or S3 rejects the
+            # upload with 403 SignatureDoesNotMatch. Default to us-east-1 (the
+            # region `mark-ed` currently resolves to); set AWS_REGION explicitly
+            # if the bucket lives elsewhere. Virtual-hosted addressing gives the
+            # `bucket.s3[.region].amazonaws.com` URLs the browser posts to.
             self.s3_client = boto3.client(
                 's3',
                 aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
                 aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-                region_name=os.getenv('AWS_REGION', 'eu-west-2'),
-                config=Config(signature_version='s3v4')
+                region_name=os.getenv('AWS_REGION', 'us-east-1'),
+                config=Config(
+                    signature_version='s3v4',
+                    s3={'addressing_style': 'virtual'},
+                ),
             )
         self.bucket = os.getenv('STORAGE_BUCKET_NAME', 'marked-bucket')
         self.is_production = True
