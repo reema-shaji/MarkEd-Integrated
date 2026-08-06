@@ -1,5 +1,6 @@
 from minio import Minio
 import boto3
+from botocore.config import Config
 from django.conf import settings
 import os
 from datetime import timedelta
@@ -7,7 +8,7 @@ from datetime import timedelta
 class StorageService:
     ALLOWED_CONTENT_TYPES = ['application/pdf']
     MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5MB
-    
+
     def __init__(self):
         # Local filesystem mode (development): no S3 client needed. Uploads go to
         # a local Django endpoint and files are served back from MEDIA_ROOT.
@@ -17,7 +18,8 @@ class StorageService:
                 's3',
                 aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
                 aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-                region_name=os.getenv('AWS_REGION', 'eu-west-2')
+                region_name=os.getenv('AWS_REGION', 'eu-west-2'),
+                config=Config(signature_version='s3v4')
             )
         self.bucket = os.getenv('STORAGE_BUCKET_NAME', 'marked-bucket')
         self.is_production = True
