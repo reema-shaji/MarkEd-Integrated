@@ -206,23 +206,31 @@ function IndividualMarkingPanel({
           </span>{' '}
           / {data.total}
         </div>
-        <div className='flex gap-2'>
-          <button
-            onClick={() => save(false)}
-            disabled={saving}
-            className='inline-flex items-center rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8] disabled:opacity-50'
-          >
-            {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-            Save marks
-          </button>
-          <button
-            onClick={() => save(true)}
-            disabled={saving}
-            className='inline-flex items-center rounded-[9px] bg-[#131A26] px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-[#243247] disabled:opacity-50'
-          >
-            Finalise marks
-          </button>
-        </div>
+        {/* Finalised marks are locked to markers — hide the actions (an academic
+            can still override, so they keep them). */}
+        {allFinalised && !isAcademic ? (
+          <span className='inline-flex items-center gap-1 text-[12.5px] font-semibold text-[#2F7D4F]'>
+            <Lock className='h-3.5 w-3.5' /> Finalised
+          </span>
+        ) : (
+          <div className='flex gap-2'>
+            <button
+              onClick={() => save(false)}
+              disabled={saving}
+              className='inline-flex items-center rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8] disabled:opacity-50'
+            >
+              {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+              Save marks
+            </button>
+            <button
+              onClick={() => save(true)}
+              disabled={saving}
+              className='inline-flex items-center rounded-[9px] bg-[#131A26] px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-[#243247] disabled:opacity-50'
+            >
+              Finalise marks
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

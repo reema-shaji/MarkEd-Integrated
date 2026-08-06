@@ -192,16 +192,26 @@ export default function SubmissionsPage() {
           )
         } else {
           const subs = await DefaultService.getAllSubmissions(id).catch(() => [])
+          // Show what still needs marking first: Unmarked, then In progress,
+          // then the finalised/Marked ones at the bottom.
+          const order: Record<string, number> = {
+            Unmarked: 0,
+            'In progress': 1,
+            Marked: 2,
+          }
           setMarkQueue(
-            subs.map((s) => ({
-              key: `s${s.id}`,
-              title: s.student_name,
-              meta: s.student_number,
-              href: `/assignments/${id}/mark/${s.id}`,
-              status: s.marking_status ?? 'Unmarked',
-              score:
-                s.score != null ? `${s.score}/${s.total}` : null,
-            }))
+            subs
+              .map((s) => ({
+                key: `s${s.id}`,
+                title: s.student_name,
+                meta: s.student_number,
+                href: `/assignments/${id}/mark/${s.id}`,
+                status: s.marking_status ?? 'Unmarked',
+                score: s.score != null ? `${s.score}/${s.total}` : null,
+              }))
+              .sort(
+                (a, b) => (order[a.status] ?? 0) - (order[b.status] ?? 0)
+              )
           )
         }
       } finally {
