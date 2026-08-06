@@ -334,18 +334,6 @@ export default function PeerReviewsPage() {
         <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
           {allocations.map((a) => {
             const status = a.status?.toUpperCase()
-            const badge =
-              status === 'COMPLETED'
-                ? { label: 'Reviewed', cls: 'bg-[#E9F1EA] text-[#2F7D4F]' }
-                : status === 'IN_PROGRESS'
-                  ? {
-                      label: 'In Progress',
-                      cls: 'bg-[#F8EFDC] text-[#8A5D14]',
-                    }
-                  : {
-                      label: 'Not started',
-                      cls: 'bg-[#F2EEE6] text-[#6D6455]',
-                    }
             return (
               <div
                 key={a.id}
@@ -358,11 +346,6 @@ export default function PeerReviewsPage() {
                   <span className='mt-px block font-mono text-[12px] text-[#5A6070]'>
                     {a.student_number}
                   </span>
-                </span>
-                <span
-                  className={`inline-block whitespace-nowrap rounded-[6px] px-2.5 py-0.5 text-[11px] font-medium ${badge.cls}`}
-                >
-                  {badge.label}
                 </span>
                 <button
                   onClick={() =>

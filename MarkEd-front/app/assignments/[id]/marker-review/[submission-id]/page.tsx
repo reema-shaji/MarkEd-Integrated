@@ -11,7 +11,6 @@ import {
 import { FileText, Loader2, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { useUser } from '@/src/contexts/user-context'
-import { FeedbackBankDialog } from '@/components/feedback-bank-dialog'
 
 // pdf.js is client-only; load the viewer lazily like the other marking pages.
 const MarkerPDFViewer = dynamic(
@@ -70,8 +69,6 @@ export default function MarkerReviewPage() {
   const [hiddenReviewers, setHiddenReviewers] = React.useState<Set<number>>(
     new Set()
   )
-  const [bankOpen, setBankOpen] = React.useState(false)
-
   const isStudent = user?.isStudent ?? false
 
   React.useEffect(() => {
@@ -211,20 +208,6 @@ export default function MarkerReviewPage() {
             {reviewers.length === 1 ? 'reviewer' : 'reviewers'}
           </span>
         </div>
-        <div className='flex items-center gap-2'>
-          <button
-            onClick={() => setBankOpen(true)}
-            className='rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-1.5 text-[13px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
-          >
-            Feedback Bank
-          </button>
-          <button
-            onClick={() => toast.success('Marker review submitted')}
-            className='rounded-[9px] bg-[#131A26] px-3.5 py-1.5 text-[13px] font-semibold text-white hover:bg-[#243247]'
-          >
-            Submit Marker Review
-          </button>
-        </div>
       </div>
 
       {/* Split body */}
@@ -359,12 +342,6 @@ export default function MarkerReviewPage() {
                       <div className='text-[13px] leading-[1.55] text-[#2C3444]'>
                         {c.feedback}
                       </div>
-                      <button
-                        onClick={() => toast('Reply sent to reviewer')}
-                        className='mt-2.5 rounded-[9px] border border-[#DED8CA] bg-white px-3.5 py-1 text-[11px] font-semibold text-[#2C3444] hover:border-[#8A9099] hover:bg-[#F2EFE8]'
-                      >
-                        Reply
-                      </button>
                     </div>
                   )
                 })
@@ -373,12 +350,6 @@ export default function MarkerReviewPage() {
           )}
         </div>
       </div>
-
-      <FeedbackBankDialog
-        open={bankOpen}
-        onOpenChange={setBankOpen}
-        assignmentId={assignmentId}
-      />
     </div>
   )
 }
