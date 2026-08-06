@@ -1,16 +1,30 @@
 'use client'
 
 import * as React from 'react'
+import dynamic from 'next/dynamic'
 import { useParams } from 'next/navigation'
 import {
   AllSubmissionSchema,
   DefaultService,
   PeerReviewCommentSchema,
 } from '@/src/api'
-import { MessageSquare } from 'lucide-react'
+import { FileText, Loader2, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { useUser } from '@/src/contexts/user-context'
 import { FeedbackBankDialog } from '@/components/feedback-bank-dialog'
+
+// pdf.js is client-only; load the viewer lazily like the other marking pages.
+const MarkerPDFViewer = dynamic(
+  () => import('@/components/pdf-viewer/MarkerPDFViewer'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className='flex h-full items-center justify-center'>
+        <Loader2 className='h-6 w-6 animate-spin text-[#8A9099]' />
+      </div>
+    ),
+  }
+)
 
 // Colours cycle per reviewer (red / blue / green) to match the prototype.
 const REVIEWER_COLORS = [
@@ -50,6 +64,7 @@ export default function MarkerReviewPage() {
   const [comments, setComments] = React.useState<PeerReviewCommentSchema[]>([])
   const [submission, setSubmission] =
     React.useState<AllSubmissionSchema | null>(null)
+  const [pdfUrl, setPdfUrl] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [hasError, setHasError] = React.useState(false)
   const [hiddenReviewers, setHiddenReviewers] = React.useState<Set<number>>(
@@ -79,6 +94,30 @@ export default function MarkerReviewPage() {
           setSubmission(subs.find((s) => s.id === submissionId) ?? null)
         } catch {
           // Non-critical — title falls back to a generic label.
+        }
+        // Resolve a viewable (presigned) PDF URL — try the individual
+        // submission endpoint first, then fall back to a group submission.
+        try {
+          const marking = await DefaultService.getSubmissionForMarking(
+            assignmentId,
+            submissionId
+          )
+          if (marking?.pre_signed_file_url) {
+            setPdfUrl(marking.pre_signed_file_url)
+          } else {
+            throw new Error('no-url')
+          }
+        } catch {
+          try {
+            const groups =
+              await DefaultService.listGroupSubmissions(assignmentId)
+            setPdfUrl(
+              groups.find((g) => g.id === submissionId)?.pre_signed_file_url ??
+                null
+            )
+          } catch {
+            // Non-critical — the document pane shows a fallback.
+          }
         }
       } catch (error) {
         console.error('Failed to load peer review comments:', error)
@@ -190,31 +229,22 @@ export default function MarkerReviewPage() {
 
       {/* Split body */}
       <div className='flex flex-1 overflow-hidden'>
-        {/* Left — submission document placeholder */}
-        <div className='flex flex-1 flex-col items-center overflow-y-auto bg-[#F5F3EF] p-6'>
-          <div className='relative min-h-[820px] w-[640px] max-w-full rounded-[14px] border border-[#EAE5DB] bg-white p-[52px]'>
-            <div className='mb-2 h-[15px] w-[70%] rounded-[2px] bg-[#d4d4d4]' />
-            <div className='mb-6 h-[9px] w-[45%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-2 h-[9px] w-[94%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-2 flex h-[22px] w-[60%] items-center rounded-[3px] border border-[rgba(239,68,68,.3)] bg-[rgba(239,68,68,.13)] px-1.5'>
-              <span className='h-[9px] w-[92%] rounded-[2px] bg-[#e5e5e5]' />
+        {/* Left — the submission document */}
+        <div className='flex flex-1 flex-col overflow-y-auto bg-[#F5F3EF]'>
+          {isLoading ? (
+            <div className='flex flex-1 items-center justify-center'>
+              <Loader2 className='h-6 w-6 animate-spin text-[#8A9099]' />
             </div>
-            <div className='mb-2 h-[9px] w-[90%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-5 h-[9px] w-[52%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-2 h-[9px] w-[95%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-2 ml-[50px] flex h-[22px] w-[72%] items-center rounded-[3px] border border-[rgba(59,130,246,.3)] bg-[rgba(59,130,246,.13)] px-1.5'>
-              <span className='h-[9px] w-[92%] rounded-[2px] bg-[#e5e5e5]' />
+          ) : pdfUrl ? (
+            <MarkerPDFViewer url={pdfUrl} previewOnly peerReviewEnabled={false} />
+          ) : (
+            <div className='flex flex-1 flex-col items-center justify-center gap-2 text-center'>
+              <FileText className='h-8 w-8 text-[#B7AE9E]' />
+              <div className='text-[13px] font-medium text-[#8A9099]'>
+                No file is available for this submission.
+              </div>
             </div>
-            <div className='mb-2 h-[9px] w-[88%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-5 h-[9px] w-[40%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-2.5 h-3 w-[35%] rounded-[2px] bg-[#d4d4d4]' />
-            <div className='mb-2 h-[9px] w-[93%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-2 flex h-[22px] w-[66%] items-center rounded-[3px] border border-[rgba(34,197,94,.3)] bg-[rgba(34,197,94,.13)] px-1.5'>
-              <span className='h-[9px] w-[92%] rounded-[2px] bg-[#e5e5e5]' />
-            </div>
-            <div className='mb-2 h-[9px] w-[90%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='h-[9px] w-[58%] rounded-[2px] bg-[#e5e5e5]' />
-          </div>
+          )}
         </div>
 
         {/* Right — reviewer filters + comment cards */}
