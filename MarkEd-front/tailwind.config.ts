@@ -17,6 +17,13 @@ export default {
         'pulse-strong': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'pulse-attention':
           'border-color 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite, background-color 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        shimmer: 'shimmer 1.4s ease-in-out infinite',
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
       },
       colors: {
         // --- MarkEd prototype palette (warm "paper" theme) ---

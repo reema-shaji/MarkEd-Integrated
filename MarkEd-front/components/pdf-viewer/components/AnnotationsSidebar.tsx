@@ -63,6 +63,9 @@ interface AnnotationsSidebarProps {
   ref?: React.RefObject<HTMLDivElement>
   isMarkerView: boolean
   isReadOnly?: boolean
+  // When false, the empty state doesn't frame the panel as "peer feedback"
+  // (used on the marking page for assignments without peer review).
+  peerReviewEnabled?: boolean
   className?: string
 }
 function DraftAnnotationCard({
@@ -626,6 +629,7 @@ export function AnnotationsSidebar({
   ref,
   isMarkerView,
   isReadOnly = false,
+  peerReviewEnabled = true,
   className,
 }: AnnotationsSidebarProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -788,22 +792,26 @@ export function AnnotationsSidebar({
         <div className='flex h-full flex-col items-center justify-center rounded-[12px] bg-warm-50 p-4 text-center'>
           <SquarePen className='mb-2 h-8 w-8 text-faint' />
           <h1 className='text-lg font-semibold text-ink'>
-            {isMarkerView && uniqueReviewers.length === 0
-              ? 'No peer feedback yet'
-              : isMarkerView && visibleReviewers.size === 0
-                ? 'No reviewers selected'
-                : isReadOnly
-                  ? 'No feedback found'
-                  : 'Select text to add a comment'}
+            {isMarkerView && !peerReviewEnabled
+              ? 'No feedback yet'
+              : isMarkerView && uniqueReviewers.length === 0
+                ? 'No peer feedback yet'
+                : isMarkerView && visibleReviewers.size === 0
+                  ? 'No reviewers selected'
+                  : isReadOnly
+                    ? 'No feedback found'
+                    : 'Select text to add a comment'}
           </h1>
           <p className='px-8 text-sm text-muted-foreground'>
-            {isMarkerView && uniqueReviewers.length === 0
-              ? 'There are no peer reviews on this submission to display.'
-              : isMarkerView && visibleReviewers.size === 0
-                ? 'Use the filter controls above to select reviewers.'
-                : isReadOnly
-                  ? 'There are no comments available for this submission yet.'
-                  : 'If you are not able to select any text, reach out to support.'}
+            {isMarkerView && !peerReviewEnabled
+              ? 'Select text on the submission to add your feedback.'
+              : isMarkerView && uniqueReviewers.length === 0
+                ? 'There are no peer reviews on this submission to display.'
+                : isMarkerView && visibleReviewers.size === 0
+                  ? 'Use the filter controls above to select reviewers.'
+                  : isReadOnly
+                    ? 'There are no comments available for this submission yet.'
+                    : 'If you are not able to select any text, reach out to support.'}
           </p>
         </div>
       )}

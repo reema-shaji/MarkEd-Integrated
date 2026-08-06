@@ -120,6 +120,9 @@ export default function SubmissionsPage() {
   const [allocations, setAllocations] = React.useState<
     PeerReviewSchemaWithStudent[]
   >([])
+  // The marker queue loads in a separate effect after the assignment resolves;
+  // gate the marker view on this so it shows a shimmer instead of a premature "0".
+  const [queueLoading, setQueueLoading] = React.useState(true)
 
   const STATUS_STYLES: Record<string, { bg: string; fg: string }> = {
     Unmarked: { bg: '#F5F3EF', fg: '#8A6D3B' },
@@ -165,29 +168,34 @@ export default function SubmissionsPage() {
   React.useEffect(() => {
     if (!assignment || !user || user.isAcademic) return
     const id = Number(params.id)
+    setQueueLoading(true)
     const load = async () => {
-      if (assignment.assignment_type === 'GROUP') {
-        const subs = await DefaultService.listGroupSubmissions(id).catch(
-          () => []
-        )
-        setMarkQueue(
-          subs.map((s) => ({
-            key: `g${s.id}`,
-            title: s.group_name,
-            meta: `Submission v${s.submission_version} · by ${s.submitted_by_name}`,
-            href: `/assignments/${id}/group-marking`,
-          }))
-        )
-      } else {
-        const subs = await DefaultService.getAllSubmissions(id).catch(() => [])
-        setMarkQueue(
-          subs.map((s) => ({
-            key: `s${s.id}`,
-            title: s.student_name,
-            meta: s.student_number,
-            href: `/assignments/${id}/mark/${s.id}`,
-          }))
-        )
+      try {
+        if (assignment.assignment_type === 'GROUP') {
+          const subs = await DefaultService.listGroupSubmissions(id).catch(
+            () => []
+          )
+          setMarkQueue(
+            subs.map((s) => ({
+              key: `g${s.id}`,
+              title: s.group_name,
+              meta: `Submission v${s.submission_version} · by ${s.submitted_by_name}`,
+              href: `/assignments/${id}/group-marking`,
+            }))
+          )
+        } else {
+          const subs = await DefaultService.getAllSubmissions(id).catch(() => [])
+          setMarkQueue(
+            subs.map((s) => ({
+              key: `s${s.id}`,
+              title: s.student_name,
+              meta: s.student_number,
+              href: `/assignments/${id}/mark/${s.id}`,
+            }))
+          )
+        }
+      } finally {
+        setQueueLoading(false)
       }
     }
     load()
@@ -231,6 +239,37 @@ export default function SubmissionsPage() {
 
   // --- Marker / TA view: personal marking queue ------------------------------
   if (!userLoading && user && !user.isAcademic) {
+    if (queueLoading) {
+      return (
+        <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
+          <div className='mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+            {[0, 1].map((i) => (
+              <div key={i} className='px-5 py-[18px]'>
+                <Skeleton className='mb-2 h-3 w-24' />
+                <Skeleton className='h-7 w-10' />
+              </div>
+            ))}
+          </div>
+          <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
+            <div className='border-b border-[#F0ECE4] px-5 py-4'>
+              <Skeleton className='h-5 w-40' />
+            </div>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className='flex items-center justify-between border-b border-[#F0ECE4] px-5 py-[15px] last:border-b-0'
+              >
+                <div>
+                  <Skeleton className='mb-2 h-4 w-48' />
+                  <Skeleton className='h-3 w-24' />
+                </div>
+                <Skeleton className='h-8 w-16 rounded-[9px]' />
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
     return (
       <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
         <div className='mb-5 grid grid-cols-2 divide-x divide-[#F0ECE4] overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>

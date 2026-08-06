@@ -30,6 +30,9 @@ interface MarkerPDFViewerProps {
   submissionId?: number
   otherControls?: React.ReactNode
   isMarkerView?: boolean
+  // Whether this assignment has peer review; when false the sidebar doesn't
+  // frame the empty state as "peer feedback".
+  peerReviewEnabled?: boolean
 }
 
 export default function MarkerPDFViewer({
@@ -38,6 +41,7 @@ export default function MarkerPDFViewer({
   submissionId,
   otherControls,
   isMarkerView = true,
+  peerReviewEnabled = true,
 }: MarkerPDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0)
   const [initialAnnotations, setInitialAnnotations] = useState<Annotation[]>([])
@@ -454,6 +458,7 @@ export default function MarkerPDFViewer({
           onAnnotationDelete={handleAnnotationDelete}
           onEdit={onAnnotationEdit}
           isMarkerView={isMarkerView}
+          peerReviewEnabled={peerReviewEnabled}
           className={
             numPages > 0
               ? 'delay-500 duration-300 animate-in fade-in'

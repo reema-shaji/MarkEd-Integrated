@@ -234,11 +234,17 @@ const MarkingPage = () => {
   const submissionId = Number(params['mark-id'])
   const [submission, setSubmission] =
     useState<PeersLastSubmissionResponse | null>(null)
+  const [peerEnabled, setPeerEnabled] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchSubmission = async () => {
       setIsLoading(true)
+      // Whether this assignment has peer review — drives whether the annotation
+      // sidebar frames things as peer feedback (it shouldn't when it's off).
+      DefaultService.getAssignment(assignmentId)
+        .then((a) => setPeerEnabled(!!a.peer_review_enabled))
+        .catch(() => {})
       try {
         const response = await DefaultService.getSubmissionForMarking(
           assignmentId,
@@ -289,17 +295,22 @@ const MarkingPage = () => {
           submissionId={submissionId}
         />
       </div>
-      {/* Annotation viewer for qualitative marker feedback on the PDF */}
-      <div className='mt-6'>
-        <div className='mx-auto mb-1 w-full max-w-[1200px] px-7 text-[13px] font-semibold text-[#2C3444]'>
+      {/* Annotation viewer for qualitative marker feedback on the PDF.
+          Constrained to the same 1200px column as the scoring panel so the
+          toolbar / Open Original line up with everything above. */}
+      <div className='mx-auto mt-6 w-full max-w-[1200px] px-7'>
+        <div className='mb-1 text-[13px] font-semibold text-[#2C3444]'>
           Annotate the submission
         </div>
-        <MarkerPDFViewer
-          url={submission.pre_signed_file_url}
-          assignmentId={assignmentId}
-          submissionId={submissionId}
-          isMarkerView={true}
-        />
+        <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB]'>
+          <MarkerPDFViewer
+            url={submission.pre_signed_file_url}
+            assignmentId={assignmentId}
+            submissionId={submissionId}
+            isMarkerView={true}
+            peerReviewEnabled={peerEnabled}
+          />
+        </div>
       </div>
     </div>
   )
