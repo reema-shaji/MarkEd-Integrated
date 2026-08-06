@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useParams } from 'next/navigation'
 import {
   DefaultService,
@@ -24,9 +25,16 @@ import {
 } from '@/src/api'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Check, Lock, Users2 } from 'lucide-react'
+import { Check, FileText, Lock, Users2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useUser } from '@/src/contexts/user-context'
+
+// The marker PDF viewer pulls in pdf.js, so keep it client-only like the
+// individual mark page does.
+const MarkerPDFViewer = dynamic(
+  () => import('@/components/pdf-viewer/MarkerPDFViewer'),
+  { ssr: false, loading: () => <Skeleton className='h-[520px] w-full' /> }
+)
 
 type Row = PersonalAdjustmentSchema
 
@@ -217,21 +225,26 @@ export default function GroupMarkingPage() {
             Submission Preview
             {selected.filename ? ` — ${selected.filename}` : ''}
           </div>
-          <div className='rounded-[10px] bg-warm-50 p-6'>
-            <div className='mb-2 h-3.5 w-[70%] rounded-[2px] bg-[#d4d4d4]' />
-            <div className='mb-5 h-2 w-[45%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-[7px] h-2 w-[95%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-[7px] h-2 w-[90%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-[7px] h-2 w-[96%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-[18px] h-2 w-[60%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-2 h-3 w-[35%] rounded-[2px] bg-[#d4d4d4]' />
-            <div className='mb-[7px] h-2 w-[94%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='mb-[7px] h-2 w-[88%] rounded-[2px] bg-[#e5e5e5]' />
-            <div className='h-2 w-[40%] rounded-[2px] bg-[#e5e5e5]' />
-          </div>
-          <div className='mt-3 text-center text-[12px] text-faint'>
-            {selected.filename ?? 'Group submission'}
-          </div>
+          {selected.pre_signed_file_url ? (
+            <div className='overflow-hidden rounded-[10px] border border-line-card'>
+              <MarkerPDFViewer
+                url={selected.pre_signed_file_url}
+                peerReviewEnabled={false}
+              />
+            </div>
+          ) : (
+            <div className='flex flex-col items-center justify-center gap-2 rounded-[10px] bg-warm-50 py-16 text-center'>
+              <FileText className='h-8 w-8 text-faint' />
+              <div className='text-[13px] font-medium text-muted2'>
+                No file was submitted for this group.
+              </div>
+            </div>
+          )}
+          {selected.filename && (
+            <div className='mt-3 text-center text-[12px] text-faint'>
+              {selected.filename}
+            </div>
+          )}
         </div>
 
         {/* Criteria marking (rubric scoring) */}

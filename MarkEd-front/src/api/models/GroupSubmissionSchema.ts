@@ -10,6 +10,7 @@ export type GroupSubmissionSchema = {
     submitted_by_id: number;
     submitted_by_name: string;
     submissionFile?: (string | null);
+    pre_signed_file_url?: (string | null);
     filename: string;
     submission_version: number;
     submissionDateTime: string;

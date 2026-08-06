@@ -9,6 +9,7 @@ as-is; only the transport layer changes from Django views to django-ninja.
 Route layout follows Unified PRD §10 (Option B).
 """
 import random
+from datetime import timedelta
 from typing import List, Optional
 
 from django.db import transaction
@@ -16,6 +17,8 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
+
+from ...services.storage import StorageService
 
 from ..decorators import require_auth
 from ..schemas.group import (
@@ -715,6 +718,20 @@ def add_workspace_comment(request, file_id: int, payload: WorkspaceCommentCreate
 # =============================================================================
 
 def _serialize_group_submission(gs: GroupSubmission) -> dict:
+    # Presign the stored file key so the marker's PDF viewer can load it,
+    # mirroring get_submission_for_marking for individual submissions. The raw
+    # submissionFile is an S3 key (prod) / local path and isn't directly
+    # viewable.
+    pre_signed_file_url = None
+    if gs.submissionFile:
+        try:
+            pre_signed_file_url = StorageService().get_presigned_url(
+                gs.submissionFile,
+                expires=timedelta(hours=1).total_seconds(),
+            )
+        except Exception:
+            pre_signed_file_url = None
+
     return {
         'id': gs.id,
         'group_id': gs.group_id,
@@ -723,6 +740,7 @@ def _serialize_group_submission(gs: GroupSubmission) -> dict:
         'submitted_by_id': gs.submitted_by_id,
         'submitted_by_name': gs.submitted_by.userName,
         'submissionFile': gs.submissionFile,
+        'pre_signed_file_url': pre_signed_file_url,
         'filename': gs.filename,
         'submission_version': gs.submission_version,
         'submissionDateTime': gs.submissionDateTime,

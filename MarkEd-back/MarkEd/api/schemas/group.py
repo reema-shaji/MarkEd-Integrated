@@ -150,6 +150,7 @@ class GroupSubmissionSchema(Schema):
     submitted_by_id: int
     submitted_by_name: str
     submissionFile: Optional[str] = None
+    pre_signed_file_url: Optional[str] = None
     filename: str
     submission_version: int
     submissionDateTime: datetime
