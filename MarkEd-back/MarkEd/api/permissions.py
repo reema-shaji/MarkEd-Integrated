@@ -209,12 +209,14 @@ class CanCreatePeerReviewComment(BasePermission):
             if request.user_role in ['Marker', 'TA', 'Academic']:
                 return True
 
-            # For students, check the normal peer review requirements
+            # For students, peer review is gated by being allocated (which only
+            # happens once a course organiser triggers matching) and the review
+            # deadline. The submission deadline is intentionally NOT required to
+            # have passed: matching is manual, so an organiser opens peer review
+            # explicitly, and this lets an assignment run submissions and peer
+            # review concurrently (needed for the demo/study).
             if request.user_role == 'Student':
-                if timezone.now() <= assignment.deadline:
-                    return False
-
-                if timezone.now() > assignment.review_deadline:
+                if assignment.review_deadline and timezone.now() > assignment.review_deadline:
                     return False
 
                 return PeerReviewAllocation.objects.filter(
