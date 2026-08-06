@@ -680,70 +680,49 @@ def get_marker_allocations(request, assignment_id: int):
         ).order_by('submission_id', 'group_submission_id')
         print(f"Found {len(all_peer_reviews)} total peer review allocations")
 
-        # Get total number of markers for this course
-        print("Getting total markers for course")
-        total_markers = Course2Marker.objects.filter(
-            course=assignment.course,
-            markingPermission__gt=0
-        ).order_by('marker_id')
+        # Group allocations by the reviewed object so each reviewed submission
+        # appears once. The key is the submission id, or the group submission id
+        # for a group peer review assignment (§8).
+        #
+        # NOTE: earlier this partitioned the submissions across the course's
+        # markers by index, so each marker only saw "their share". That silently
+        # blanked the tab in two common cases — (a) a staff member who is not a
+        # Course2Marker row with markingPermission > 0 (the .index() lookup threw
+        # and the broad except returned []), and (b) fewer submissions than
+        # markers (integer division gave 0, so every marker but the last got an
+        # empty slice). For reviewing peer feedback (M5) every marker should be
+        # able to see the peer reviews, so we now return one row per reviewed
+        # submission to any course staff member.
+        submissions = {}
+        for review in all_peer_reviews:
+            key = review.submission_id or review.group_submission_id
+            if key not in submissions:
+                submissions[key] = []
+            submissions[key].append(review)
 
-        # Find this marker's index
-        marker_index = list(total_markers.values_list('marker_id', flat=True)).index(request.user_id)
-        total_markers_count = total_markers.count()
-        print(f"Marker index: {marker_index}, Total markers: {total_markers_count}")
+        submission_groups = list(submissions.values())
+        print(f"Returning {len(submission_groups)} reviewed submissions to this marker")
 
-        # Calculate which allocations this marker should handle
-        if total_markers_count > 0:
-            # Group allocations by the reviewed object to ensure complete sets.
-            # The key is the submission id, or the group submission id for a
-            # group peer review assignment (§8).
-            submissions = {}
-            for review in all_peer_reviews:
-                key = review.submission_id or review.group_submission_id
-                if key not in submissions:
-                    submissions[key] = []
-                submissions[key].append(review)
-
-            # Convert to list of submission groups
-            submission_groups = list(submissions.values())
-            
-            # Calculate distribution
-            submissions_per_marker = len(submission_groups) // total_markers_count
-            start_index = marker_index * submissions_per_marker
-            end_index = start_index + submissions_per_marker if marker_index < total_markers_count - 1 else None
-            
-            # Get this marker's allocated submission groups
-            allocated_groups = submission_groups[start_index:end_index]
-            
-            # Flatten the groups into a single list of reviews
-            allocated_reviews = [review for group in allocated_groups for review in group]
-            print(f"Allocated {len(allocated_reviews)} reviews across {len(allocated_groups)} submissions to this marker")
-
-            # Convert to response schema, using the first review from each group as the representative
-            print("Converting allocated reviews to response schema")
-            def _representative(review):
-                # Group peer review: the marker sees the group, never the
-                # individual students who submitted or reviewed (§8.4).
-                if review.group_submission_id:
-                    return PeerReviewSchemaWithStudent(
-                        id=review.id,
-                        submission_id=review.group_submission_id,
-                        status=review.status,
-                        student_name=f"Group: {review.group_submission.group.name}",
-                        student_number="",
-                    )
+        def _representative(review):
+            # Group peer review: the marker sees the group, never the
+            # individual students who submitted or reviewed (§8.4).
+            if review.group_submission_id:
                 return PeerReviewSchemaWithStudent(
                     id=review.id,
-                    submission_id=review.submission.id,
+                    submission_id=review.group_submission_id,
                     status=review.status,
-                    student_name=review.submission.student.userName,
-                    student_number=review.submission.student.userNumber,
+                    student_name=f"Group: {review.group_submission.group.name}",
+                    student_number="",
                 )
+            return PeerReviewSchemaWithStudent(
+                id=review.id,
+                submission_id=review.submission.id,
+                status=review.status,
+                student_name=review.submission.student.userName,
+                student_number=review.submission.student.userNumber,
+            )
 
-            return [_representative(group[0]) for group in allocated_groups]
-        
-        print("No markers found, returning empty list")
-        return []
+        return [_representative(group[0]) for group in submission_groups]
 
     except Assignment.DoesNotExist:
         logger.error(f"Assignment {assignment_id} not found")
