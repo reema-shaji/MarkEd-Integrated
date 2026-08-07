@@ -58,6 +58,9 @@ export default function MarkerPDFViewer({
   readOnly = false,
 }: MarkerPDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0)
+  // Bumped when a page finishes rendering so renderAnnotations re-runs with the
+  // page DOM present (it can't position highlights before the pages exist).
+  const [, setRenderTick] = useState(0)
   const [initialAnnotations, setInitialAnnotations] = useState<Annotation[]>([])
   const [annotations, setAnnotations] = useState<Annotation[]>([])
   const { user } = useUser()
@@ -325,6 +328,10 @@ export default function MarkerPDFViewer({
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages)
+    // Force a re-render once the document is parsed so renderAnnotations runs
+    // again — it queries the [data-page-number] DOM nodes, which don't exist on
+    // the first pass, so without this the highlights never appear.
+    setInitialAnnotations((prev) => [...prev])
   }
 
   useEffect(() => {
@@ -473,6 +480,7 @@ export default function MarkerPDFViewer({
                 pageNumber={index + 1}
                 width={pageWidth}
                 className='overflow-hidden rounded-[14px] border border-[#EAE5DB] shadow-[0_1px_4px_rgba(19,26,38,0.06)]'
+                onRenderSuccess={() => setRenderTick((t) => t + 1)}
                 onMouseUp={() => {
                   if (readOnly) return
                   setCurrentPageNumber(index + 1)
