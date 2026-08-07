@@ -400,7 +400,7 @@ export default function PDFViewer({
   )
 
   return (
-    <div className='min-h-screen-5xl bg-paper'>
+    <div className='flex h-[80vh] flex-col bg-paper'>
       <Controls
         url={url}
         annotations={annotations}
@@ -410,9 +410,9 @@ export default function PDFViewer({
         {otherControls}
       </Controls>
 
-      <div className='flex'>
+      <div className='flex min-h-0 flex-1'>
         <div
-          className='relative flex flex-1 justify-center overflow-x-auto px-6 py-6'
+          className='relative flex min-h-0 flex-1 justify-center overflow-auto px-6 py-6'
           onClick={(event) => {
             if (event.target === event.currentTarget) {
               setSelectedAnnotation(null)

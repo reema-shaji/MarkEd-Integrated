@@ -37,6 +37,10 @@ interface MarkerPDFViewerProps {
   // to its container instead of a fixed 760px. Used where the viewer sits in a
   // narrow column (e.g. group marking) and no commenting is possible.
   previewOnly?: boolean
+  // Height of the viewer box. Pages scroll inside this height rather than the
+  // viewer growing with the page count. Defaults to ~one screen; pass 'h-full'
+  // to fill a parent that already sets the height.
+  heightClass?: string
 }
 
 export default function MarkerPDFViewer({
@@ -47,6 +51,7 @@ export default function MarkerPDFViewer({
   isMarkerView = true,
   peerReviewEnabled = true,
   previewOnly = false,
+  heightClass = 'h-[80vh]',
 }: MarkerPDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0)
   const [initialAnnotations, setInitialAnnotations] = useState<Annotation[]>([])
@@ -426,15 +431,15 @@ export default function MarkerPDFViewer({
   )
 
   return (
-    <div className={previewOnly ? 'bg-paper' : 'min-h-screen-5xl bg-paper'}>
+    <div className={`${heightClass} flex flex-col bg-paper`}>
       <Controls url={url} annotations={annotations} isMarkerView={isMarkerView}>
         {otherControls}
       </Controls>
 
-      <div className='flex'>
+      <div className='flex min-h-0 flex-1'>
         <div
           ref={pdfContainerRef}
-          className={`relative flex flex-1 justify-center overflow-x-auto ${
+          className={`relative flex min-h-0 flex-1 justify-center overflow-auto ${
             previewOnly ? 'px-3 py-4' : 'px-6 py-6'
           }`}
           onClick={(event) => {

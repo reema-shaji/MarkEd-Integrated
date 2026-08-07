@@ -213,13 +213,18 @@ export default function MarkerReviewPage() {
       {/* Split body */}
       <div className='flex flex-1 overflow-hidden'>
         {/* Left — the submission document */}
-        <div className='flex flex-1 flex-col overflow-y-auto bg-[#F5F3EF]'>
+        <div className='flex min-h-0 flex-1 flex-col bg-[#F5F3EF]'>
           {isLoading ? (
             <div className='flex flex-1 items-center justify-center'>
               <Loader2 className='h-6 w-6 animate-spin text-[#8A9099]' />
             </div>
           ) : pdfUrl ? (
-            <MarkerPDFViewer url={pdfUrl} previewOnly peerReviewEnabled={false} />
+            <MarkerPDFViewer
+              url={pdfUrl}
+              previewOnly
+              peerReviewEnabled={false}
+              heightClass='h-full'
+            />
           ) : (
             <div className='flex flex-1 flex-col items-center justify-center gap-2 text-center'>
               <FileText className='h-8 w-8 text-[#B7AE9E]' />

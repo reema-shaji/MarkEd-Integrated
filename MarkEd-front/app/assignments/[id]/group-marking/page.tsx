@@ -247,6 +247,7 @@ export default function GroupMarkingPage() {
                 url={selected.pre_signed_file_url}
                 previewOnly
                 peerReviewEnabled={false}
+                heightClass='h-[70vh]'
               />
             </div>
           ) : (
