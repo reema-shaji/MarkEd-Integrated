@@ -37,6 +37,7 @@ import { throttle } from 'lodash'
 import { MarkerControls } from './MarkerControls'
 import { UserSchema } from '@/src/api'
 import { MarkerFeedbackForm } from './MarkerFeedbackForm'
+import { getReviewerColor } from '../hooks/useAnnotations'
 
 type DraftAnnotation = {
   selectedText: string
@@ -445,15 +446,12 @@ function AnnotationCard({
     [onHighlight]
   )
 
-  // Prototype uses three colours (red / blue / green). In the marker view they
-  // distinguish reviewers (by name); in the student's own anonymous view they
-  // just cycle by comment order.
-  const hash = (annotation.author.userName || '')
-    .split('')
-    .reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  const colorIndex =
-    (isMarkerView ? hash : index) % REVIEW_COLORS.length
-  const { borderColor, bgColor } = REVIEW_COLORS[colorIndex]
+  // In the marker view cards distinguish reviewers by name and must match the
+  // PDF highlight colour exactly, so use the same getReviewerColor mapping the
+  // highlights use. The student's own anonymous view just cycles by order.
+  const { borderColor, bgColor } = isMarkerView
+    ? getReviewerColor(annotation.author.userName || '')
+    : REVIEW_COLORS[index % REVIEW_COLORS.length]
 
   // Check if this is a marker's own comment
   const isMarkerComment =

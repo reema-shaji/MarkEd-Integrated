@@ -6,7 +6,7 @@ import { UserSchema } from '@/src/api'
 import { cn } from '@/lib/utils'
 
 // Function to generate a consistent color based on the reviewer's userNumber
-const getReviewerColor = (userNumber: string) => {
+export const getReviewerColor = (userNumber: string) => {
   const colors = [
     { borderColor: 'border-red-500', bgColor: 'bg-red-200' },
     { borderColor: 'border-blue-500', bgColor: 'bg-blue-200' },

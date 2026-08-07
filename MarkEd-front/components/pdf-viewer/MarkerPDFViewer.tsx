@@ -357,6 +357,16 @@ export default function MarkerPDFViewer({
     }
   }, [selectedAnnotation])
 
+  // Selecting a comment (from the sidebar) also navigates the document to that
+  // annotation's page.
+  useEffect(() => {
+    if (!selectedAnnotation) return
+    const page = pdfContainerRef.current?.querySelector(
+      `[data-page-number="${selectedAnnotation.position.pageNumber}"]`
+    )
+    page?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [selectedAnnotation])
+
   useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
