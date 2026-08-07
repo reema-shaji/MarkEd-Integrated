@@ -28,6 +28,7 @@ import { useParams } from 'next/navigation'
 import {
   DefaultService,
   GroupMarkingSchema,
+  GroupSchema,
   GroupSubmissionSchema,
   PersonalAdjustmentSchema,
 } from '@/src/api'
@@ -51,6 +52,7 @@ export default function GroupMarkingPage() {
   const assignmentId = Number(params.id)
 
   const [submissions, setSubmissions] = useState<GroupSubmissionSchema[]>([])
+  const [groups, setGroups] = useState<GroupSchema[]>([])
   const [selected, setSelected] = useState<GroupSubmissionSchema | null>(null)
   const [rows, setRows] = useState<Row[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -62,11 +64,54 @@ export default function GroupMarkingPage() {
   const [criteriaDirty, setCriteriaDirty] = useState(false)
 
   useEffect(() => {
-    DefaultService.listGroupSubmissions(assignmentId)
-      .then(setSubmissions)
-      .catch(() => toast.error('Could not load group submissions'))
-      .finally(() => setIsLoading(false))
+    let cancelled = false
+    const load = async () => {
+      setIsLoading(true)
+      const subs = await DefaultService.listGroupSubmissions(assignmentId).catch(
+        () => {
+          toast.error('Could not load group submissions')
+          return [] as GroupSubmissionSchema[]
+        }
+      )
+      // The whole group roster (so groups that haven't submitted still show).
+      let grps: GroupSchema[] = []
+      try {
+        const a = await DefaultService.getAssignment(assignmentId)
+        if (a.group_set_id) grps = await DefaultService.listGroups(a.group_set_id)
+      } catch {
+        // Non-critical — fall back to just the submitted groups.
+      }
+      if (cancelled) return
+      setSubmissions(subs)
+      setGroups(grps)
+      setIsLoading(false)
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
   }, [assignmentId])
+
+  // One row per group: the submission if the group has submitted, else null so
+  // the roster still shows the group with a "no submission yet" state.
+  const roster = useMemo(() => {
+    const byGroup = new Map(submissions.map((s) => [s.group_id, s]))
+    if (groups.length === 0) {
+      // Groups couldn't be resolved — show whatever has submitted.
+      return submissions.map((s) => ({
+        id: s.group_id,
+        name: s.group_name,
+        memberCount: undefined as number | undefined,
+        submission: s as GroupSubmissionSchema | null,
+      }))
+    }
+    return groups.map((g) => ({
+      id: g.id,
+      name: g.name,
+      memberCount: g.members?.length ?? 0,
+      submission: byGroup.get(g.id) ?? null,
+    }))
+  }, [groups, submissions])
 
   const snapshot = useCallback(
     (r: Row[]) =>
@@ -147,43 +192,68 @@ export default function GroupMarkingPage() {
           Group Marking
         </h1>
         <p className='mt-1 text-sm text-muted2'>
-          Pick a group to review its mark and set each member&apos;s
-          contribution adjustment.
+          Groups that have submitted can be marked. Set up groups under{' '}
+          <b className='text-ink'>Group Categories</b>.
         </p>
         <div className='mt-5 flex flex-col gap-3'>
-          {submissions.length === 0 ? (
+          {roster.length === 0 ? (
             <div className='rounded-[14px] border border-line-card bg-white py-12 text-center text-sm text-muted2'>
-              No group submissions yet.
+              No groups yet. Create groups under Group Categories first.
             </div>
           ) : (
-            submissions.map((submission) => (
-              <div
-                key={submission.id}
-                role='button'
-                tabIndex={0}
-                onClick={() => openSubmission(submission)}
-                onKeyDown={(e) =>
-                  (e.key === 'Enter' || e.key === ' ') && openSubmission(submission)
-                }
-                className='flex cursor-pointer items-center justify-between gap-3 rounded-[14px] border border-line-card bg-white px-5 py-4 transition-colors hover:bg-warm-50'
-              >
-                <div className='flex items-center gap-2.5'>
-                  <Users2 className='h-4 w-4 text-faint' />
-                  <span className='font-semibold text-ink'>
-                    {submission.group_name}
-                  </span>
-                  <span className='whitespace-nowrap rounded-[6px] bg-warm-100 px-2 py-px font-mono text-[11px] text-muted2'>
-                    v{submission.submission_version}
-                  </span>
-                  <span className='whitespace-nowrap rounded-[6px] bg-[#EDEAF4] px-2.5 py-0.5 text-[11px] font-medium text-[#4C3A82]'>
-                    Group Submission
-                  </span>
+            roster.map((r) => {
+              const sub = r.submission
+              const clickable = Boolean(sub)
+              return (
+                <div
+                  key={r.id}
+                  role={clickable ? 'button' : undefined}
+                  tabIndex={clickable ? 0 : undefined}
+                  onClick={() => sub && openSubmission(sub)}
+                  onKeyDown={(e) =>
+                    sub &&
+                    (e.key === 'Enter' || e.key === ' ') &&
+                    openSubmission(sub)
+                  }
+                  className={`flex items-center justify-between gap-3 rounded-[14px] border border-line-card px-5 py-4 transition-colors ${
+                    clickable
+                      ? 'cursor-pointer bg-white hover:bg-warm-50'
+                      : 'bg-warm-50/40'
+                  }`}
+                >
+                  <div className='flex min-w-0 items-center gap-2.5'>
+                    <Users2 className='h-4 w-4 shrink-0 text-faint' />
+                    <span className='truncate font-semibold text-ink'>
+                      {r.name}
+                    </span>
+                    {r.memberCount !== undefined && (
+                      <span className='whitespace-nowrap text-[11px] text-faint'>
+                        {r.memberCount} member{r.memberCount === 1 ? '' : 's'}
+                      </span>
+                    )}
+                    {sub && (
+                      <span className='whitespace-nowrap rounded-[6px] bg-warm-100 px-2 py-px font-mono text-[11px] text-muted2'>
+                        v{sub.submission_version}
+                      </span>
+                    )}
+                  </div>
+                  {sub ? (
+                    <span className='flex items-center gap-2.5'>
+                      <span className='hidden text-xs text-muted2 sm:inline'>
+                        Submitted by {sub.submitted_by_name}
+                      </span>
+                      <span className='whitespace-nowrap rounded-[6px] bg-[#E9F1EA] px-2.5 py-0.5 text-[11px] font-semibold text-[#2F7D4F]'>
+                        Submitted
+                      </span>
+                    </span>
+                  ) : (
+                    <span className='whitespace-nowrap rounded-[6px] bg-[#F2EEE6] px-2.5 py-0.5 text-[11px] font-medium text-[#8A7F6B]'>
+                      No submission yet
+                    </span>
+                  )}
                 </div>
-                <span className='text-xs text-muted2'>
-                  Submitted by {submission.submitted_by_name}
-                </span>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </div>
