@@ -332,34 +332,31 @@ export default function PeerReviewsPage() {
         </div>
       ) : (
         <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
-          {allocations.map((a) => {
-            const status = a.status?.toUpperCase()
-            return (
-              <div
-                key={a.id}
-                className='flex items-center gap-3 border-b border-[#F0ECE4] px-5 py-[14px] last:border-b-0'
-              >
-                <span className='flex-1'>
-                  <span className='block text-[13.5px] font-semibold text-[#131A26]'>
-                    {a.student_name}
-                  </span>
-                  <span className='mt-px block font-mono text-[12px] text-[#5A6070]'>
-                    {a.student_number}
-                  </span>
+          {allocations.map((a) => (
+            <div
+              key={a.id}
+              className='flex items-center gap-3 border-b border-[#F0ECE4] px-5 py-[14px] last:border-b-0'
+            >
+              <span className='flex-1'>
+                <span className='block text-[13.5px] font-semibold text-[#131A26]'>
+                  {a.student_name}
                 </span>
-                <button
-                  onClick={() =>
-                    router.push(
-                      `/assignments/${params.id}/marker-review/${a.submission_id}`
-                    )
-                  }
-                  className='rounded-[9px] border border-[#DED8CA] bg-white px-[13px] py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
-                >
-                  {status === 'COMPLETED' ? 'View' : 'Review'}
-                </button>
-              </div>
-            )
-          })}
+                <span className='mt-px block font-mono text-[12px] text-[#5A6070]'>
+                  {a.student_number}
+                </span>
+              </span>
+              <button
+                onClick={() =>
+                  router.push(
+                    `/assignments/${params.id}/marker-review/${a.submission_id}`
+                  )
+                }
+                className='rounded-[9px] border border-[#DED8CA] bg-white px-[13px] py-1.5 text-[12px] font-semibold text-[#2C3444] hover:bg-[#F2EFE8]'
+              >
+                View
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>
