@@ -27,7 +27,9 @@ import { useUser } from '@/src/contexts/user-context'
 function IndividualMarkingPanel({
   assignmentId,
   submissionId,
+  onReadOnlyChange,
 }: {
+  onReadOnlyChange?: (readOnly: boolean) => void
   assignmentId: number
   submissionId: number
 }) {
@@ -58,6 +60,12 @@ function IndividualMarkingPanel({
       cancelled = true
     }
   }, [assignmentId, submissionId])
+
+  // Tell the page whether the PDF annotations should be read-only: a marker
+  // (not an academic) can't annotate a finalised submission.
+  useEffect(() => {
+    if (data) onReadOnlyChange?.(!!data.finalised && !isAcademic)
+  }, [data, isAcademic, onReadOnlyChange])
 
   const liveTotal = useMemo(() => {
     if (!data) return 0
@@ -272,6 +280,9 @@ const MarkingPage = () => {
     useState<PeersLastSubmissionResponse | null>(null)
   const [peerEnabled, setPeerEnabled] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  // Finalised marks (for a non-academic marker) make the PDF annotations
+  // read-only; the scoring panel reports this up.
+  const [pdfReadOnly, setPdfReadOnly] = useState(false)
 
   useEffect(() => {
     const fetchSubmission = async () => {
@@ -337,6 +348,7 @@ const MarkingPage = () => {
             submissionId={submissionId}
             isMarkerView={true}
             peerReviewEnabled={peerEnabled}
+            readOnly={pdfReadOnly}
           />
         </div>
       </div>
@@ -345,6 +357,7 @@ const MarkingPage = () => {
         <IndividualMarkingPanel
           assignmentId={assignmentId}
           submissionId={submissionId}
+          onReadOnlyChange={setPdfReadOnly}
         />
       </div>
     </div>

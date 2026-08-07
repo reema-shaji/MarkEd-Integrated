@@ -27,7 +27,6 @@ import {
   AllSubmissionSchema,
   AssignmentSchema,
   DefaultService,
-  PeerReviewSchemaWithStudent,
 } from '@/src/api'
 import { FileText, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -124,9 +123,6 @@ export default function SubmissionsPage() {
       score?: string | null
     }[]
   >([])
-  const [allocations, setAllocations] = React.useState<
-    PeerReviewSchemaWithStudent[]
-  >([])
   // The marker queue loads in a separate effect after the assignment resolves;
   // gate the marker view on this so it shows a shimmer instead of a premature "0".
   const [queueLoading, setQueueLoading] = React.useState(true)
@@ -163,11 +159,6 @@ export default function SubmissionsPage() {
     // Stats for academic header
     DefaultService.getAssignmentStatistics(id)
       .then((s) => setStats(s as AssignmentStatistics))
-      .catch(() => {})
-
-    // Marker allocations (for peer-review-to-moderate count)
-    DefaultService.getMarkerAllocations(id)
-      .then(setAllocations)
       .catch(() => {})
   }, [params.id, router])
 
@@ -262,14 +253,6 @@ export default function SubmissionsPage() {
     if (queueLoading) {
       return (
         <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
-          <div className='mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
-            {[0, 1].map((i) => (
-              <div key={i} className='px-5 py-[18px]'>
-                <Skeleton className='mb-2 h-3 w-24' />
-                <Skeleton className='h-7 w-10' />
-              </div>
-            ))}
-          </div>
           <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
             <div className='border-b border-[#F0ECE4] px-5 py-4'>
               <Skeleton className='h-5 w-40' />
@@ -292,25 +275,6 @@ export default function SubmissionsPage() {
     }
     return (
       <div className='mx-auto w-full max-w-[1200px] px-7 pb-12 pt-8'>
-        <div className='mb-5 grid grid-cols-2 divide-x divide-[#F0ECE4] overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
-          <div className='px-5 py-[18px]'>
-            <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
-              To mark
-            </div>
-            <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
-              {markQueue.length}
-            </div>
-          </div>
-          <div className='px-5 py-[18px]'>
-            <div className='text-[10px] font-semibold uppercase tracking-[.85px] text-[#A29A8C]'>
-              Peer reviews to moderate
-            </div>
-            <div className='mt-[5px] text-[26px] font-semibold tracking-[-.7px] text-[#131A26]'>
-              {allocations.length}
-            </div>
-          </div>
-        </div>
-
         <div className='overflow-hidden rounded-[14px] border border-[#EAE5DB] bg-white'>
           <div className='border-b border-[#F0ECE4] px-5 py-4 text-[15px] font-semibold tracking-[-.1px] text-[#131A26]'>
             My Marking Queue

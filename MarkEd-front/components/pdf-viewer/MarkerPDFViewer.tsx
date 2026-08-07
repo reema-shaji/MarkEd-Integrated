@@ -41,6 +41,9 @@ interface MarkerPDFViewerProps {
   // viewer growing with the page count. Defaults to ~one screen; pass 'h-full'
   // to fill a parent that already sets the height.
   heightClass?: string
+  // View-only annotations: existing comments still show, but the marker can't
+  // select text to add new ones and can't edit/delete (e.g. finalised marks).
+  readOnly?: boolean
 }
 
 export default function MarkerPDFViewer({
@@ -52,6 +55,7 @@ export default function MarkerPDFViewer({
   peerReviewEnabled = true,
   previewOnly = false,
   heightClass = 'h-[80vh]',
+  readOnly = false,
 }: MarkerPDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0)
   const [initialAnnotations, setInitialAnnotations] = useState<Annotation[]>([])
@@ -465,6 +469,7 @@ export default function MarkerPDFViewer({
                 width={pageWidth}
                 className='overflow-hidden rounded-[14px] border border-[#EAE5DB] shadow-[0_1px_4px_rgba(19,26,38,0.06)]'
                 onMouseUp={() => {
+                  if (readOnly) return
                   setCurrentPageNumber(index + 1)
                   debouncedHandleTextSelection()
                 }}
@@ -491,6 +496,7 @@ export default function MarkerPDFViewer({
             onAnnotationDelete={handleAnnotationDelete}
             onEdit={onAnnotationEdit}
             isMarkerView={isMarkerView}
+            isReadOnly={readOnly}
             peerReviewEnabled={peerReviewEnabled}
             className={
               numPages > 0
