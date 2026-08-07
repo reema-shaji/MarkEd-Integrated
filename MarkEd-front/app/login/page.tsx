@@ -6,11 +6,6 @@
  * Auth is bearer-token, so the SPA can run on a different origin from the API
  * (Vercel + Render). This page posts to /api/auth/login, stores the returned
  * token, and enters the app.
- *
- * Demo quick-access: optional buttons that sign in as a seeded demo account.
- * They are NOT a shortcut — each runs the exact same token login as the form
- * (a real POST to /api/auth/login with the demo credentials). They are gated
- * behind NEXT_PUBLIC_SHOW_DEMO_LOGINS so a production deployment can hide them.
  */
 
 import { useState } from 'react'
@@ -20,37 +15,6 @@ import { initializeApi, setToken } from '@/src/api/config'
 import { Loader2 } from 'lucide-react'
 
 initializeApi()
-
-// Demo quick-access is shown unless explicitly disabled. The password comes
-// from NEXT_PUBLIC_DEMO_PASSWORD (defaults to the local seed password); on a
-// deployment with a private SEED_DEMO_PASSWORD, set this to match or disable
-// the demo buttons entirely.
-const SHOW_DEMO = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS !== 'false'
-const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD || 'Test1234!'
-// Matches the seeded demo accounts (see seed_demo.py).
-const DEMO_ACCOUNTS = [
-  {
-    role: 'Academic',
-    name: 'Dr Alan Whitfield',
-    subtitle: 'Academic',
-    initials: 'AW',
-    userNumber: 'acad001',
-  },
-  {
-    role: 'Marker',
-    name: 'Ben Carter',
-    subtitle: 'Marker',
-    initials: 'BC',
-    userNumber: 'mark001',
-  },
-  {
-    role: 'Student',
-    name: 'Amara Okafor',
-    subtitle: 'Student · Team 1',
-    initials: 'AO',
-    userNumber: 'stud001',
-  },
-]
 
 export default function LoginPage() {
   const router = useRouter()
@@ -153,40 +117,6 @@ export default function LoginPage() {
             </button>
           </form>
         </div>
-
-        {SHOW_DEMO && (
-          <div className='mt-[18px] rounded-[12px] border border-dashed border-[#D3CDBF] bg-[#FAF8F4] px-4 py-3.5'>
-            <div className='mb-[3px] text-[10px] font-semibold uppercase tracking-[0.85px] text-[#A29A8C]'>
-              Prototype only — not part of the product
-            </div>
-            <div className='mb-2.5 text-[11.5px] leading-[1.5] text-[#8A9099]'>
-              Sign in directly as a test persona to explore each role.
-            </div>
-            <div className='flex flex-col gap-1.5'>
-              {DEMO_ACCOUNTS.map((account) => (
-                <button
-                  key={account.userNumber}
-                  type='button'
-                  disabled={submitting}
-                  onClick={() => doLogin(account.userNumber, DEMO_PASSWORD)}
-                  className='flex items-center gap-2.5 rounded-[9px] border border-[#EBE7DD] bg-white px-2.5 py-2 text-left hover:border-[#C6BFB0] hover:bg-[#FAF8F4] disabled:opacity-60'
-                >
-                  <span className='flex h-[27px] w-[27px] flex-none items-center justify-center rounded-full bg-[#EFEBE2] text-[10.5px] font-bold text-[#5A6070]'>
-                    {account.initials}
-                  </span>
-                  <span className='min-w-0 flex-1'>
-                    <span className='block text-[12.5px] font-semibold text-[#131A26]'>
-                      {account.name}
-                    </span>
-                    <span className='block text-[11px] text-[#8A9099]'>
-                      {account.subtitle}
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
