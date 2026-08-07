@@ -221,7 +221,10 @@ export default function MarkerReviewPage() {
           ) : pdfUrl ? (
             <MarkerPDFViewer
               url={pdfUrl}
+              assignmentId={assignmentId}
+              submissionId={submissionId}
               previewOnly
+              readOnly
               peerReviewEnabled={false}
               heightClass='h-full'
             />

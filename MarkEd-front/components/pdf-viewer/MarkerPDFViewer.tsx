@@ -80,7 +80,12 @@ export default function MarkerPDFViewer({
     ro.observe(el)
     return () => ro.disconnect()
   }, [previewOnly])
-  const pageWidth = previewOnly ? fitWidth : 760
+  // Annotations are stored as absolute pixel rects captured at the fixed 760px
+  // render width, so whenever we render them (submission context present) we
+  // must render at 760 too or the highlights won't line up. The responsive
+  // fit-width is only for a plain preview with no annotations.
+  const hasAnnotationContext = Boolean(assignmentId && submissionId)
+  const pageWidth = previewOnly && !hasAnnotationContext ? fitWidth : 760
 
   const {
     selectedText,
