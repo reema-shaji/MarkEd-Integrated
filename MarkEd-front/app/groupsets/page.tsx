@@ -14,7 +14,6 @@ import { useCourse } from '@/src/contexts/course-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
@@ -147,17 +146,16 @@ export default function GroupSetsPage() {
       ) : (
         <div className='overflow-x-auto rounded-[14px] border border-line-card bg-white'>
           <div className='min-w-[640px]'>
-            <div className='grid grid-cols-[1.6fr_1fr_1fr_1fr_1.4fr] border-b border-line-card px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.85px] text-kicker'>
+            <div className='grid grid-cols-[1.6fr_1fr_1fr_1.4fr] border-b border-line-card px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.85px] text-kicker'>
               <span>Name</span>
               <span>Size</span>
               <span>Students</span>
-              <span>Self-enrol</span>
               <span />
             </div>
             {sets.map((gs) => (
               <div
                 key={gs.id}
-                className='grid grid-cols-[1.6fr_1fr_1fr_1fr_1.4fr] items-center border-t border-line-soft px-5 py-3.5 transition-colors hover:bg-warm-50'
+                className='grid grid-cols-[1.6fr_1fr_1fr_1.4fr] items-center border-t border-line-soft px-5 py-3.5 transition-colors hover:bg-warm-50'
               >
                 <div className='min-w-0'>
                   <div className='truncate text-sm font-medium text-ink'>
@@ -174,17 +172,6 @@ export default function GroupSetsPage() {
                 </span>
                 <span className='text-[13px] text-muted2'>
                   {gs.students_count} students · {gs.groups_count} groups
-                </span>
-                <span>
-                  <span
-                    className={`inline-block whitespace-nowrap rounded-[6px] px-2 py-0.5 text-[11px] font-medium ${
-                      gs.allow_student_self_assignment
-                        ? 'bg-[#E9F1EA] text-[#2F7D4F]'
-                        : 'bg-[#F5F3EF] text-[#525252]'
-                    }`}
-                  >
-                    {gs.allow_student_self_assignment ? 'Enabled' : 'Disabled'}
-                  </span>
                 </span>
                 <span className='flex justify-end gap-1.5'>
                   <button
@@ -282,25 +269,9 @@ export default function GroupSetsPage() {
                 Group sizes are locked because teams already have members.
               </p>
             )}
-
-            <div className='flex items-start justify-between gap-4 rounded-md border p-3'>
-              <div>
-                <Label htmlFor='gs-self'>Let students join groups themselves</Label>
-                {/* Help text added because his evaluation found this toggle hard
-                    to discover (Unified PRD §9, b-3). */}
-                <p className='mt-1 text-xs text-muted-foreground'>
-                  When on, students pick their own team instead of being assigned.
-                  You can still move anyone between teams.
-                </p>
-              </div>
-              <Switch
-                id='gs-self'
-                checked={form.allow_student_self_assignment}
-                onCheckedChange={(checked) =>
-                  setForm({ ...form, allow_student_self_assignment: checked })
-                }
-              />
-            </div>
+            {/* Student self-enrolment is intentionally not offered: the
+                student-facing join/leave UI isn't built, so the toggle would
+                have no effect. Groups are staff-assigned. */}
           </div>
 
           <DialogFooter>
