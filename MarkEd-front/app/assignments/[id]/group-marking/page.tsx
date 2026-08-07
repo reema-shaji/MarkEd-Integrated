@@ -478,6 +478,8 @@ function CriteriaMarkingSection({
     )
   }
 
+  const allFinalised = data.finalised ?? data.criteria.every((c) => c.finalised)
+
   return (
     <div className='rounded-[14px] border border-line-card bg-white p-5'>
       <div className='mb-1 text-sm font-semibold tracking-[-0.05px] text-ink'>
@@ -548,29 +550,38 @@ function CriteriaMarkingSection({
           </span>
         </div>
 
-        <div className='flex flex-wrap items-center gap-2'>
-          <button
-            onClick={() => save(false)}
-            disabled={saving}
-            className='inline-flex items-center rounded-[9px] border border-line-input bg-white px-4 py-2 text-[13px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100 disabled:opacity-50'
-          >
-            <Check className='mr-1.5 h-4 w-4' />
-            Save marks
-          </button>
-          <button
-            onClick={() => save(true)}
-            disabled={saving}
-            className='inline-flex items-center rounded-[9px] bg-ink px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
-          >
-            <Lock className='mr-1.5 h-4 w-4' />
-            Finalise marks
-          </button>
-          <span className='text-[11.5px] text-faint'>
-            {isAcademic
-              ? 'Finalised criteria lock out markers; you can still override them.'
-              : 'Finalising locks a criterion — only a course organiser can change it after.'}
+        {/* Once every criterion is finalised a marker has nothing editable, so
+            saving/finalising would only error — hide the actions and show a
+            lock instead. An academic keeps them to override. */}
+        {allFinalised && !isAcademic ? (
+          <span className='inline-flex w-fit items-center gap-1.5 rounded-[9px] bg-[#E9F1EA] px-3 py-2 text-[12.5px] font-semibold text-[#2F7D4F]'>
+            <Lock className='h-3.5 w-3.5' /> Marks finalised
           </span>
-        </div>
+        ) : (
+          <div className='flex flex-wrap items-center gap-2'>
+            <button
+              onClick={() => save(false)}
+              disabled={saving}
+              className='inline-flex items-center rounded-[9px] border border-line-input bg-white px-4 py-2 text-[13px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100 disabled:opacity-50'
+            >
+              <Check className='mr-1.5 h-4 w-4' />
+              Save marks
+            </button>
+            <button
+              onClick={() => save(true)}
+              disabled={saving}
+              className='inline-flex items-center rounded-[9px] bg-ink px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
+            >
+              <Lock className='mr-1.5 h-4 w-4' />
+              Finalise marks
+            </button>
+            <span className='text-[11.5px] text-faint'>
+              {isAcademic
+                ? 'Finalised criteria lock out markers; you can still override them.'
+                : 'Finalising locks a criterion — only a course organiser can change it after.'}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )
