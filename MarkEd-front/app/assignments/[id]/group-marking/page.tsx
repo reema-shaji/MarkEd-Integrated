@@ -199,12 +199,6 @@ export default function GroupMarkingPage() {
     setRows([])
   }
 
-  const scrollToAdjust = () => {
-    document
-      .getElementById('contribution-adjustment')
-      ?.scrollIntoView({ behavior: 'smooth' })
-  }
-
   return (
     <div className='w-full px-7 pb-24 pt-8'>
       {/* Header bar, per the "Group Marking" prototype. */}
@@ -225,17 +219,10 @@ export default function GroupMarkingPage() {
         <span className='whitespace-nowrap rounded-[6px] bg-[#EDEAF4] px-2.5 py-0.5 text-[11px] font-medium text-[#4C3A82]'>
           Group Submission
         </span>
-        <div className='flex-1' />
-        <button
-          onClick={scrollToAdjust}
-          className='rounded-[9px] border border-line-input bg-white px-3.5 py-1.5 text-[12px] font-medium text-[#2C3444] transition-colors hover:bg-warm-100'
-        >
-          Personal Contribution Adjustment →
-        </button>
       </div>
 
-      {/* Two columns: submission preview + rubric marking. */}
-      <div className='grid items-start gap-4 lg:grid-cols-2'>
+      {/* Submission PDF on top, rubric marking below. */}
+      <div className='space-y-4'>
         <div className='rounded-[14px] border border-line-card bg-white p-5'>
           <div className='mb-3 text-sm font-semibold text-muted2'>
             Submission Preview
@@ -520,84 +507,134 @@ const CriteriaMarkingSection = forwardRef<
         Marking Criteria
       </div>
       <div className='mb-3.5 text-[12px] text-muted2'>
-        Scores apply to the whole group. Set per-member adjustments afterwards.
+        {allFinalised && !isAcademic
+          ? 'These marks are finalised — shown for reference.'
+          : 'Scores apply to the whole group. Set per-member adjustments afterwards.'}
       </div>
 
-      <div className='flex flex-col gap-3'>
-        {data.criteria.map((c) => {
-          const locked = c.finalised && !isAcademic
-          return (
-            <div key={c.criteria_id} className={locked ? 'opacity-70' : ''}>
-              <div className='mb-1.5 flex items-center justify-between gap-2'>
-                <span className='flex items-center gap-2 text-[13px] font-semibold text-ink'>
-                  {c.name}
-                  {c.finalised && (
-                    <span className='inline-flex items-center gap-1 rounded-[6px] bg-[#E9F1EA] px-2 py-0.5 text-[10px] font-semibold text-[#2F7D4F]'>
-                      <Lock className='h-3 w-3' />
-                      Finalised{isAcademic ? ' · you can override' : ''}
-                    </span>
-                  )}
-                </span>
-                <span className='shrink-0 text-xs text-faint'>{c.marks} marks</span>
+      {/* Once finalised (and not an academic who can override) there is nothing
+          to edit — show a compact read-only summary instead of the full level
+          picker. */}
+      {allFinalised && !isAcademic ? (
+        <div className='flex flex-col gap-2'>
+          {data.criteria.map((c) => {
+            const selected = c.levels.find((l) => l.id === picks[c.criteria_id])
+            return (
+              <div
+                key={c.criteria_id}
+                className='flex items-center justify-between gap-3 rounded-[10px] border border-line-card px-4 py-2.5'
+              >
+                <div className='min-w-0'>
+                  <div className='text-[13px] font-semibold text-ink'>
+                    {c.name}
+                  </div>
+                  <div className='truncate text-[12px] text-muted2'>
+                    {selected ? selected.name : 'Not marked'}
+                  </div>
+                </div>
+                <div className='shrink-0 text-[13px] font-semibold tabular-nums text-ink'>
+                  {selected?.marks ?? 0} / {c.marks}
+                </div>
               </div>
-              <div className='grid gap-2 sm:grid-cols-2'>
-                {c.levels.map((level) => {
-                  const on = picks[c.criteria_id] === level.id
-                  return (
-                    <button
-                      key={level.id}
-                      type='button'
-                      disabled={locked}
-                      onClick={() =>
-                        setPicks((p) => ({ ...p, [c.criteria_id]: level.id }))
-                      }
-                      className={`rounded-[9px] border p-3 text-left text-sm transition-colors ${
-                        on
-                          ? 'border-ink bg-warm-50'
-                          : 'border-line-input hover:border-line'
-                      } ${locked ? 'cursor-not-allowed' : ''}`}
-                    >
-                      <div className='flex items-center justify-between gap-2'>
-                        <span className='font-medium text-ink'>{level.name}</span>
-                        <span className='shrink-0 text-xs text-muted2'>
-                          {level.marks} pts
-                        </span>
-                      </div>
-                      {level.description && (
-                        <p className='mt-1 text-xs text-muted2'>{level.description}</p>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
+            )
+          })}
 
-        {/* Group base score box. */}
-        <div className='flex items-center justify-between rounded-[10px] bg-warm-50 px-4 py-3'>
-          <span className='text-[13px] font-semibold text-ink'>
-            Group Base Score
-          </span>
-          <span className='text-[20px] font-bold tabular-nums text-ink'>
-            {liveScore} / {data.group_total}
+          <div className='flex items-center justify-between rounded-[10px] bg-warm-50 px-4 py-3'>
+            <span className='text-[13px] font-semibold text-ink'>
+              Group Base Score
+            </span>
+            <span className='text-[20px] font-bold tabular-nums text-ink'>
+              {liveScore} / {data.group_total}
+            </span>
+          </div>
+
+          <span className='inline-flex w-fit items-center gap-1.5 rounded-[9px] bg-[#E9F1EA] px-3 py-2 text-[12.5px] font-semibold text-[#2F7D4F]'>
+            <Lock className='h-3.5 w-3.5' /> Marks finalised
           </span>
         </div>
+      ) : (
+        <div className='flex flex-col gap-3'>
+          {data.criteria.map((c) => {
+            const locked = c.finalised && !isAcademic
+            return (
+              <div key={c.criteria_id} className={locked ? 'opacity-70' : ''}>
+                <div className='mb-1.5 flex items-center justify-between gap-2'>
+                  <span className='flex items-center gap-2 text-[13px] font-semibold text-ink'>
+                    {c.name}
+                    {c.finalised && (
+                      <span className='inline-flex items-center gap-1 rounded-[6px] bg-[#E9F1EA] px-2 py-0.5 text-[10px] font-semibold text-[#2F7D4F]'>
+                        <Lock className='h-3 w-3' />
+                        Finalised{isAcademic ? ' · you can override' : ''}
+                      </span>
+                    )}
+                  </span>
+                  <span className='shrink-0 text-xs text-faint'>
+                    {c.marks} marks
+                  </span>
+                </div>
+                <div className='grid gap-2 sm:grid-cols-2'>
+                  {c.levels.map((level) => {
+                    const on = picks[c.criteria_id] === level.id
+                    return (
+                      <button
+                        key={level.id}
+                        type='button'
+                        disabled={locked}
+                        onClick={() =>
+                          setPicks((p) => ({ ...p, [c.criteria_id]: level.id }))
+                        }
+                        className={`rounded-[9px] border p-3 text-left text-sm transition-colors ${
+                          on
+                            ? 'border-ink bg-warm-50'
+                            : 'border-line-input hover:border-line'
+                        } ${locked ? 'cursor-not-allowed' : ''}`}
+                      >
+                        <div className='flex items-center justify-between gap-2'>
+                          <span className='font-medium text-ink'>
+                            {level.name}
+                          </span>
+                          <span className='shrink-0 text-xs text-muted2'>
+                            {level.marks} pts
+                          </span>
+                        </div>
+                        {level.description && (
+                          <p className='mt-1 text-xs text-muted2'>
+                            {level.description}
+                          </p>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
 
-        {/* No save button here — the page's footer saves the rubric and the
-            contribution adjustments together. */}
-        {allFinalised ? (
-          <span className='inline-flex w-fit items-center gap-1.5 rounded-[9px] bg-[#E9F1EA] px-3 py-2 text-[12.5px] font-semibold text-[#2F7D4F]'>
-            <Lock className='h-3.5 w-3.5' />
-            Marks finalised{isAcademic ? ' · you can override' : ''}
-          </span>
-        ) : (
-          <span className='text-[11.5px] text-faint'>
-            Use “Save &amp; finalise” below to lock these marks — only a course
-            organiser can change a criterion after that.
-          </span>
-        )}
-      </div>
+          {/* Group base score box. */}
+          <div className='flex items-center justify-between rounded-[10px] bg-warm-50 px-4 py-3'>
+            <span className='text-[13px] font-semibold text-ink'>
+              Group Base Score
+            </span>
+            <span className='text-[20px] font-bold tabular-nums text-ink'>
+              {liveScore} / {data.group_total}
+            </span>
+          </div>
+
+          {/* No save button here — the page's footer saves the rubric and the
+              contribution adjustments together. */}
+          {allFinalised ? (
+            <span className='inline-flex w-fit items-center gap-1.5 rounded-[9px] bg-[#E9F1EA] px-3 py-2 text-[12.5px] font-semibold text-[#2F7D4F]'>
+              <Lock className='h-3.5 w-3.5' />
+              Marks finalised{isAcademic ? ' · you can override' : ''}
+            </span>
+          ) : (
+            <span className='text-[11.5px] text-faint'>
+              Use “Save &amp; finalise” below to lock these marks — only a course
+              organiser can change a criterion after that.
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 })

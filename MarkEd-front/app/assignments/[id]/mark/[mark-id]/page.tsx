@@ -139,64 +139,92 @@ function IndividualMarkingPanel({
         )}
       </div>
       <div className='mb-3.5 text-[12px] text-[#8A9099]'>
-        Enter a score for each criterion. Finalising releases the mark to the
-        student and locks it to markers.
+        {allFinalised && !isAcademic
+          ? 'These marks are finalised — shown for reference.'
+          : 'Enter a score for each criterion. Finalising releases the mark to the student and locks it to markers.'}
       </div>
 
-      <div className='flex flex-col gap-3'>
-        {data.criteria.map((c) => {
-          const locked = c.finalised && !isAcademic
-          return (
+      {/* Finalised (and not an academic override) — read-only summary rather
+          than disabled inputs the marker can't use. */}
+      {allFinalised && !isAcademic ? (
+        <div className='flex flex-col gap-2'>
+          {data.criteria.map((c) => (
             <div
               key={c.criteria_id}
-              className={`rounded-[10px] border border-[#F0EBE1] p-3 ${locked ? 'opacity-70' : ''}`}
+              className='rounded-[10px] border border-[#F0EBE1] p-3'
             >
-              <div className='mb-1.5 flex items-center justify-between gap-2'>
-                <span className='flex items-center gap-2 text-[13px] font-semibold text-[#2C3444]'>
+              <div className='flex items-center justify-between gap-2'>
+                <span className='text-[13px] font-semibold text-[#2C3444]'>
                   {c.name}
-                  {c.finalised && (
-                    <span className='inline-flex items-center gap-1 rounded-[6px] bg-[#E9F1EA] px-2 py-0.5 text-[10px] font-semibold text-[#2F7D4F]'>
-                      <Lock className='h-3 w-3' />
-                      Finalised{isAcademic ? ' · you can override' : ''}
-                    </span>
-                  )}
                 </span>
-                <span className='flex shrink-0 items-center gap-1 text-xs text-[#8A9099]'>
-                  <input
-                    type='number'
-                    min={0}
-                    max={c.marks}
-                    step='0.5'
-                    disabled={locked}
-                    value={scores[c.criteria_id] ?? ''}
-                    onChange={(e) =>
-                      setScores((prev) => ({
-                        ...prev,
-                        [c.criteria_id]: e.target.value,
-                      }))
-                    }
-                    className='w-[68px] rounded-[8px] border border-[#D3CDBF] bg-white px-2 py-1 text-right text-[13px] tabular-nums text-[#131A26] outline-none focus:border-[#8A9099] disabled:bg-[#F5F3EF]'
-                  />
-                  <span className='tabular-nums'>/ {c.marks}</span>
+                <span className='shrink-0 text-[13px] font-semibold tabular-nums text-[#131A26]'>
+                  {c.score ?? 0} / {c.marks}
                 </span>
               </div>
-              <textarea
-                rows={2}
-                disabled={locked}
-                value={feedback[c.criteria_id] ?? ''}
-                onChange={(e) =>
-                  setFeedback((prev) => ({
-                    ...prev,
-                    [c.criteria_id]: e.target.value,
-                  }))
-                }
-                placeholder='Feedback for this criterion (optional)…'
-                className='w-full resize-y rounded-[8px] border border-[#DED8CA] bg-white px-2.5 py-1.5 text-[12.5px] leading-[1.5] text-[#2C3444] outline-none focus:border-[#8A9099] disabled:bg-[#F5F3EF]'
-              />
+              {c.feedback && (
+                <p className='mt-1.5 whitespace-pre-wrap text-[12.5px] leading-[1.5] text-[#5A6070]'>
+                  {c.feedback}
+                </p>
+              )}
             </div>
-          )
-        })}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className='flex flex-col gap-3'>
+          {data.criteria.map((c) => {
+            const locked = c.finalised && !isAcademic
+            return (
+              <div
+                key={c.criteria_id}
+                className={`rounded-[10px] border border-[#F0EBE1] p-3 ${locked ? 'opacity-70' : ''}`}
+              >
+                <div className='mb-1.5 flex items-center justify-between gap-2'>
+                  <span className='flex items-center gap-2 text-[13px] font-semibold text-[#2C3444]'>
+                    {c.name}
+                    {c.finalised && (
+                      <span className='inline-flex items-center gap-1 rounded-[6px] bg-[#E9F1EA] px-2 py-0.5 text-[10px] font-semibold text-[#2F7D4F]'>
+                        <Lock className='h-3 w-3' />
+                        Finalised{isAcademic ? ' · you can override' : ''}
+                      </span>
+                    )}
+                  </span>
+                  <span className='flex shrink-0 items-center gap-1 text-xs text-[#8A9099]'>
+                    <input
+                      type='number'
+                      min={0}
+                      max={c.marks}
+                      step='0.5'
+                      disabled={locked}
+                      value={scores[c.criteria_id] ?? ''}
+                      onChange={(e) =>
+                        setScores((prev) => ({
+                          ...prev,
+                          [c.criteria_id]: e.target.value,
+                        }))
+                      }
+                      className='w-[68px] rounded-[8px] border border-[#D3CDBF] bg-white px-2 py-1 text-right text-[13px] tabular-nums text-[#131A26] outline-none focus:border-[#8A9099] disabled:bg-[#F5F3EF]'
+                    />
+                    <span className='tabular-nums'>/ {c.marks}</span>
+                  </span>
+                </div>
+                <textarea
+                  rows={2}
+                  disabled={locked}
+                  value={feedback[c.criteria_id] ?? ''}
+                  onChange={(e) =>
+                    setFeedback((prev) => ({
+                      ...prev,
+                      [c.criteria_id]: e.target.value,
+                    }))
+                  }
+                  placeholder='Feedback for this criterion (optional)…'
+                  className='w-full resize-y rounded-[8px] border border-[#DED8CA] bg-white px-2.5 py-1.5 text-[12.5px] leading-[1.5] text-[#2C3444] outline-none focus:border-[#8A9099] disabled:bg-[#F5F3EF]'
+                />
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       <div className='mt-4 flex items-center justify-between gap-3 border-t border-[#F0EBE1] pt-3.5'>
         <div className='text-[13px] text-[#5A6070]'>
@@ -296,17 +324,9 @@ const MarkingPage = () => {
 
   return (
     <div className='bg-paper pb-12'>
-      {/* Rubric scoring panel (restored individual marking) */}
+      {/* Submission PDF on top so staff read it first. Constrained to the same
+          1200px column as the scoring panel below. */}
       <div className='mx-auto w-full max-w-[1200px] px-7 pt-6'>
-        <IndividualMarkingPanel
-          assignmentId={assignmentId}
-          submissionId={submissionId}
-        />
-      </div>
-      {/* Annotation viewer for qualitative marker feedback on the PDF.
-          Constrained to the same 1200px column as the scoring panel so the
-          toolbar / Open Original line up with everything above. */}
-      <div className='mx-auto mt-6 w-full max-w-[1200px] px-7'>
         <div className='mb-1 text-[13px] font-semibold text-[#2C3444]'>
           Annotate the submission
         </div>
@@ -319,6 +339,13 @@ const MarkingPage = () => {
             peerReviewEnabled={peerEnabled}
           />
         </div>
+      </div>
+      {/* Rubric scoring panel (restored individual marking) below the PDF. */}
+      <div className='mx-auto mt-6 w-full max-w-[1200px] px-7'>
+        <IndividualMarkingPanel
+          assignmentId={assignmentId}
+          submissionId={submissionId}
+        />
       </div>
     </div>
   )
