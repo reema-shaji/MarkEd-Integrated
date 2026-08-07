@@ -111,6 +111,24 @@ export function AssignmentProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAssignmentId, user])
 
+  // The assignments list is fetched once on mount, so a deep link or a
+  // just-created assignment can be absent from it — which leaves the header
+  // title, Edit button and tabs blank. Fetch that single assignment on demand
+  // and merge it in so the header always populates.
+  useEffect(() => {
+    if (!currentAssignmentId) return
+    if (assignments.some((a) => a.id === currentAssignmentId)) return
+    DefaultService.getAssignment(currentAssignmentId)
+      .then((a) =>
+        setAssignments((prev) =>
+          prev.some((x) => x.id === a.id)
+            ? prev
+            : [...prev, a as AssignmentSchema]
+        )
+      )
+      .catch(() => {})
+  }, [currentAssignmentId, assignments])
+
   const getSubmissionStatus = (
     assignment: AssignmentSchema | null
   ): AssignmentStatus => {
