@@ -14,7 +14,15 @@
  * reason; one save writes them all at once, as his form did.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import dynamic from 'next/dynamic'
 import { useParams } from 'next/navigation'
 import {
@@ -49,6 +57,9 @@ export default function GroupMarkingPage() {
   const [loadingRows, setLoadingRows] = useState(false)
   const [saving, setSaving] = useState(false)
   const [baseline, setBaseline] = useState('')
+  // The rubric marking lives in a child; the single footer save drives it too.
+  const criteriaRef = useRef<CriteriaMarkingHandle>(null)
+  const [criteriaDirty, setCriteriaDirty] = useState(false)
 
   useEffect(() => {
     DefaultService.listGroupSubmissions(assignmentId)
@@ -80,8 +91,8 @@ export default function GroupMarkingPage() {
   }
 
   const dirty = useMemo(
-    () => rows.length > 0 && snapshot(rows) !== baseline,
-    [rows, baseline, snapshot]
+    () => (rows.length > 0 && snapshot(rows) !== baseline) || criteriaDirty,
+    [rows, baseline, snapshot, criteriaDirty]
   )
 
   const patchRow = (studentId: number, patch: Partial<Row>) =>
@@ -89,10 +100,15 @@ export default function GroupMarkingPage() {
       prev.map((r) => (r.student_id === studentId ? { ...r, ...patch } : r))
     )
 
+  // A single save for the whole page: the rubric marks (via the criteria
+  // child) and the personal contribution adjustments, together.
   const save = async (status: 'draft' | 'final') => {
     if (!selected) return
     setSaving(true)
     try {
+      // 1) Rubric criteria — no-ops cleanly if nothing is editable.
+      await criteriaRef.current?.save(status === 'final')
+      // 2) Personal contribution adjustments.
       await DefaultService.savePersonalAdjustments(selected.id, {
         status,
         adjustments: rows.map((r) => ({
@@ -102,13 +118,13 @@ export default function GroupMarkingPage() {
         })),
       })
       setBaseline(snapshot(rows))
+      // Reload so the adjustment table reflects the new group base score.
+      await openSubmission(selected)
       toast.success(
-        status === 'final'
-          ? 'Contribution adjustments saved'
-          : 'Saved as draft'
+        status === 'final' ? 'Marks saved & finalised' : 'Saved as draft'
       )
     } catch {
-      toast.error('Could not save the adjustments')
+      toast.error('Could not save the marks')
     } finally {
       setSaving(false)
     }
@@ -248,10 +264,12 @@ export default function GroupMarkingPage() {
           )}
         </div>
 
-        {/* Criteria marking (rubric scoring) */}
+        {/* Criteria marking (rubric scoring) — saved by the footer, not on its
+            own, so the page has a single save. */}
         <CriteriaMarkingSection
+          ref={criteriaRef}
           groupSubmissionId={selected.id}
-          onScored={() => openSubmission(selected)}
+          onDirtyChange={setCriteriaDirty}
         />
       </div>
 
@@ -385,23 +403,29 @@ export default function GroupMarkingPage() {
   )
 }
 
+/** Imperative handle so the page's single footer save can persist the rubric
+ *  marks alongside the contribution adjustments. */
+export interface CriteriaMarkingHandle {
+  save: (finalise: boolean) => Promise<void>
+}
+
 /**
  * Criteria marking (prototype "Group Marking"): score the group against each
  * rubric criterion by picking a level; the level's marks become the score.
  * Saving updates the group base score used by the adjustment table above.
+ * It has no save button of its own — the page's footer drives the save.
  */
-function CriteriaMarkingSection({
-  groupSubmissionId,
-  onScored,
-}: {
-  groupSubmissionId: number
-  onScored: () => void
-}) {
+const CriteriaMarkingSection = forwardRef<
+  CriteriaMarkingHandle,
+  {
+    groupSubmissionId: number
+    onDirtyChange: (dirty: boolean) => void
+  }
+>(function CriteriaMarkingSection({ groupSubmissionId, onDirtyChange }, ref) {
   const { user } = useUser()
   const isAcademic = user?.isAcademic ?? false
   const [data, setData] = useState<GroupMarkingSchema | null>(null)
   const [picks, setPicks] = useState<Record<number, number>>({})
-  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -429,38 +453,47 @@ function CriteriaMarkingSection({
     }, 0)
   }, [data, picks])
 
-  const save = async (finalise: boolean) => {
+  // Report unsaved level changes up so the footer's dirty indicator is honest.
+  useEffect(() => {
     if (!data) return
-    // A marker can't re-save a finalised criterion; academics can override.
-    const editable = new Set(
-      data.criteria
-        .filter((c) => isAcademic || !c.finalised)
-        .map((c) => c.criteria_id)
+    const changed = data.criteria.some(
+      (c) =>
+        picks[c.criteria_id] !== undefined &&
+        picks[c.criteria_id] !== c.selected_element_id
     )
-    const marks = Object.entries(picks)
-      .filter(([cid]) => editable.has(Number(cid)))
-      .map(([criteria_id, element_id]) => ({
-        criteria_id: Number(criteria_id),
-        element_id,
-      }))
-    if (marks.length === 0)
-      return toast.error('Pick a level for at least one editable criterion')
-    setSaving(true)
-    try {
-      const updated = await DefaultService.saveGroupMarking(groupSubmissionId, {
-        marks,
-        finalise,
-      })
-      setData(updated)
-      toast.success(finalise ? 'Marks finalised' : 'Marks saved')
-      onScored()
-    } catch (error) {
-      const msg = (error as { body?: { detail?: string } })?.body?.detail
-      toast.error(msg || 'Could not save the marks')
-    } finally {
-      setSaving(false)
-    }
-  }
+    onDirtyChange(changed)
+  }, [data, picks, onDirtyChange])
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      save: async (finalise: boolean) => {
+        if (!data) return
+        // A marker can't re-save a finalised criterion; academics can override.
+        const editable = new Set(
+          data.criteria
+            .filter((c) => isAcademic || !c.finalised)
+            .map((c) => c.criteria_id)
+        )
+        const marks = Object.entries(picks)
+          .filter(([cid]) => editable.has(Number(cid)))
+          .map(([criteria_id, element_id]) => ({
+            criteria_id: Number(criteria_id),
+            element_id,
+          }))
+        // Nothing editable (e.g. all finalised) — skip silently so the footer
+        // save can still persist the contribution adjustments.
+        if (marks.length === 0) return
+        const updated = await DefaultService.saveGroupMarking(
+          groupSubmissionId,
+          { marks, finalise }
+        )
+        setData(updated)
+        onDirtyChange(false)
+      },
+    }),
+    [data, picks, isAcademic, groupSubmissionId, onDirtyChange]
+  )
 
   if (!data) {
     return (
@@ -550,39 +583,20 @@ function CriteriaMarkingSection({
           </span>
         </div>
 
-        {/* Once every criterion is finalised a marker has nothing editable, so
-            saving/finalising would only error — hide the actions and show a
-            lock instead. An academic keeps them to override. */}
-        {allFinalised && !isAcademic ? (
+        {/* No save button here — the page's footer saves the rubric and the
+            contribution adjustments together. */}
+        {allFinalised ? (
           <span className='inline-flex w-fit items-center gap-1.5 rounded-[9px] bg-[#E9F1EA] px-3 py-2 text-[12.5px] font-semibold text-[#2F7D4F]'>
-            <Lock className='h-3.5 w-3.5' /> Marks finalised
+            <Lock className='h-3.5 w-3.5' />
+            Marks finalised{isAcademic ? ' · you can override' : ''}
           </span>
         ) : (
-          <div className='flex flex-wrap items-center gap-2'>
-            <button
-              onClick={() => save(false)}
-              disabled={saving}
-              className='inline-flex items-center rounded-[9px] border border-line-input bg-white px-4 py-2 text-[13px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100 disabled:opacity-50'
-            >
-              <Check className='mr-1.5 h-4 w-4' />
-              Save marks
-            </button>
-            <button
-              onClick={() => save(true)}
-              disabled={saving}
-              className='inline-flex items-center rounded-[9px] bg-ink px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
-            >
-              <Lock className='mr-1.5 h-4 w-4' />
-              Finalise marks
-            </button>
-            <span className='text-[11.5px] text-faint'>
-              {isAcademic
-                ? 'Finalised criteria lock out markers; you can still override them.'
-                : 'Finalising locks a criterion — only a course organiser can change it after.'}
-            </span>
-          </div>
+          <span className='text-[11.5px] text-faint'>
+            Use “Save &amp; finalise” below to lock these marks — only a course
+            organiser can change a criterion after that.
+          </span>
         )}
       </div>
     </div>
   )
-}
+})
