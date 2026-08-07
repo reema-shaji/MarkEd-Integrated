@@ -9,7 +9,6 @@ import {
   PeerReviewCommentSchema,
 } from '@/src/api'
 import { FileText, Loader2, MessageSquare } from 'lucide-react'
-import { toast } from 'sonner'
 import { useUser } from '@/src/contexts/user-context'
 
 // pdf.js is client-only; load the viewer lazily like the other marking pages.
