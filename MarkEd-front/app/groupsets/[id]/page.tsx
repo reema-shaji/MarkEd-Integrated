@@ -97,6 +97,46 @@ export default function GroupManagementPage() {
     load()
   }, [load])
 
+  // Native HTML5 drag-and-drop does not auto-scroll the app shell's inner
+  // scroll container (<main>), so a student can't be dragged to a group below
+  // the fold. While a drag is in progress, scroll <main> when the pointer nears
+  // the top/bottom edge of the viewport.
+  useEffect(() => {
+    const EDGE = 90 // px from an edge that triggers scrolling
+    const SPEED = 16 // px per frame
+    let dir = 0
+    let raf = 0
+    const scroller = () =>
+      document.querySelector('main') as HTMLElement | null
+    const tick = () => {
+      if (dir !== 0) {
+        scroller()?.scrollBy(0, dir * SPEED)
+        raf = requestAnimationFrame(tick)
+      } else {
+        raf = 0
+      }
+    }
+    const onDragOver = (e: DragEvent) => {
+      const h = window.innerHeight
+      dir = e.clientY < EDGE ? -1 : e.clientY > h - EDGE ? 1 : 0
+      if (dir !== 0 && !raf) raf = requestAnimationFrame(tick)
+    }
+    const stop = () => {
+      dir = 0
+      if (raf) cancelAnimationFrame(raf)
+      raf = 0
+    }
+    window.addEventListener('dragover', onDragOver)
+    window.addEventListener('drop', stop)
+    window.addEventListener('dragend', stop)
+    return () => {
+      window.removeEventListener('dragover', onDragOver)
+      window.removeEventListener('drop', stop)
+      window.removeEventListener('dragend', stop)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [])
+
   const filteredUngrouped = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return ungrouped
