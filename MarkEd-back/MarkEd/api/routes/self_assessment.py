@@ -156,6 +156,7 @@ def _rubric_items(assignment_id: int) -> List[dict]:
                 'criteria_id': criterion.id,
                 'name': criterion.name,
                 'full_path': _full_path(criterion),
+                'marks': criterion.marks,
                 'levels': [
                     {
                         'id': el.id,
@@ -418,7 +419,8 @@ def get_self_assessment_form(request, assignment_id: int):
     checklist_answers, rubric_answers, reflection_answers, feedback_text = {}, {}, {}, ''
     if previous:
         checklist_answers = {str(k): bool(v) for k, v in (previous.checklist_answers or {}).items()}
-        rubric_answers = {str(k): int(v) for k, v in (previous.rubric_answers or {}).items()}
+        # Keep the value as-is: an element id (level) or a direct score.
+        rubric_answers = {str(k): float(v) for k, v in (previous.rubric_answers or {}).items()}
         reflection_answers = previous.guided_reflection_answers or {}
         feedback_text = previous.feedback_text or ''
 
@@ -519,21 +521,40 @@ def _serialize_student_sa(submission, setting) -> dict:
 
     rubric, rubric_total = [], 0.0
     if submission.rubric_answers:
-        for raw_criteria_id, element_id in submission.rubric_answers.items():
+        for raw_criteria_id, value in submission.rubric_answers.items():
             criterion = Criteria.objects.filter(id=int(raw_criteria_id)).first()
-            element = Element.objects.filter(id=int(element_id)).first() if element_id else None
             if criterion is None:
                 continue
-            if element is not None:
-                rubric_total += element.marks
-            rubric.append(
-                {
-                    'criteria_name': criterion.name,
-                    'element_name': element.name if element else None,
-                    'element_description': element.description if element else None,
-                    'marks': element.marks if element else None,
-                }
-            )
+            # Level-based criteria store an element id; criteria with no levels
+            # store a direct self-graded score.
+            if Element.objects.filter(criteria=criterion).exists():
+                element = (
+                    Element.objects.filter(id=int(value)).first()
+                    if value is not None
+                    else None
+                )
+                if element is not None:
+                    rubric_total += element.marks
+                rubric.append(
+                    {
+                        'criteria_name': criterion.name,
+                        'element_name': element.name if element else None,
+                        'element_description': element.description if element else None,
+                        'marks': element.marks if element else None,
+                    }
+                )
+            else:
+                score = float(value) if value is not None else None
+                if score is not None:
+                    rubric_total += score
+                rubric.append(
+                    {
+                        'criteria_name': criterion.name,
+                        'element_name': None,
+                        'element_description': None,
+                        'marks': score,
+                    }
+                )
 
     reflections = []
     answers = submission.guided_reflection_answers or {}

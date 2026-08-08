@@ -80,6 +80,7 @@ class RubricItemSchema(Schema):
     criteria_id: int
     name: str
     full_path: str
+    marks: float = 0.0
     levels: List[RubricLevelSchema]
 
 
@@ -101,8 +102,10 @@ class SelfAssessmentFormSchema(Schema):
     rubric_items: List[RubricItemSchema]
 
     # Previously saved answers, so the form reopens where the student left off.
+    # Rubric values are an element id (level-based criteria) or a direct score
+    # (criteria with no levels), so this is float to carry either.
     checklist_answers: Dict[str, bool]
-    rubric_answers: Dict[str, int]
+    rubric_answers: Dict[str, float]
     reflection_answers: Dict[str, str]
     feedback_text: str = ''
     submitted_at: Optional[datetime] = None
@@ -110,7 +113,8 @@ class SelfAssessmentFormSchema(Schema):
 
 class SelfAssessmentSubmitRequest(Schema):
     checklist: Dict[str, bool] = {}
-    rubric: Dict[str, int] = {}
+    # Value is an element id (level-based) or a direct score (no levels).
+    rubric: Dict[str, float] = {}
     reflection: Dict[str, str] = {}
 
 

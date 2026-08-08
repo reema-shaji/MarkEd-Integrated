@@ -415,8 +415,8 @@ function StudentSelfAssessment() {
           subtitle={
             <>
               <b>What &amp; why:</b> grade yourself against the same rubric your
-              marker uses. <b>How:</b> select the level that best describes your
-              work.
+              marker uses. <b>How:</b> pick the level — or enter a score — that
+              best reflects your work.
             </>
           }
         >
@@ -426,50 +426,78 @@ function StudentSelfAssessment() {
                 <div className='mb-2 text-sm font-semibold text-[#131A26]'>
                   {criterion.name}
                 </div>
-                <div className='flex flex-col gap-[7px]'>
-                  {criterion.levels.map((level) => {
-                    const selected = rubric[String(criterion.criteria_id)] === level.id
-                    return (
-                      <button
-                        key={level.id}
-                        type='button'
-                        onClick={() =>
-                          setRubric({
-                            ...rubric,
-                            [String(criterion.criteria_id)]: level.id,
-                          })
-                        }
-                        className={`flex items-start gap-2.5 border-[1.5px] p-3 text-left transition-colors ${
-                          selected
-                            ? 'rounded-[10px] border-[#131A26] bg-[#FAF6EE]'
-                            : 'rounded-[12px] border-[#EAE5DB] bg-white hover:border-[#C6BFB0]'
-                        }`}
-                      >
-                        {/* Radio indicator, matching the prototype's filled dot. */}
-                        <span
-                          className={`mt-0.5 h-[15px] w-[15px] shrink-0 rounded-full bg-white ${
+                {criterion.levels.length > 0 ? (
+                  <div className='flex flex-col gap-[7px]'>
+                    {criterion.levels.map((level) => {
+                      const selected =
+                        rubric[String(criterion.criteria_id)] === level.id
+                      return (
+                        <button
+                          key={level.id}
+                          type='button'
+                          onClick={() =>
+                            setRubric({
+                              ...rubric,
+                              [String(criterion.criteria_id)]: level.id,
+                            })
+                          }
+                          className={`flex items-start gap-2.5 border-[1.5px] p-3 text-left transition-colors ${
                             selected
-                              ? 'border-[4.5px] border-[#1F4E79]'
-                              : 'border-[1.5px] border-[#C6BFB0]'
+                              ? 'rounded-[10px] border-[#131A26] bg-[#FAF6EE]'
+                              : 'rounded-[12px] border-[#EAE5DB] bg-white hover:border-[#C6BFB0]'
                           }`}
-                        />
-                        <span>
-                          <span className='block text-[13px] font-semibold text-[#131A26]'>
-                            {level.name}{' '}
-                            <span className='font-normal text-[#5A6070]'>
-                              ({level.marks} marks)
+                        >
+                          {/* Radio indicator, matching the prototype's filled dot. */}
+                          <span
+                            className={`mt-0.5 h-[15px] w-[15px] shrink-0 rounded-full bg-white ${
+                              selected
+                                ? 'border-[4.5px] border-[#1F4E79]'
+                                : 'border-[1.5px] border-[#C6BFB0]'
+                            }`}
+                          />
+                          <span>
+                            <span className='block text-[13px] font-semibold text-[#131A26]'>
+                              {level.name}{' '}
+                              <span className='font-normal text-[#5A6070]'>
+                                ({level.marks} marks)
+                              </span>
                             </span>
+                            {level.description && (
+                              <span className='mt-0.5 block text-xs leading-[1.45] text-[#5A6070]'>
+                                {level.description}
+                              </span>
+                            )}
                           </span>
-                          {level.description && (
-                            <span className='mt-0.5 block text-xs leading-[1.45] text-[#5A6070]'>
-                              {level.description}
-                            </span>
-                          )}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  // No rubric levels defined — grade yourself with a direct score.
+                  <div className='flex items-center gap-2'>
+                    <input
+                      type='number'
+                      min={0}
+                      max={criterion.marks}
+                      step='0.5'
+                      value={rubric[String(criterion.criteria_id)] ?? ''}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setRubric((prev) => {
+                          const next = { ...prev }
+                          if (v === '') delete next[String(criterion.criteria_id)]
+                          else next[String(criterion.criteria_id)] = Number(v)
+                          return next
+                        })
+                      }}
+                      className='w-[100px] rounded-[9px] border border-[#DED8CA] bg-white px-2.5 py-1.5 text-right text-[13px] tabular-nums text-[#131A26] outline-none focus:border-[#8A9099]'
+                      aria-label={`Self-grade for ${criterion.name}`}
+                    />
+                    <span className='text-xs text-[#8A9099]'>
+                      / {criterion.marks} marks
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>

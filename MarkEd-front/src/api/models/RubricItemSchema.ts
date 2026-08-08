@@ -7,6 +7,7 @@ export type RubricItemSchema = {
     criteria_id: number;
     name: string;
     full_path: string;
+    marks?: number;
     levels: Array<RubricLevelSchema>;
 };
 
