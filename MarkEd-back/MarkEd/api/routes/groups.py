@@ -1023,9 +1023,10 @@ def get_group_marking(request, group_submission_id: int):
             'finalised': bool(row and row.status == 2),
         })
 
-    finalised = GroupSubmissionPersonalAdjustment.objects.filter(
-        group_submission=gs, status='final'
-    ).exists()
+    # The submission is finalised once every criterion has been finalised — so
+    # this reflects the actual marks, not the (separate) personal-adjustment
+    # status, which previously let the flag be true while criteria stayed unset.
+    finalised = bool(criteria_out) and all(c['finalised'] for c in criteria_out)
     return {
         'group_submission_id': gs.id,
         'group_name': gs.group.name,
@@ -1074,12 +1075,32 @@ def save_group_marking(request, group_submission_id: int, payload: GroupMarkingS
                     "This criterion has been finalised and can only be changed by "
                     "a course organiser."
                 )
-            element = get_object_or_404(Element, pk=entry.element_id, criteria_id=entry.criteria_id)
-            row, _ = GroupSubmissionCriteria.objects.update_or_create(
-                group_submission=gs, criteria_id=entry.criteria_id,
-                defaults={'marker_id': request.user_id, 'score': element.marks, 'status': new_status},
-            )
-            row.selected_elements.set([element])
+            if entry.element_id is not None:
+                # Level-based rubric: the picked level's marks are the score.
+                element = get_object_or_404(
+                    Element, pk=entry.element_id, criteria_id=entry.criteria_id
+                )
+                row, _ = GroupSubmissionCriteria.objects.update_or_create(
+                    group_submission=gs, criteria_id=entry.criteria_id,
+                    defaults={'marker_id': request.user_id, 'score': element.marks, 'status': new_status},
+                )
+                row.selected_elements.set([element])
+            elif entry.score is not None:
+                # Direct numeric score (criteria without levels, like individual
+                # marking). Validate against the criterion's max marks.
+                crit_marks = (
+                    Criteria.objects.filter(id=entry.criteria_id)
+                    .values_list('marks', flat=True)
+                    .first()
+                    or 0
+                )
+                if entry.score < 0 or entry.score > crit_marks:
+                    raise HttpError(400, f"Score must be between 0 and {crit_marks}")
+                row, _ = GroupSubmissionCriteria.objects.update_or_create(
+                    group_submission=gs, criteria_id=entry.criteria_id,
+                    defaults={'marker_id': request.user_id, 'score': entry.score, 'status': new_status},
+                )
+                row.selected_elements.clear()
     return get_group_marking(request, group_submission_id)
 
 

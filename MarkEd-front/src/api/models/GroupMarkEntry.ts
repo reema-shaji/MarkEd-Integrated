@@ -4,6 +4,7 @@
 /* eslint-disable */
 export type GroupMarkEntry = {
     criteria_id: number;
-    element_id: number;
+    element_id?: (number | null);
+    score?: (number | null);
 };
 

@@ -62,6 +62,9 @@ export default function GroupMarkingPage() {
   // The rubric marking lives in a child; the single footer save drives it too.
   const criteriaRef = useRef<CriteriaMarkingHandle>(null)
   const [criteriaDirty, setCriteriaDirty] = useState(false)
+  // True once the marks are finalised and this viewer can't change them (a
+  // marker on a finalised submission); hides the footer save buttons.
+  const [locked, setLocked] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -168,8 +171,10 @@ export default function GroupMarkingPage() {
       toast.success(
         status === 'final' ? 'Marks saved & finalised' : 'Saved as draft'
       )
-    } catch {
-      toast.error('Could not save the marks')
+    } catch (e) {
+      toast.error(
+        e instanceof Error && e.message ? e.message : 'Could not save the marks'
+      )
     } finally {
       setSaving(false)
     }
@@ -328,6 +333,7 @@ export default function GroupMarkingPage() {
           ref={criteriaRef}
           groupSubmissionId={selected.id}
           onDirtyChange={setCriteriaDirty}
+          onLockedChange={setLocked}
         />
       </div>
 
@@ -432,29 +438,37 @@ export default function GroupMarkingPage() {
       {/* Sticky save bar — keeps draft/final distinction. */}
       <div className='fixed inset-x-0 bottom-0 z-40 border-t border-line-card bg-paper/95 backdrop-blur md:pl-64'>
         <div className='mx-auto flex max-w-[1100px] items-center justify-end gap-3 px-7 py-3'>
-          {dirty ? (
-            <span className='text-xs font-medium text-[#8A5D14]'>
-              Unsaved changes
+          {locked ? (
+            <span className='inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#2F7D4F]'>
+              <Lock className='h-3.5 w-3.5' /> Marks finalised
             </span>
           ) : (
-            <span className='inline-flex items-center gap-1 text-xs font-medium text-[#2F7D4F]'>
-              <Check className='h-3.5 w-3.5' /> Saved
-            </span>
+            <>
+              {dirty ? (
+                <span className='text-xs font-medium text-[#8A5D14]'>
+                  Unsaved changes
+                </span>
+              ) : (
+                <span className='inline-flex items-center gap-1 text-xs font-medium text-[#2F7D4F]'>
+                  <Check className='h-3.5 w-3.5' /> Saved
+                </span>
+              )}
+              <button
+                onClick={() => save('draft')}
+                disabled={saving}
+                className='rounded-[9px] border border-line-input bg-white px-4 py-2 text-[13px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100 disabled:opacity-50'
+              >
+                Save draft
+              </button>
+              <button
+                onClick={() => save('final')}
+                disabled={saving}
+                className='rounded-[9px] bg-ink px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
+              >
+                Save &amp; finalise
+              </button>
+            </>
           )}
-          <button
-            onClick={() => save('draft')}
-            disabled={saving}
-            className='rounded-[9px] border border-line-input bg-white px-4 py-2 text-[13px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100 disabled:opacity-50'
-          >
-            Save draft
-          </button>
-          <button
-            onClick={() => save('final')}
-            disabled={saving}
-            className='rounded-[9px] bg-ink px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
-          >
-            Save &amp; finalise
-          </button>
         </div>
       </div>
     </div>
@@ -478,12 +492,19 @@ const CriteriaMarkingSection = forwardRef<
   {
     groupSubmissionId: number
     onDirtyChange: (dirty: boolean) => void
+    onLockedChange: (locked: boolean) => void
   }
->(function CriteriaMarkingSection({ groupSubmissionId, onDirtyChange }, ref) {
+>(function CriteriaMarkingSection(
+  { groupSubmissionId, onDirtyChange, onLockedChange },
+  ref
+) {
   const { user } = useUser()
   const isAcademic = user?.isAcademic ?? false
   const [data, setData] = useState<GroupMarkingSchema | null>(null)
+  // Level-based criteria use `picks` (selected element); criteria with no
+  // levels use `scores` (a direct numeric score, like individual marking).
   const [picks, setPicks] = useState<Record<number, number>>({})
+  const [scores, setScores] = useState<Record<number, string>>({})
 
   useEffect(() => {
     let cancelled = false
@@ -491,11 +512,16 @@ const CriteriaMarkingSection = forwardRef<
       .then((d) => {
         if (cancelled) return
         setData(d)
-        const initial: Record<number, number> = {}
+        const initialPicks: Record<number, number> = {}
+        const initialScores: Record<number, string> = {}
         d.criteria.forEach((c) => {
-          if (c.selected_element_id) initial[c.criteria_id] = c.selected_element_id
+          if (c.selected_element_id)
+            initialPicks[c.criteria_id] = c.selected_element_id
+          if (c.levels.length === 0)
+            initialScores[c.criteria_id] = c.score != null ? String(c.score) : ''
         })
-        setPicks(initial)
+        setPicks(initialPicks)
+        setScores(initialScores)
       })
       .catch(() => toast.error('Could not load the rubric'))
     return () => {
@@ -506,21 +532,34 @@ const CriteriaMarkingSection = forwardRef<
   const liveScore = useMemo(() => {
     if (!data) return 0
     return data.criteria.reduce((sum, c) => {
-      const el = c.levels.find((l) => l.id === picks[c.criteria_id])
-      return sum + (el?.marks ?? 0)
+      if (c.levels.length > 0) {
+        const el = c.levels.find((l) => l.id === picks[c.criteria_id])
+        return sum + (el?.marks ?? 0)
+      }
+      const v = parseFloat(scores[c.criteria_id])
+      return sum + (isNaN(v) ? 0 : v)
     }, 0)
-  }, [data, picks])
+  }, [data, picks, scores])
 
-  // Report unsaved level changes up so the footer's dirty indicator is honest.
+  // Report unsaved changes up so the footer's dirty indicator is honest.
   useEffect(() => {
     if (!data) return
-    const changed = data.criteria.some(
-      (c) =>
-        picks[c.criteria_id] !== undefined &&
-        picks[c.criteria_id] !== c.selected_element_id
+    const changed = data.criteria.some((c) =>
+      c.levels.length > 0
+        ? picks[c.criteria_id] !== undefined &&
+          picks[c.criteria_id] !== c.selected_element_id
+        : (scores[c.criteria_id] ?? '') !==
+          (c.score != null ? String(c.score) : '')
     )
     onDirtyChange(changed)
-  }, [data, picks, onDirtyChange])
+  }, [data, picks, scores, onDirtyChange])
+
+  // Report the finalised-lock up so the page can hide the footer save buttons
+  // (a marker can't change finalised marks; an academic can override).
+  useEffect(() => {
+    if (!data) return
+    onLockedChange(Boolean(data.finalised) && !isAcademic)
+  }, [data, isAcademic, onLockedChange])
 
   useImperativeHandle(
     ref,
@@ -528,17 +567,28 @@ const CriteriaMarkingSection = forwardRef<
       save: async (finalise: boolean) => {
         if (!data) return
         // A marker can't re-save a finalised criterion; academics can override.
-        const editable = new Set(
-          data.criteria
-            .filter((c) => isAcademic || !c.finalised)
-            .map((c) => c.criteria_id)
-        )
-        const marks = Object.entries(picks)
-          .filter(([cid]) => editable.has(Number(cid)))
-          .map(([criteria_id, element_id]) => ({
-            criteria_id: Number(criteria_id),
-            element_id,
-          }))
+        const marks: {
+          criteria_id: number
+          element_id?: number
+          score?: number
+        }[] = []
+        for (const c of data.criteria) {
+          if (!(isAcademic || !c.finalised)) continue // locked criterion
+          if (c.levels.length > 0) {
+            const el = picks[c.criteria_id]
+            if (el) marks.push({ criteria_id: c.criteria_id, element_id: el })
+          } else {
+            const raw = scores[c.criteria_id]
+            if (raw === '' || raw == null) continue
+            const v = parseFloat(raw)
+            if (isNaN(v) || v < 0 || v > c.marks) {
+              throw new Error(
+                `Score for “${c.name}” must be between 0 and ${c.marks}`
+              )
+            }
+            marks.push({ criteria_id: c.criteria_id, score: v })
+          }
+        }
         // Nothing editable (e.g. all finalised) — skip silently so the footer
         // save can still persist the contribution adjustments.
         if (marks.length === 0) return
@@ -550,7 +600,7 @@ const CriteriaMarkingSection = forwardRef<
         onDirtyChange(false)
       },
     }),
-    [data, picks, isAcademic, groupSubmissionId, onDirtyChange]
+    [data, picks, scores, isAcademic, groupSubmissionId, onDirtyChange]
   )
 
   if (!data) {
@@ -599,11 +649,15 @@ const CriteriaMarkingSection = forwardRef<
                     {c.name}
                   </div>
                   <div className='truncate text-[12px] text-muted2'>
-                    {selected ? selected.name : 'Not marked'}
+                    {selected
+                      ? selected.name
+                      : c.score != null
+                        ? 'Score entered'
+                        : 'Not marked'}
                   </div>
                 </div>
                 <div className='shrink-0 text-[13px] font-semibold tabular-nums text-ink'>
-                  {selected?.marks ?? 0} / {c.marks}
+                  {c.score ?? selected?.marks ?? 0} / {c.marks}
                 </div>
               </div>
             )
@@ -642,40 +696,63 @@ const CriteriaMarkingSection = forwardRef<
                     {c.marks} marks
                   </span>
                 </div>
-                <div className='grid gap-2 sm:grid-cols-2'>
-                  {c.levels.map((level) => {
-                    const on = picks[c.criteria_id] === level.id
-                    return (
-                      <button
-                        key={level.id}
-                        type='button'
-                        disabled={locked}
-                        onClick={() =>
-                          setPicks((p) => ({ ...p, [c.criteria_id]: level.id }))
-                        }
-                        className={`rounded-[9px] border p-3 text-left text-sm transition-colors ${
-                          on
-                            ? 'border-ink bg-warm-50'
-                            : 'border-line-input hover:border-line'
-                        } ${locked ? 'cursor-not-allowed' : ''}`}
-                      >
-                        <div className='flex items-center justify-between gap-2'>
-                          <span className='font-medium text-ink'>
-                            {level.name}
-                          </span>
-                          <span className='shrink-0 text-xs text-muted2'>
-                            {level.marks} pts
-                          </span>
-                        </div>
-                        {level.description && (
-                          <p className='mt-1 text-xs text-muted2'>
-                            {level.description}
-                          </p>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
+                {c.levels.length > 0 ? (
+                  <div className='grid gap-2 sm:grid-cols-2'>
+                    {c.levels.map((level) => {
+                      const on = picks[c.criteria_id] === level.id
+                      return (
+                        <button
+                          key={level.id}
+                          type='button'
+                          disabled={locked}
+                          onClick={() =>
+                            setPicks((p) => ({ ...p, [c.criteria_id]: level.id }))
+                          }
+                          className={`rounded-[9px] border p-3 text-left text-sm transition-colors ${
+                            on
+                              ? 'border-ink bg-warm-50'
+                              : 'border-line-input hover:border-line'
+                          } ${locked ? 'cursor-not-allowed' : ''}`}
+                        >
+                          <div className='flex items-center justify-between gap-2'>
+                            <span className='font-medium text-ink'>
+                              {level.name}
+                            </span>
+                            <span className='shrink-0 text-xs text-muted2'>
+                              {level.marks} pts
+                            </span>
+                          </div>
+                          {level.description && (
+                            <p className='mt-1 text-xs text-muted2'>
+                              {level.description}
+                            </p>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  // No rubric levels defined — enter a direct score (0…max).
+                  <div className='flex items-center gap-2'>
+                    <Input
+                      type='number'
+                      min={0}
+                      max={c.marks}
+                      step='0.5'
+                      disabled={locked}
+                      value={scores[c.criteria_id] ?? ''}
+                      onChange={(e) =>
+                        setScores((p) => ({
+                          ...p,
+                          [c.criteria_id]: e.target.value,
+                        }))
+                      }
+                      className='h-9 w-[90px] rounded-[9px] border-line-input text-center tabular-nums disabled:bg-[#F5F3EF]'
+                      aria-label={`Score for ${c.name}`}
+                    />
+                    <span className='text-xs text-faint'>/ {c.marks} marks</span>
+                  </div>
+                )}
               </div>
             )
           })}

@@ -246,7 +246,11 @@ class GroupMarkingSchema(Schema):
 
 class GroupMarkEntry(Schema):
     criteria_id: int
-    element_id: int
+    # Either pick a rubric level (element_id) or enter a direct numeric score.
+    # Criteria created via the unified form have no levels, so scoring is direct
+    # (as in individual marking); level-based rubrics still pass an element_id.
+    element_id: Optional[int] = None
+    score: Optional[float] = None
 
 
 class GroupMarkingSaveRequest(Schema):
