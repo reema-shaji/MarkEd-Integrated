@@ -178,7 +178,7 @@ export default function GroupWorkspacePage() {
     }
   }
 
-  // The most recently uploaded workspace file — the candidate for submission.
+  // The most recently uploaded workspace file — the default for submission.
   const latestFile = useMemo(() => {
     if (files.length === 0) return null
     return [...files].sort(
@@ -186,6 +186,14 @@ export default function GroupWorkspacePage() {
         new Date(b.upload_time).getTime() - new Date(a.upload_time).getTime()
     )[0]
   }, [files])
+
+  // A file is already the current submission when it matches the latest
+  // submission's file — used to stop re-submitting an identical version.
+  const isCurrentSubmission = (f: WorkspaceFileSchema | null) =>
+    !!f?.file &&
+    !!latestSubmission?.submissionFile &&
+    f.file === latestSubmission.submissionFile
+  const latestAlreadySubmitted = isCurrentSubmission(latestFile)
 
   if (isLoading) {
     return (
@@ -331,7 +339,22 @@ export default function GroupWorkspacePage() {
                       <span className='text-[12px] text-muted2'>
                         {formatDate(file.upload_time)}
                       </span>
-                      <span className='flex justify-end gap-1'>
+                      <span className='flex items-center justify-end gap-1'>
+                        {isCurrentSubmission(file) ? (
+                          <span className='inline-flex h-[26px] items-center rounded-[9px] bg-[#E9F1EA] px-2.5 text-[11px] font-semibold text-[#2F7D4F]'>
+                            Submitted
+                          </span>
+                        ) : (
+                          file.file && (
+                            <button
+                              onClick={() => setConfirmFile(file)}
+                              title='Submit this file as the group submission'
+                              className='inline-flex h-[26px] items-center rounded-[9px] border border-line bg-white px-2.5 text-[11px] font-semibold text-[#2C3444] transition-colors hover:bg-warm-100'
+                            >
+                              Submit
+                            </button>
+                          )
+                        )}
                         {file.file && (
                           <a
                             href={file.file}
@@ -411,15 +434,22 @@ export default function GroupWorkspacePage() {
               workspace files. Every submission is kept.
             </p>
             <p className='mb-3 text-[11.5px] leading-[1.5] text-kicker'>
-              PDF only · latest workspace file is submitted.
+              PDF only · submits the latest file, or pick one from the list.
             </p>
             <button
               onClick={() => latestFile && setConfirmFile(latestFile)}
-              disabled={!latestFile}
+              disabled={!latestFile || latestAlreadySubmitted}
               className='w-full rounded-[9px] bg-ink py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-ink-hover disabled:opacity-50'
             >
               Submit as Group Submission
             </button>
+            {latestAlreadySubmitted && (
+              <p className='mt-2 text-[11.5px] leading-[1.5] text-[#2F7D4F]'>
+                The latest file is already submitted (v
+                {latestSubmission!.submission_version}). Upload a new file to
+                submit again.
+              </p>
+            )}
           </div>
 
           <div className='rounded-[14px] border border-line-card bg-white p-5'>
